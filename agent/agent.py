@@ -2,7 +2,8 @@ import json
 import os
 
 from tools.schema import create_args_model
-
+from pydantic import ValidationError
+from agent.session import SessionManager
 
 class Agent:
 
@@ -10,15 +11,18 @@ class Agent:
         self.client = client
         self.tools = tools
         self.tool_registry = tool_registry
+        self.session_manager = SessionManager()
 
-    def run(self, user_input):
+    def run(self, user_input, session_id="default"):
 
-        messages = [
-            {
-                "role": "user",
-                "content": user_input
-            }
-        ]
+        messages = self.session_manager.get_messages(session_id)
+
+        messages.append({
+            "role": "user",
+            "content": user_input
+        })
+
+        self.session_manager.save()
 
         while True:
 
@@ -35,6 +39,7 @@ class Agent:
 
             # LLM 不需要工具
             if not message.tool_calls:
+                self.session_manager.save()
                 return message.content
 
             # LLM 要调用工具
@@ -61,6 +66,8 @@ class Agent:
                         )
                     })
 
+                    self.session_manager.save()
+
                     continue
 
                 tool = self.tool_registry.get(tool_name)
@@ -75,20 +82,26 @@ class Agent:
 
                     try:
                         args_model = create_args_model(tool)
+                        validated_args = args_model(**tool_arguments)
 
-                        validated_args = args_model(
-                            **tool_arguments
-                        )
-
-                        result = tool(
-                            **validated_args.model_dump()
-                        )
+                    except ValidationError as e:
+                        result = {
+                            "error": "工具参数校验失败",
+                            "details": e.errors()
+                        }
 
                     except Exception as e:
-
                         result = {
-                            "error": str(e)
+                            "error": f"工具执行前发生错误: {str(e)}"
                         }
+
+                    else:
+                        try:
+                            result = tool(**validated_args.model_dump())
+                        except Exception as e:
+                            result = {
+                                "error": f"工具执行失败: {str(e)}"
+                            }
 
                 messages.append({
                     "role": "tool",

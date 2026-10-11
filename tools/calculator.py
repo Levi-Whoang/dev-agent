@@ -1,4 +1,6 @@
-def calculate(a: float, b: float, operation: str):
+from typing import Literal
+
+def calculate(a: float, b: float, operation: Literal["add", "subtract", "multiply", "divide"]):
     """进行两个数字之间的数学运算"""
 
     if operation == "add":
