@@ -1,0 +1,2 @@
+2026-10-12 20:35:49,090 | INFO | dev-agent | GET /docs status=200 duration=0.001s
+2026-10-12 20:35:49,474 | INFO | dev-agent | GET /openapi.json status=200 duration=0.016s

@@ -4,4 +4,191 @@
       "role": "user",
       "content": "我叫小明"
     },
-    
+    {
+      "content": "你好，小明！很高兴认识你。😊\n\n我是你的智能助手，可以帮你做这些事情：\n\n- 🔍 **查询订单**：告诉我订单号，我帮你查状态和金额\n- 🌤️ **查询天气**：告诉我城市名，我帮你查天气情况\n- 🧮 **数学计算**：加、减、乘、除都可以\n\n有什么需要帮忙的吗？",
+      "role": "assistant",
+      "reasoning_content": "The user says \"我叫小明\" (My name is Xiaoming). This is just a greeting/introduction. No tool needed. I should respond warmly and ask how I can help."
+    },
+    {
+      "role": "user",
+      "content": "我叫什么名字？"
+    },
+    {
+      "content": "你叫**小明**呀！😊\n\n刚才你告诉我\"我叫小明\"，我记住啦。有什么需要我帮忙的吗？",
+      "role": "assistant",
+      "reasoning_content": ""
+    },
+    {
+      "role": "user",
+      "content": "我叫小明"
+    },
+    {
+      "content": "是的，小明，我知道啦！😄\n\n有什么我可以帮你的吗？比如查订单、查天气，或者做数学计算～",
+      "role": "assistant",
+      "reasoning_content": "The user said \"我叫小明\" again. I already know this. Respond simply."
+    },
+    {
+      "role": "user",
+      "content": "我叫什么名字？"
+    },
+    {
+      "content": "你叫**小明**！😊\n\n（这次是你第三次告诉我啦，我记性很好的～）有什么需要帮忙的吗？",
+      "role": "assistant",
+      "reasoning_content": "The user is asking again. Just answer."
+    }
+  ],
+  "default": [
+    {
+      "role": "user",
+      "content": "请计算 123 乘以 456"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_00_fA857fMOWHK7xP74sarS8757",
+          "function": {
+            "arguments": "{\"a\": 123, \"b\": 456, \"operation\": \"multiply\"}",
+            "name": "calculate"
+          },
+          "type": "function",
+          "index": 0
+        }
+      ],
+      "reasoning_content": "Simple multiplication."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_fA857fMOWHK7xP74sarS8757",
+      "content": "56088.0"
+    },
+    {
+      "content": "123 × 456 = **56088**",
+      "role": "assistant",
+      "reasoning_content": ""
+    },
+    {
+      "role": "user",
+      "content": "深圳今天天气怎么样？"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_00_5RZRiWUXtphnnfjVqiwP6523",
+          "function": {
+            "arguments": "{\"city\": \"深圳\"}",
+            "name": "get_weather"
+          },
+          "type": "function",
+          "index": 0
+        }
+      ],
+      "reasoning_content": "The user asks about Shenzhen weather. I have a get_weather tool."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_5RZRiWUXtphnnfjVqiwP6523",
+      "content": "{\"temperature\": 28, \"weather\": \"晴\"}"
+    },
+    {
+      "content": "深圳今天天气：**晴**，气温 **28°C**。\n\n比较炎热，建议穿轻薄透气的衣物，外出注意防晒补水。",
+      "role": "assistant",
+      "reasoning_content": ""
+    },
+    {
+      "role": "user",
+      "content": "帮我查询订单 10086 的状态和金额"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_00_kMAXTmtpXrLnTn40pkxS4831",
+          "function": {
+            "arguments": "{\"order_id\": \"10086\"}",
+            "name": "get_order"
+          },
+          "type": "function",
+          "index": 0
+        }
+      ],
+      "reasoning_content": "The user wants order status and amount for order 10086."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_kMAXTmtpXrLnTn40pkxS4831",
+      "content": "{\"status\": \"paid\", \"amount\": 99.9}"
+    },
+    {
+      "content": "订单 **10086** 的信息如下：\n\n- **状态**：已支付（paid）\n- **金额**：99.9 元\n\n如需查询物流或其他订单，请随时告诉我。",
+      "role": "assistant",
+      "reasoning_content": ""
+    },
+    {
+      "role": "user",
+      "content": "请查询订单 99999 的状态"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_00_T67ODpmgs3lnqtXuJNy42729",
+          "function": {
+            "arguments": "{\"order_id\": \"99999\"}",
+            "name": "get_order"
+          },
+          "type": "function",
+          "index": 0
+        }
+      ],
+      "reasoning_content": "Let me query order 99999.\n\nNote: the user asked only for status now (previously status and amount)."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_T67ODpmgs3lnqtXuJNy42729",
+      "content": "null"
+    },
+    {
+      "content": "订单 **99999** 查询结果为空，系统中未找到该订单。\n\n可能的原因：\n- 订单号输入有误（可核对是否为 10086 等其他单号）\n- 该订单不存在或已被删除\n\n请确认订单号后我再帮你查询。",
+      "role": "assistant",
+      "reasoning_content": "The tool returned null — meaning no such order found. I should report that the order couldn't be found and not fabricate info."
+    }
+  ],
+  "test_user": [
+    {
+      "role": "user",
+      "content": "请计算 123 乘以 456"
+    },
+    {
+      "content": "",
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_00_H9gOCT1VRgmp6hhhXgHn3007",
+          "function": {
+            "arguments": "{\"a\": 123, \"b\": 456, \"operation\": \"multiply\"}",
+            "name": "calculate"
+          },
+          "type": "function",
+          "index": 0
+        }
+      ],
+      "reasoning_content": "The user asks to calculate 123 times 456. Use the calculate tool."
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_00_H9gOCT1VRgmp6hhhXgHn3007",
+      "content": "56088.0"
+    },
+    {
+      "content": "123 × 456 = **56088**",
+      "role": "assistant",
+      "reasoning_content": ""
+    }
+  ]
+}

@@ -22,10 +22,11 @@ class Agent:
             "content": user_input
         })
 
-        self.session_manager.save()
+        self.session_manager.save(session_id, messages)
+        #最多10轮决策
+        max_iterations = 10
 
-        while True:
-
+        for _ in range(max_iterations):
             response = self.client.chat.completions.create(
                 model=os.getenv("LLM_MODEL"),
                 messages=messages,
@@ -35,11 +36,11 @@ class Agent:
 
             message = response.choices[0].message
 
-            messages.append(message)
+            messages.append(message.model_dump(exclude_none=True))
 
             # LLM 不需要工具
             if not message.tool_calls:
-                self.session_manager.save()
+                self.session_manager.save(session_id, messages)
                 return message.content
 
             # LLM 要调用工具
@@ -66,7 +67,7 @@ class Agent:
                         )
                     })
 
-                    self.session_manager.save()
+                    self.session_manager.save(session_id, messages)
 
                     continue
 
@@ -87,7 +88,7 @@ class Agent:
                     except ValidationError as e:
                         result = {
                             "error": "工具参数校验失败",
-                            "details": e.errors()
+                            "details":  e.errors(include_context=False)
                         }
 
                     except Exception as e:
@@ -111,3 +112,9 @@ class Agent:
                         ensure_ascii=False
                     )
                 })
+
+            self.session_manager.save(session_id, messages)
+
+        else:
+            self.session_manager.save(session_id, messages)
+            raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
