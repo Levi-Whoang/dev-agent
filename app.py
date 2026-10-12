@@ -48,22 +48,23 @@ async def log_requests(request: Request, call_next):
         )
         raise
 
-
-@app.post("/chat", response_model=ChatResponse)
+#在某会话进行
+@app.post("/chat", response_model=APIResponse)
 def chat(request: ChatRequest):
     answer = agent.run(
         request.message,
         session_id=request.session_id
     )
 
-    return ChatResponse(
-        answer=answer,
-        session_id=request.session_id
+    return success_response(
+        data={
+            "answer": answer,
+            "session_id": request.session_id
+        }
     )
 
-
-
-@app.post("/sessions/{session_id}/clear")
+#清空会话
+@app.post("/sessions/{session_id}/clear", response_model=APIResponse)
 def clear_session(session_id: str):
     if not session_id.strip():
         raise HTTPException(
@@ -73,14 +74,13 @@ def clear_session(session_id: str):
 
     agent.session_manager.clear(session_id)
 
-    return {
-        "message": "会话已清空",
-        "session_id": session_id
-    }
+    return success_response(
+        data={"session_id": session_id},
+        message="会话已清空"
+    )
 
-
-
-@app.post("/sessions")
+#新建会话
+@app.post("/sessions", response_model=APIResponse)
 def create_session(request: CreateSessionRequest):
     session_id = request.session_id or str(uuid4())
 
@@ -92,20 +92,19 @@ def create_session(request: CreateSessionRequest):
             detail="会话创建失败，可能是 session_id 已存在"
         ) from e
 
-    return {
-        "session_id": session_id,
-        "message": "会话创建成功"
-    }
+    return success_response(
+        data={"session_id": session_id},
+        message="会话创建成功"
+    )
 
-
-@app.get("/sessions")
+#列出所有会话id
+@app.get("/sessions", response_model=APIResponse)
 def list_sessions():
     sessions = agent.session_manager.list_sessions()
     return success_response(data=sessions)
 
-
-
-@app.get("/sessions/{session_id}/messages")
+#获取会话信息
+@app.get("/sessions/{session_id}/messages", response_model=APIResponse)
 def get_session_messages(session_id: str):
     if not agent.session_manager.exists(session_id):
         raise HTTPException(
@@ -115,12 +114,15 @@ def get_session_messages(session_id: str):
 
     messages = agent.session_manager.get_messages(session_id)
 
-    return {
-        "session_id": session_id,
-        "messages": messages
-    }
+    return success_response(
+        data={
+            "session_id": session_id,
+            "messages": messages
+        }
+    )
 
-@app.delete("/sessions/{session_id}")
+#删除会话
+@app.delete("/sessions/{session_id}", response_model=APIResponse)
 def delete_session(session_id: str):
     if not agent.session_manager.exists(session_id):
         raise HTTPException(
@@ -130,13 +132,14 @@ def delete_session(session_id: str):
 
     agent.session_manager.clear(session_id)
 
-    return {
-        "message": "会话删除成功",
-        "session_id": session_id
-    }
+    return success_response(
+        data={"session_id": session_id},
+        message="会话删除成功"
+    )
 
 
-
+#三个异常响应
+#http异常处理器
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(
     request: Request,
@@ -144,14 +147,13 @@ async def http_exception_handler(
 ):
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "code": exc.status_code,
-            "message": str(exc.detail),
-            "data": None,
-        },
+        content=error_response(
+            code=exc.status_code,
+            message=str(exc.detail)
+        ),
     )
 
-
+#参数校验异常处理器
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request,
@@ -159,13 +161,15 @@ async def validation_exception_handler(
 ):
     return JSONResponse(
         status_code=422,
-        content={
-            "code": 422,
-            "message": "请求参数校验失败",
-            "data": exc.errors(),
-        },
+        content=error_response(
+            code=422,
+            message="请求参数校验失败",
+            data=exc.errors()
+        ),
     )
 
+
+#处理其他未知异常
 @app.exception_handler(Exception)
 async def unexpected_exception_handler(
     request: Request,

@@ -1,2 +1,4 @@
-2026-10-12 20:35:49,090 | INFO | dev-agent | GET /docs status=200 duration=0.001s
-2026-10-12 20:35:49,474 | INFO | dev-agent | GET /openapi.json status=200 duration=0.016s
+2026-10-12 21:08:23,575 | INFO | dev-agent | GET /docs status=200 duration=0.001s
+2026-10-12 21:08:23,879 | INFO | dev-agent | GET /openapi.json status=200 duration=0.009s
+2026-10-12 21:08:34,467 | INFO | httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2026-10-12 21:08:35,554 | INFO | dev-agent | POST /chat status=200 duration=1.773s
