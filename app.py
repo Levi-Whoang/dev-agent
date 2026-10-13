@@ -130,7 +130,7 @@ def delete_session(session_id: str):
             detail="会话不存在"
         )
 
-    agent.session_manager.clear(session_id)
+    agent.session_manager.delete(session_id)
 
     return success_response(
         data={"session_id": session_id},

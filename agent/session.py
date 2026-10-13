@@ -65,7 +65,7 @@ class SessionManager:
                     (session_id,)
                 )
                 row = cursor.fetchone()
-
+        return row is not None
 
     def save(self, session_id, messages):
         messages_json = json.dumps(
@@ -87,6 +87,17 @@ class SessionManager:
             conn.commit()
 
     def clear(self, session_id: str):
+        """清空聊天记录，但保留会话"""
+        with self._connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE sessions SET messages = %s WHERE session_id = %s",
+                    (json.dumps([], ensure_ascii=False), session_id)
+                )
+            conn.commit()
+
+    def delete(self, session_id: str):
+        """删除整个会话"""
         with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
@@ -130,4 +141,4 @@ class SessionManager:
 
 
 
-        return row is not None
+
