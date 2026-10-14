@@ -16,3 +16,6 @@ logger = logging.getLogger("dev-agent")
 logger.info("程序启动")
 logger.warning("参数缺失")
 logger.error("工具执行失败")
+
+@lru_cache(maxsize=1) 是 Python 中的缓存装饰器，作用是：缓存函数的计算结果，避免相同参数重复执行函数。
+在 Agent 项目中，它经常用来缓存模型对象，例如 Embedding 模型，避免每次调用都重新加载模型。

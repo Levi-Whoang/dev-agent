@@ -35,6 +35,13 @@ class Agent:
             )
 
             message = response.choices[0].message
+            print("本轮 tool_calls：", message.tool_calls)
+            if message.tool_calls:
+                print("LLM 请求调用的工具：")
+                for tool_call in message.tool_calls:
+                    print(tool_call.function.name)
+            else:
+                print("LLM 本轮没有请求调用工具")
 
             messages.append(message.model_dump(exclude_none=True))
 
@@ -99,6 +106,8 @@ class Agent:
                     else:
                         try:
                             result = tool(**validated_args.model_dump())
+                            print("工具执行结果：", result)
+
                         except Exception as e:
                             result = {
                                 "error": f"工具执行失败: {str(e)}"
