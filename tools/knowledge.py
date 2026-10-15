@@ -32,23 +32,23 @@ def load_knowledge() -> tuple[dict, ...]:
     for file_path in sorted(KNOWLEDGE_DIR.glob("*.txt")):
         content = file_path.read_text(encoding="utf-8")
 
-        for paragraph in content.split("\n\n"):
-            paragraph = paragraph.strip()
+        # 将标题和正文保留在同一段中，避免标题独立成为知识块
+        content = content.strip()
 
-            if not paragraph:
-                continue
+        if not content:
+            continue
 
-            text_chunks = split_text(
-                paragraph,
-                chunk_size=CHUNK_SIZE,
-                overlap=CHUNK_OVERLAP,
-            )
+        text_chunks = split_text(
+            content,
+            chunk_size=CHUNK_SIZE,
+            overlap=CHUNK_OVERLAP,
+        )
 
-            for text_chunk in text_chunks:
-                chunks.append({
-                    "content": text_chunk,
-                    "source": file_path.name,
-                })
+        for text_chunk in text_chunks:
+            chunks.append({
+                "content": text_chunk,
+                "source": file_path.name,
+            })
 
     return tuple(chunks)
 
@@ -90,6 +90,7 @@ def knowledge_search(query: str) -> list[dict]:
     ranked_indices = scores.argsort()[::-1]
 
     results = []
+    seen_contents = set()
 
     for index in ranked_indices:
         score = float(scores[index])
@@ -97,8 +98,15 @@ def knowledge_search(query: str) -> list[dict]:
         if score < threshold:
             break
 
+        content = knowledge[index]["content"].strip()
+
+        if content in seen_contents:
+            continue
+
+        seen_contents.add(content)
+
         results.append({
-            "content": knowledge[index]["content"],
+            "content": content,
             "source": knowledge[index]["source"],
             "score": round(score, 4),
         })
@@ -114,7 +122,7 @@ def knowledge_search_context(query: str) -> str:
     results = knowledge_search(query)
 
     if not results:
-        return "知识库中没有找到足够相关的证据。"
+        return "NO_RELEVANT_EVIDENCE"
 
     evidence = []
 
