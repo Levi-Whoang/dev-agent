@@ -6,3 +6,4 @@ venv/
 .env
 sessions.db
 knowledge_base
+.mcp.json

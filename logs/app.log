@@ -65,3 +65,8 @@
 2026-10-14 23:32:38,188 | INFO | httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
 2026-10-14 23:32:39,943 | INFO | httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
 2026-10-14 23:32:41,604 | INFO | dev-agent | POST /chat status=200 duration=4.215s
+2026-10-15 13:05:50,468 | INFO | dev-agent | GET /docs status=200 duration=0.001s
+2026-10-15 13:05:50,651 | INFO | dev-agent | GET /openapi.json status=200 duration=0.009s
+2026-10-15 13:06:10,413 | INFO | httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2026-10-15 13:06:11,337 | INFO | httpx2 | HTTP Request: POST https://api.deepseek.com/chat/completions "HTTP/1.1 200 OK"
+2026-10-15 13:06:12,304 | INFO | dev-agent | POST /chat status=200 duration=2.348s

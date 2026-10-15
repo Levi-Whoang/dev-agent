@@ -26,6 +26,21 @@ class Agent:
         #最多10轮决策
         max_iterations = 10
 
+        system_prompt = {
+            "role": "system",
+            "content": (
+                "你是一个基于企业知识库回答问题的助手。"
+                "涉及公司信息、招聘岗位和岗位要求时，必须调用 "
+                "knowledge_search_context 工具检索。"
+                "只能依据检索到的证据回答。"
+                "如果工具返回 NO_RELEVANT_EVIDENCE，"
+                "必须明确告知用户当前知识库无法确认答案，禁止猜测。"
+            ),
+        }
+
+        if not messages or messages[0].get("role") != "system":
+            messages.insert(0, system_prompt)
+
         for _ in range(max_iterations):
             response = self.client.chat.completions.create(
                 model=os.getenv("LLM_MODEL"),
