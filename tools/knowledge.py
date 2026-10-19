@@ -8,15 +8,15 @@ from functools import lru_cache
 from tools.text_splitter import split_text
 
 
-CHUNK_SIZE = 300
-CHUNK_OVERLAP = 50
-SIMILARITY_THRESHOLD = 0.60
-TOP_K = 3
-DENSE_WEIGHT = 0.7
-KEYWORD_WEIGHT = 0.3
-BM25_K1 = 1.5
-BM25_B = 0.75
-KEYWORD_MIN_COVERAGE = 0.4
+CHUNK_SIZE = 300 # 每个知识片段的目标长度
+CHUNK_OVERLAP = 50 # 相邻片段的重叠长度
+SIMILARITY_THRESHOLD = 0.60 # 向量相似度阈值
+TOP_K = 3 # 最终返回数量上限
+DENSE_WEIGHT = 0.7 # 向量分数权重
+KEYWORD_WEIGHT = 0.3 # 关键词分数权重
+BM25_K1 = 1.5 # BM25 参数
+BM25_B = 0.75 # BM25 参数
+KEYWORD_MIN_COVERAGE = 0.4 # 关键词覆盖率门槛
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+|[\u4e00-\u9fff]+", re.IGNORECASE)
 _KEYWORD_STOP_WORDS = {
