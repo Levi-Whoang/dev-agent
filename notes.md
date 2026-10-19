@@ -19,3 +19,15 @@ logger.error("工具执行失败")
 
 @lru_cache(maxsize=1) 是 Python 中的缓存装饰器，作用是：缓存函数的计算结果，避免相同参数重复执行函数。
 在 Agent 项目中，它经常用来缓存模型对象，例如 Embedding 模型，避免每次调用都重新加载模型。
+
+
+
+# BGE （BAAI General Embedding）
+将文本转换为向量
+
+
+# RRF
+## RRF_K = 60
+平滑参数\
+越大，前几名之间的分数差异越小；越小，排名靠前的文档获得的优势越明显。
+
