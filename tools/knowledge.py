@@ -10,14 +10,23 @@ from tools.text_splitter import split_text
 
 CHUNK_SIZE = 300
 CHUNK_OVERLAP = 50
-SIMILARITY_THRESHOLD = 0.55
+SIMILARITY_THRESHOLD = 0.60
 TOP_K = 3
 DENSE_WEIGHT = 0.7
 KEYWORD_WEIGHT = 0.3
 BM25_K1 = 1.5
 BM25_B = 0.75
+KEYWORD_MIN_COVERAGE = 0.4
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+|[\u4e00-\u9fff]+", re.IGNORECASE)
+_KEYWORD_STOP_WORDS = {
+    "a", "an", "and", "are", "can", "do", "does", "for", "how", "in",
+    "is", "of", "or", "the", "this", "to", "what", "when", "where", "which",
+    "who", "why", "公司", "企业", "岗位", "实习", "具体", "目前", "这个", "哪些",
+    "如何", "怎么", "怎样", "什么", "哪里", "在哪", "哪儿", "多少", "是否", "需要",
+    "应该", "可以", "吗", "呢", "的", "有", "是", "和", "及", "员工", "老板",
+    "姓氏", "范围", "今年", "每周", "几天",
+}
 
 KNOWLEDGE_DIR = (
     Path(__file__).resolve().parent.parent / "knowledge_base"
@@ -126,6 +135,29 @@ def _get_keyword_index():
     return document_terms, document_frequency, average_length
 
 
+def _keyword_query_terms(query: str) -> set[str]:
+    """移除通用词和疑问词，避免它们单独触发关键词召回。"""
+    return {
+        term
+        for term in _tokenize_for_keyword(query)
+        if term not in _KEYWORD_STOP_WORDS
+    }
+
+
+def _keyword_coverages(query: str) -> list[float]:
+    """计算每个片段覆盖了多少个有效查询词。"""
+    document_terms, _, _ = _get_keyword_index()
+    query_terms = _keyword_query_terms(query)
+
+    if not query_terms:
+        return [0.0] * len(document_terms)
+
+    return [
+        sum(term in terms for term in query_terms) / len(query_terms)
+        for terms in document_terms
+    ]
+
+
 def _bm25_scores(query: str) -> list[float]:
     """为每个知识片段计算 BM25 关键词相关度。"""
     document_terms, document_frequency, average_length = _get_keyword_index()
@@ -133,7 +165,7 @@ def _bm25_scores(query: str) -> list[float]:
     if not document_terms or average_length == 0:
         return []
 
-    query_terms = set(_tokenize_for_keyword(query))
+    query_terms = _keyword_query_terms(query)
     if not query_terms:
         return [0.0] * len(document_terms)
 
@@ -187,7 +219,16 @@ def knowledge_search(query: str) -> list[dict]:
     )[0]
 
     keyword_scores = _bm25_scores(query)
-    max_keyword_score = max(keyword_scores, default=0.0)
+    keyword_coverages = _keyword_coverages(query)
+    qualified_keyword_indices = {
+        index
+        for index, coverage in enumerate(keyword_coverages)
+        if coverage >= KEYWORD_MIN_COVERAGE and keyword_scores[index] > 0
+    }
+    max_keyword_score = max(
+        (keyword_scores[index] for index in qualified_keyword_indices),
+        default=0.0,
+    )
 
     ranked_results = []
     for index, dense_score_value in enumerate(scores):
@@ -195,11 +236,12 @@ def knowledge_search(query: str) -> list[dict]:
         keyword_score = keyword_scores[index] if keyword_scores else 0.0
 
         # 向量通道保留原有阈值；关键词通道可补回语义分偏低但词面明确的结果。
-        if dense_score < SIMILARITY_THRESHOLD and keyword_score <= 0:
+        has_keyword_evidence = index in qualified_keyword_indices
+        if dense_score < SIMILARITY_THRESHOLD and not has_keyword_evidence:
             continue
 
         dense_component = max(0.0, min(1.0, dense_score))
-        if keyword_score > 0 and max_keyword_score > 0:
+        if has_keyword_evidence and max_keyword_score > 0:
             keyword_component = keyword_score / max_keyword_score
             combined_score = (
                 DENSE_WEIGHT * dense_component

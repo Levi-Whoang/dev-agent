@@ -179,3 +179,34 @@ def test_bm25_ranks_exact_keyword_match_higher(monkeypatch):
 
     assert scores[0] > scores[1]
     assert scores[1] == 0
+
+
+def test_bm25_ignores_generic_company_terms_for_unanswerable_questions(monkeypatch):
+    items = (
+        {"content": "公司位于深圳市南山区。", "source": "company.txt"},
+        {"content": "公司招聘 Agent 应用开发实习生。", "source": "recruitment.txt"},
+    )
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda: items)
+    knowledge._get_keyword_index.cache_clear()
+
+    scores = knowledge._bm25_scores("公司具体月薪范围是多少？")
+
+    assert scores == [0.0, 0.0]
+
+
+def test_partial_keyword_overlap_cannot_bypass_dense_threshold(monkeypatch):
+    items = (
+        {"content": "岗位要求掌握 Python。", "source": "job.txt"},
+    )
+
+    class FakeEmbeddingModel:
+        def encode(self, texts, normalize_embeddings):
+            return np.array([[1.0, 0.0]])
+
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda: items)
+    monkeypatch.setattr(knowledge, "get_knowledge_vectors", lambda: np.array([[0.2, 0.98]]))
+    monkeypatch.setattr(knowledge, "get_embedding_model", lambda: FakeEmbeddingModel())
+    monkeypatch.setattr(knowledge, "_bm25_scores", lambda query: [4.0])
+    monkeypatch.setattr(knowledge, "SIMILARITY_THRESHOLD", 0.55)
+
+    assert knowledge.knowledge_search("Python FastAPI 月薪") == []
