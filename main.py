@@ -20,7 +20,3 @@ agent = Agent(
     tool_registry=TOOLS
 )
 
-
-# print(agent.run("我叫小明", session_id="user_a"))
-# print(agent.run("我叫什么名字？", session_id="user_a"))
-# print(agent.run("我叫什么名字？", session_id="user_b"))

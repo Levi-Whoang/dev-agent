@@ -2,8 +2,6 @@
 from pathlib import Path
 from functools import lru_cache
 
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from tools.text_splitter import split_text
 
 
@@ -16,7 +14,12 @@ KNOWLEDGE_DIR = (
     Path(__file__).resolve().parent.parent / "knowledge_base"
 )
 
-model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
+@lru_cache(maxsize=1)
+def get_embedding_model():
+    """首次执行向量编码时再加载模型，并在进程内复用。"""
+    from sentence_transformers import SentenceTransformer
+
+    return SentenceTransformer("BAAI/bge-small-zh-v1.5")
 
 
 @lru_cache(maxsize=1)
@@ -62,7 +65,7 @@ def get_knowledge_vectors():
 
     texts = [item["content"] for item in knowledge]
 
-    return model.encode(
+    return get_embedding_model().encode(
         texts,
         normalize_embeddings=True,
     )
@@ -76,10 +79,12 @@ def knowledge_search(query: str) -> list[dict]:
     if not knowledge or knowledge_vectors is None:
         return []
 
-    query_vector = model.encode(
+    query_vector = get_embedding_model().encode(
         [query],
         normalize_embeddings=True,
     )
+
+    from sklearn.metrics.pairwise import cosine_similarity
 
     scores = cosine_similarity(
         query_vector,

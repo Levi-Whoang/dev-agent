@@ -1,8 +1,8 @@
 
 import json
 import os
+from threading import Lock
 
-import pymysql
 from dotenv import load_dotenv
 
 
@@ -20,22 +20,35 @@ class SessionManager:
             "charset": "utf8mb4",
             "connect_timeout": 5,
         }
-
-        # 启动时检查数据库连接，并确保会话表存在
-        with self._connect() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS sessions (
-                        session_id VARCHAR(100) PRIMARY KEY,
-                        messages JSON NOT NULL,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                            ON UPDATE CURRENT_TIMESTAMP
-                    )
-                """)
-            conn.commit()
+        self._initialized = False
+        self._init_lock = Lock()
 
     def _connect(self):
-        return pymysql.connect(**self.db_config)
+        # 只在第一次实际访问会话数据时加载驱动并连接数据库。
+        import pymysql
+
+        conn = pymysql.connect(**self.db_config)
+
+        try:
+            if not self._initialized:
+                with self._init_lock:
+                    if not self._initialized:
+                        with conn.cursor() as cursor:
+                            cursor.execute("""
+                                CREATE TABLE IF NOT EXISTS sessions (
+                                    session_id VARCHAR(100) PRIMARY KEY,
+                                    messages JSON NOT NULL,
+                                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                        ON UPDATE CURRENT_TIMESTAMP
+                                )
+                            """)
+                        conn.commit()
+                        self._initialized = True
+        except Exception:
+            conn.close()
+            raise
+
+        return conn
 
     def get_messages(self, session_id):
         with self._connect() as conn:
