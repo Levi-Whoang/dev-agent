@@ -12,10 +12,12 @@ def clear_model_and_document_caches():
     knowledge.get_embedding_model.cache_clear()
     knowledge.load_knowledge.cache_clear()
     knowledge.get_knowledge_vectors.cache_clear()
+    knowledge._get_keyword_index.cache_clear()
     yield
     knowledge.get_embedding_model.cache_clear()
     knowledge.load_knowledge.cache_clear()
     knowledge.get_knowledge_vectors.cache_clear()
+    knowledge._get_keyword_index.cache_clear()
 
 
 def test_load_knowledge_reads_txt_files_and_preserves_sources(tmp_path, monkeypatch):
@@ -123,7 +125,57 @@ def test_search_context_formats_evidence_and_empty_result(monkeypatch):
 
     assert "来源：company.txt" in context
     assert "证据：公司在深圳。" in context
-    assert "相似度：0.91" in context
+    assert "综合分：0.91" in context
 
     monkeypatch.setattr(knowledge, "knowledge_search", lambda query: [])
     assert knowledge.knowledge_search_context("没有答案的问题") == "NO_RELEVANT_EVIDENCE"
+
+
+def test_keyword_search_recovers_low_dense_match_and_returns_component_scores(
+    monkeypatch,
+):
+    items = (
+        {"content": "岗位要求熟悉 Python、FastAPI、LLM API 和 RAG 基础。", "source": "job.txt"},
+        {"content": "公司位于深圳市南山区。", "source": "company.txt"},
+    )
+
+    class FakeEmbeddingModel:
+        def encode(self, texts, normalize_embeddings):
+            return np.array([[1.0, 0.0]])
+
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda: items)
+    monkeypatch.setattr(knowledge, "get_knowledge_vectors", lambda: np.array([[0.2, 0.98], [0.1, 0.995]]))
+    monkeypatch.setattr(knowledge, "get_embedding_model", lambda: FakeEmbeddingModel())
+    monkeypatch.setattr(knowledge, "_bm25_scores", lambda query: [4.0, 0.0])
+    monkeypatch.setattr(knowledge, "SIMILARITY_THRESHOLD", 0.55)
+
+    results = knowledge.knowledge_search("FastAPI RAG")
+
+    assert len(results) == 1
+    assert results[0]["source"] == "job.txt"
+    assert results[0]["dense_score"] < 0.55
+    assert results[0]["keyword_score"] == 4.0
+    assert results[0]["score"] == 0.44
+
+
+def test_keyword_tokenizer_supports_english_and_chinese_phrases():
+    tokens = knowledge._tokenize_for_keyword("FastAPI 知识检索")
+
+    assert "fastapi" in tokens
+    assert "知识" in tokens
+    assert "检索" in tokens
+    assert "知识检" in tokens
+
+
+def test_bm25_ranks_exact_keyword_match_higher(monkeypatch):
+    items = (
+        {"content": "岗位要求掌握 FastAPI 与 RAG。", "source": "job.txt"},
+        {"content": "公司办公地点在深圳。", "source": "company.txt"},
+    )
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda: items)
+    knowledge._get_keyword_index.cache_clear()
+
+    scores = knowledge._bm25_scores("FastAPI RAG")
+
+    assert scores[0] > scores[1]
+    assert scores[1] == 0

@@ -7,8 +7,8 @@
 ## 功能特性
 
 - **Agent 工具调用**：根据用户问题决定是否调用工具，并处理工具参数、执行结果和异常。
-- **RAG 知识库检索**：使用 Sentence Transformers 将文本与查询转换为向量，通过余弦相似度检索相关内容。
-- **证据辅助问答**：支持返回知识片段、来源文件和相似度信息，帮助回答基于知识库内容。
+- **RAG 混合检索**：使用 Sentence Transformers 做向量语义召回，并使用 BM25 做关键词召回；英文按词匹配，中文按重叠字片段匹配，再融合排序。
+- **可解释检索分数**：返回知识片段、来源文件、向量分、关键词分和综合分，便于检查召回原因。
 - **多轮对话**：维护会话消息历史，并将会话记录保存到 MySQL。
 - **RESTful API**：基于 FastAPI 提供聊天、会话创建、历史查询、清空和删除接口。
 - **统一异常响应**：处理 HTTP 异常、请求参数校验异常及未预期异常。
@@ -22,7 +22,7 @@
 | Web 框架 | FastAPI |
 | 大语言模型调用 | OpenAI 兼容 API |
 | Agent 核心 | Tool Calling、工具注册与参数校验 |
-| RAG | Sentence Transformers、向量相似度检索 |
+| RAG | Sentence Transformers、余弦相似度、BM25 关键词检索 |
 | 参数校验 | Pydantic |
 | 数据库 | MySQL、PyMySQL |
 | 测试 | pytest |
@@ -40,7 +40,7 @@ dev-agent/
 ├── tools/
 │   ├── registry.py          # 工具注册
 │   ├── schema.py            # 工具参数模型与 Schema 生成
-│   ├── knowledge.py         # 知识加载、向量检索与证据构建
+│   ├── knowledge.py         # 知识加载、向量/关键词混合检索与证据构建
 │   ├── text_splitter.py     # 文本分块
 │   ├── calculator.py        # 计算工具
 │   ├── weather.py           # 天气工具
@@ -189,7 +189,9 @@ LLM 分析问题并决定是否调用工具
 保存会话历史并返回响应
 ```
 
-当涉及知识库的问题时，Agent 可以调用知识检索工具获取相关文本，再结合检索结果生成回答。检索质量和最终回答质量需要通过测试数据进行验证。
+当涉及知识库的问题时，Agent 可以调用知识检索工具获取相关文本，再结合检索结果生成回答。检索同时使用向量语义分和 BM25 关键词分：默认权重分别为 0.7 和 0.3；若没有词面匹配，则维持原有向量分排序。结果中的 `score` 是综合分，`dense_score` 和 `keyword_score` 可用于观察两路召回。
+
+可在 `test/retrieval_dataset.py` 维护有答案和无答案样本，并运行 `python test/evaluate_retrieval.py` 比较分块、阈值和 Top-K 配置。当前评测集规模较小，结果用于开发对照，不代表通用检索准确率。
 
 ## 运行测试
 

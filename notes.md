@@ -4,7 +4,15 @@ cursor.execute()：执行 SQL。\
 cursor.fetchone()：获取一条查询结果。\
 cursor.fetchall()：获取所有查询结果。
 
-
+# Test
+**monkeypatch** \
+monkeypatch.setattr(\
+    agent_module,\
+    "SessionManager",\
+    FakeSessionManager\
+)\
+是 pytest 提供的测试工具。这里的意思是：\
+在这次测试期间，把 agent.agent 模块中的 SessionManager 临时替换成 FakeSessionManager。
 
 
 ### isinstance() 

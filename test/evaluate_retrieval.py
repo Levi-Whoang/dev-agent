@@ -25,9 +25,10 @@ def evaluate_config(
     knowledge.SIMILARITY_THRESHOLD = threshold
     knowledge.TOP_K = top_k
 
-    # 清除旧文本片段和旧向量缓存
+    # 清除旧文本片段、向量和关键词索引缓存
     knowledge.load_knowledge.cache_clear()
     knowledge.get_knowledge_vectors.cache_clear()
+    knowledge._get_keyword_index.cache_clear()
 
     positive_total = 0
     positive_hits = 0
