@@ -40,6 +40,7 @@ class FakeAgent:
     def __init__(self):
         self.session_manager = FakeSessionManager()
         self.calls = []
+        self.stream_calls = []
         self.error = None
 
     def run(self, message, session_id):
@@ -47,6 +48,11 @@ class FakeAgent:
         if self.error is not None:
             raise self.error
         return f"回答：{message}"
+
+    def run_stream(self, message, session_id):
+        self.stream_calls.append((message, session_id))
+        yield f"回答：{message[:1]}"
+        yield message[1:]
 
 
 @pytest.fixture
@@ -71,7 +77,9 @@ def api_module(monkeypatch):
 def test_chat_route_calls_agent_and_returns_standard_response(api_module):
     app, agent = api_module
 
-    response = app.chat(ChatRequest(message="你好", session_id="chat-1"))
+    response = app.chat(
+        ChatRequest(message="你好", session_id="chat-1", stream=False)
+    )
 
     assert response == {
         "code": 0,
@@ -79,6 +87,21 @@ def test_chat_route_calls_agent_and_returns_standard_response(api_module):
         "data": {"answer": "回答：你好", "session_id": "chat-1"},
     }
     assert agent.calls == [("你好", "chat-1")]
+
+
+def test_chat_route_streams_sse_deltas_and_completion_event(api_module):
+    app, agent = api_module
+    response = app.chat(ChatRequest(message="你好", session_id="stream-1"))
+    events = list(app.chat_event_stream("你好", "stream-1"))
+
+    assert response.media_type == "text/event-stream"
+    assert response.headers["cache-control"] == "no-cache"
+    body = "".join(events)
+
+    assert '"type": "delta", "content": "回答：你"' in body
+    assert '"type": "delta", "content": "好"' in body
+    assert '"type": "done", "session_id": "stream-1"' in body
+    assert agent.stream_calls == [("你好", "stream-1")]
 
 
 @pytest.mark.parametrize(

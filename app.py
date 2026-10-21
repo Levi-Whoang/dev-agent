@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException,Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -11,6 +11,7 @@ from api.api_response import success_response
 
 from main import agent
 from uuid import uuid4
+import json
 
 import time
 from logging_config import logger
@@ -49,18 +50,48 @@ async def log_requests(request: Request, call_next):
         raise
 
 #在某会话进行
-@app.post("/chat", response_model=APIResponse)
-def chat(request: ChatRequest):
-    answer = agent.run(
-        request.message,
-        session_id=request.session_id
-    )
+def chat_event_stream(message: str, session_id: str):
+    try:
+        for content in agent.run_stream(message, session_id=session_id):
+            yield "data: " + json.dumps(
+                {"type": "delta", "content": content},
+                ensure_ascii=False,
+            ) + "\n\n"
 
-    return success_response(
-        data={
-            "answer": answer,
-            "session_id": request.session_id
-        }
+        yield "data: " + json.dumps(
+            {"type": "done", "session_id": session_id},
+            ensure_ascii=False,
+        ) + "\n\n"
+    except Exception:
+        logger.exception("流式聊天生成失败 session_id=%s", session_id)
+        yield "data: " + json.dumps(
+            {"type": "error", "message": "生成回复时发生错误"},
+            ensure_ascii=False,
+        ) + "\n\n"
+
+
+@app.post("/chat")
+def chat(request: ChatRequest):
+    if not request.stream:
+        answer = agent.run(
+            request.message,
+            session_id=request.session_id
+        )
+
+        return success_response(
+            data={
+                "answer": answer,
+                "session_id": request.session_id
+            }
+        )
+
+    return StreamingResponse(
+        chat_event_stream(request.message, request.session_id),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 #清空会话

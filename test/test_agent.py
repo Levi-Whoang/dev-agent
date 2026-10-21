@@ -67,6 +67,25 @@ def llm_response(message):
     return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
 
+def stream_chunk(content=None, tool_calls=None):
+    delta = SimpleNamespace(content=content, tool_calls=tool_calls)
+    return SimpleNamespace(choices=[SimpleNamespace(delta=delta)])
+
+
+def stream_tool_call_delta(
+    index=0,
+    call_id=None,
+    name=None,
+    arguments=None,
+):
+    function = SimpleNamespace(name=name, arguments=arguments)
+    return SimpleNamespace(
+        index=index,
+        id=call_id,
+        function=function,
+    )
+
+
 def make_agent(monkeypatch, *messages, tool_registry=None):
     monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
     client = MagicMock()
@@ -202,3 +221,51 @@ def test_agent_stops_after_maximum_tool_iterations(monkeypatch):
     assert client.chat.completions.create.call_count == 10
     messages = agent.session_manager.get_messages("iteration_limit")
     assert sum(message.get("role") == "tool" for message in messages) == 10
+
+
+def test_agent_streams_final_answer_and_persists_complete_message(monkeypatch):
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    client = MagicMock()
+    client.chat.completions.create.return_value = iter([
+        stream_chunk(content="你好"),
+        stream_chunk(content="，世界！"),
+    ])
+    agent = Agent(client, tools=[], tool_registry={})
+
+    chunks = list(agent.run_stream("打招呼", session_id="stream-1"))
+
+    assert chunks == ["你好", "，世界！"]
+    assert client.chat.completions.create.call_args.kwargs["stream"] is True
+    assert agent.session_manager.get_messages("stream-1")[-1] == {
+        "role": "assistant",
+        "content": "你好，世界！",
+    }
+
+
+def test_agent_streams_tool_call_round_then_streams_final_answer(monkeypatch):
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    client = MagicMock()
+    client.chat.completions.create.side_effect = [
+        iter([
+            stream_chunk(tool_calls=[stream_tool_call_delta(
+                call_id="call_stream",
+                name="calculate",
+                arguments='{"a":',
+            )]),
+            stream_chunk(tool_calls=[stream_tool_call_delta(
+                arguments="10,\"b\":20}",
+            )]),
+        ]),
+        iter([stream_chunk(content="结果是 30")]),
+    ]
+    agent = Agent(client, tools=[], tool_registry={"calculate": calculate})
+
+    chunks = list(agent.run_stream("计算 10 + 20", session_id="stream-tool"))
+
+    assert chunks == ["结果是 30"]
+    assert client.chat.completions.create.call_count == 2
+    messages = agent.session_manager.get_messages("stream-tool")
+    assert messages[-1] == {"role": "assistant", "content": "结果是 30"}
+    tool_message = next(message for message in messages if message["role"] == "tool")
+    assert tool_message["tool_call_id"] == "call_stream"
+    assert json.loads(tool_message["content"]) == 30

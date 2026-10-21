@@ -133,11 +133,14 @@ uvicorn app:app --reload
 ```json
 {
   "message": "请介绍一下知识库中的相关岗位要求",
-  "session_id": "demo-session"
+  "session_id": "demo-session",
+  "stream": true
 }
 ```
 
-接口会调用 Agent 处理消息，并返回统一响应结构。实际回答取决于模型配置和知识库内容。
+`stream` 默认为 `true`。流式模式返回 `Content-Type: text/event-stream`，采用 SSE 格式：`delta` 事件逐段包含 `content`，结束时发送带 `session_id` 的 `done` 事件；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。
+
+需要兼容原有 JSON 响应时传入 `"stream": false`，返回统一响应结构 `data.answer` 和 `data.session_id`。实际回答取决于模型配置和知识库内容。
 
 ### 2. 创建会话
 
