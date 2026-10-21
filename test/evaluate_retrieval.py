@@ -11,6 +11,55 @@ from retrieval_dataset import EVALUATION_CASES
 import tools.knowledge as knowledge
 
 
+# 仅使用 BGE 向量检索，供离线评测使用
+def dense_search_for_evaluation(
+    query: str,
+    top_k: int,
+) -> list[dict]:
+    """仅使用 BGE 向量检索，供离线评测使用。"""
+    knowledge_items = knowledge.load_knowledge()
+    knowledge_vectors = knowledge.get_knowledge_vectors()
+
+    if not knowledge_items or knowledge_vectors is None:
+        return []
+
+    query_vector = knowledge.model.encode(
+        [query],
+        normalize_embeddings=True,
+    )
+
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    scores = cosine_similarity(
+        query_vector,
+        knowledge_vectors,
+    )[0]
+
+    ranked_indices = scores.argsort()[::-1]
+
+    results = []
+
+    for index in ranked_indices:
+        score = float(scores[index])
+
+        # 与现有混合检索使用相同的向量阈值
+        if score < knowledge.SIMILARITY_THRESHOLD:
+            break
+
+        item = knowledge_items[index]
+
+        results.append({
+            "content": item["content"],
+            "source": item["source"],
+            "score": round(score, 4),
+        })
+
+        if len(results) >= top_k:
+            break
+
+    return results
+
+
 def evaluate_config(
     chunk_size: int,
     overlap: int,

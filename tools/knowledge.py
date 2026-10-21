@@ -29,11 +29,10 @@ KNOWLEDGE_DIR = (
 
 model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
 
+
+
 # RRF融合函数
-def reciprocal_rank_fusion(
-    ranked_lists: list[list[int]],
-    k: int = RRF_K,
-) -> dict[int, float]:
+def reciprocal_rank_fusion(ranked_lists: list[list[int]],k: int = RRF_K,) -> dict[int, float]:
     """根据多个检索结果的排名计算 RRF 分数。"""
     fused_scores = {}
 
@@ -58,7 +57,6 @@ def tokenize_text(text: str) -> list[str]:
         text[i:i + 2]
         for i in range(len(text) - 1)
     ]
-
 
 # 读取txt文本，并切割成知识片（缓存后，每次只要运行一次该函数）
 @lru_cache(maxsize=1)
@@ -110,24 +108,6 @@ def get_knowledge_vectors():
         normalize_embeddings=True,
     )
 
-# 检索知识库并整理为供 LLM 使用的证据
-def knowledge_search_context(query: str) -> str:
-    """检索知识库并整理为供 LLM 使用的证据。"""
-    results = knowledge_search(query)
-
-    if not results:
-        return "NO_RELEVANT_EVIDENCE"
-
-    evidence = []
-
-    for item in results:
-        evidence.append(
-            f"来源：{item['source']}\n"
-            f"证据：{item['content']}\n"
-            f"相似度：{item['score']}"
-        )
-
-    return "\n\n".join(evidence)
 
 # 建立并缓存 BM25 索引
 @lru_cache(maxsize=1)
@@ -150,10 +130,7 @@ def get_bm25_index():
     )
 
 # 使用 BM25 检索相关知识片段
-def bm25_search(
-    query: str,
-    top_k: int = BM25_TOP_K,
-) -> list[dict]:
+def bm25_search(query: str,top_k: int = BM25_TOP_K,) -> list[dict]:
     """使用 BM25 检索相关知识片段。"""
     knowledge = load_knowledge()
     bm25 = get_bm25_index()
@@ -167,7 +144,7 @@ def bm25_search(
         return []
 
     scores = bm25.get_scores(query_tokens)
-    ranked_indices = scores.argsort()[::-1]
+    ranked_indices = scores.argsort()[::-1]# 排序
 
     results = []
     seen_contents = set()
@@ -301,3 +278,22 @@ def knowledge_search(query: str) -> list[dict]:
             break
 
     return results
+
+# 检索知识库并整理为供 LLM 使用的证据
+def knowledge_search_context(query: str) -> str:
+    """检索知识库并整理为供 LLM 使用的证据。"""
+    results = knowledge_search(query)
+
+    if not results:
+        return "NO_RELEVANT_EVIDENCE"
+
+    evidence = []
+
+    for item in results:
+        evidence.append(
+            f"来源：{item['source']}\n"
+            f"证据：{item['content']}\n"
+            f"相似度：{item['score']}"
+        )
+
+    return "\n\n".join(evidence)
