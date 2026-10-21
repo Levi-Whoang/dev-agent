@@ -19,6 +19,12 @@ from logging_config import logger
 
 app = FastAPI(title="Dev Agent API")
 
+
+@app.get("/health")
+def health():
+    """进程存活检查，不连接外部模型或数据库。"""
+    return {"status": "ok"}
+
 #日志（中间件）
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

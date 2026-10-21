@@ -1,5 +1,6 @@
 
 import math
+import os
 import re
 from collections import Counter
 from pathlib import Path
@@ -28,8 +29,10 @@ _KEYWORD_STOP_WORDS = {
     "姓氏", "范围", "今年", "每周", "几天",
 }
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_knowledge_dir = Path(os.getenv("KNOWLEDGE_DIR", PROJECT_ROOT / "knowledge_base"))
 KNOWLEDGE_DIR = (
-    Path(__file__).resolve().parent.parent / "knowledge_base"
+    _knowledge_dir if _knowledge_dir.is_absolute() else PROJECT_ROOT / _knowledge_dir
 )
 
 @lru_cache(maxsize=1)

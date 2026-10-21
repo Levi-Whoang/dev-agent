@@ -73,7 +73,7 @@ cd dev-agent
 Windows PowerShell：
 
 ```powershell
-python -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
@@ -85,29 +85,32 @@ python -m pip install -r requirements.txt
 
 ### 4. 配置环境变量
 
-在项目根目录创建 `.env` 文件，根据 `main.py` 中实际读取的模型配置项，以及 `agent/session.py` 中的数据库配置项填写参数。
+复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API 和 MySQL 配置。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
 
-数据库配置项：
+PowerShell：
 
-```dotenv
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=你的数据库密码
-MYSQL_DATABASE=agent_db
+```powershell
+Copy-Item .env.example .env
+notepad .env
 ```
 
-请同时配置 `main.py` 实际使用的大模型 API Key、API Base URL 和模型名称等变量。变量名以项目代码为准，不要直接照抄其他模型平台的配置。
+`.env.example` 中的模型地址和模型名是占位示例，须替换成所选服务商支持流式输出与 Tool Calling 的 OpenAI 兼容配置。不要提交 `.env` 或真实知识库资料。
 
-确保 MySQL 服务已启动，并且数据库账号有创建表和读写数据的权限。应用导入和启动时不会连接 MySQL；首次访问会话数据（例如调用 `/chat` 或会话管理接口）时，才会连接数据库并按需创建 `sessions` 表。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次访问会话数据时会自动创建 `sessions` 表。
 
-### 5. 准备知识库
+### 5. 演示语料与模型
 
-知识检索模块会从 `knowledge_base/` 目录读取 `.txt` 文件。请创建该目录并放入自己的知识文档。
+克隆仓库即可使用 `demo_data/knowledge_base/` 中的虚构演示资料。检索模块读取 `KNOWLEDGE_DIR` 下的 `.txt` 文件。Sentence Transformers 模型首次检索时需要从 Hugging Face 下载；后续运行使用本机缓存。
 
-注意：知识库目录可能不包含在 Git 提交中，需要自行准备测试数据；请勿将公司内部资料、个人隐私或其他敏感信息提交到公开仓库。
+演示语料中的公司、职位和地址均为虚构数据。自己的知识库可以通过 `.env` 中的 `KNOWLEDGE_DIR` 指向本地目录；请勿将公司内部资料、个人隐私或其他敏感信息提交到公开仓库。
 
-Sentence Transformers 模型会在首次实际执行知识检索时加载；首次加载时可能需要下载模型文件，请确保模型能够正常获取。
+### 6. 运行离线测试
+
+```powershell
+python -m pytest test/ -v
+```
+
+HTTP/ASGI 测试使用内存 Agent 和会话存储，不读取 API Key、不连接 MySQL，也不调用真实模型。
 
 ## 启动服务
 
@@ -121,6 +124,17 @@ uvicorn app:app --reload
 
 - API 文档：`http://127.0.0.1:8000/docs`
 - OpenAPI Schema：`http://127.0.0.1:8000/openapi.json`
+- 存活检查：`http://127.0.0.1:8000/health`
+
+### 实际服务链路检查
+
+配置 `.env`、启动 MySQL 和 API 服务后，在另一个终端运行：
+
+```powershell
+python scripts/smoke_demo.py
+```
+
+该检查会通过真实 HTTP 流程调用 LLM 和检索工具、确认 MySQL 中写入了工具结果及完整回答，最后删除专用临时会话。它会产生一次模型 API 调用，并在 MySQL 中短暂创建一条演示会话；检查脚本不会打印密钥或完整回答。
 
 ## API 示例
 
@@ -208,10 +222,10 @@ python -m pytest test/ -v
 
 ## 项目改进方向
 
-- 增加更完整的 Agent 单元测试与 API 集成测试。
+- 扩展 Agent 决策边界与真实服务链路的集成覆盖。
 - 统一知识库检索的无证据返回协议。
 - 增加检索评估与问答评估数据集。
-- 完善部署说明、错误追踪与运行日志。
+- 完善部署、错误追踪与生产环境运行日志。
 - 优化知识库更新、检索效果和生产环境配置。
 
 ## 项目目标
