@@ -36,7 +36,19 @@ dev-agent/
 │   └── session.py           # MySQL 会话持久化
 ├── api/
 │   ├── api_schemas.py       # 请求与响应模型
-│   └── api_response.py      # 统一响应格式
+│   ├── api_response.py      # 统一响应格式
+│   ├── chat_helpers.py      # 聊天接口辅助逻辑
+│   └── session_helpers.py   # 会话接口辅助逻辑
+├── app/
+│   ├── main.py              # FastAPI 应用入口与路由注册
+│   ├── users.py             # 注册、登录与认证相关路由
+│   ├── sessions.py          # 聊天和会话管理路由
+│   └── errors.py            # 全局异常处理
+├── auth/
+│   ├── jwt_auth.py          # JWT 认证与令牌验证
+│   ├── passwords.py         # 密码哈希与校验
+│   ├── repository.py        # 用户和令牌数据库操作
+│   └── schemas.py           # 认证请求模型
 ├── tools/
 │   ├── registry.py          # 工具注册
 │   ├── schema.py            # 工具参数模型与 Schema 生成
@@ -45,10 +57,15 @@ dev-agent/
 │   ├── calculator.py        # 计算工具
 │   ├── weather.py           # 天气工具
 │   └── order.py             # 订单工具
-├── test/                    # 测试代码
-├── app.py                   # FastAPI 应用与路由
+├── frontend/                # React + TypeScript 前端
+├── scripts/                 # 演示链路检查等脚本
+├── logs/
+│   └── logging_config.py     # 日志配置
+├── test/                    # API、Agent、会话、检索和切分测试
+├── demo_data/knowledge_base/ # 随仓库提供的虚构演示语料
+├── app.py                   # 兼容入口；推荐使用 app.main:app
 ├── main.py                  # Agent 初始化入口
-├── logging_config.py        # 日志配置
+├── .mcp.json                # 本地 MCP 客户端配置示例
 ├── requirements.txt         # Python 依赖
 └── README.md
 ```
@@ -109,6 +126,8 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 克隆仓库即可使用 `demo_data/knowledge_base/` 中的虚构演示资料。检索模块读取 `KNOWLEDGE_DIR` 下的 `.txt` 文件。Sentence Transformers 模型首次检索时需要从 Hugging Face 下载；后续运行使用本机缓存。
 
 演示语料中的公司、职位和地址均为虚构数据。自己的知识库可以通过 `.env` 中的 `KNOWLEDGE_DIR` 指向本地目录；请勿将公司内部资料、个人隐私或其他敏感信息提交到公开仓库。
+
+`.mcp.json` 是本地开发工具的 MCP 客户端配置示例，当前项目的 Agent 尚未接入 MCP Server；没有配置或启动对应的本地 MCP 服务时，该文件不会影响 API、聊天或 RAG 功能。
 
 ### 6. 运行离线测试
 
@@ -258,11 +277,10 @@ python -m pytest test/ -v
 
 ## 项目改进方向
 
-- 扩展 Agent 决策边界与真实服务链路的集成覆盖。
-- 统一知识库检索的无证据返回协议。
-- 增加检索评估与问答评估数据集。
-- 完善部署、错误追踪与生产环境运行日志。
-- 优化知识库更新、检索效果和生产环境配置。
+- 将本地 MySQL 和模型依赖整理为可部署的服务配置，并完善部署文档。
+- 持续扩大 RAG 评估集，补充问答正确性、引用准确性和无答案拒答质量评估。
+- 为知识库变更、索引缓存和检索性能增加可重复的评估与观测。
+- 根据目标运行环境补充数据库迁移、备份和生产级运维方案。
 
 ## 项目目标
 
