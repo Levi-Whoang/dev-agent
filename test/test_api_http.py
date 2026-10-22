@@ -1,7 +1,7 @@
 import importlib
-import hashlib
 import json
 import sys
+from datetime import datetime, timezone
 from types import ModuleType
 from unittest.mock import MagicMock
 
@@ -9,42 +9,99 @@ import anyio
 import httpx
 import pytest
 
+from api.session_helpers import stored_session_id as make_stored_session_id
+
 ALICE_HEADERS = {}
 BOB_HEADERS = {}
-
-
-def stored_session_id(user_id, session_id):
-    owner_key = hashlib.sha256(user_id.encode("utf-8")).hexdigest()[:24]
-    return f"{owner_key}:{session_id}"
 
 
 class MemorySessionManager:
     def __init__(self):
         self.sessions = {}
 
-    def create(self, session_id):
+    def create(self, session_id, owner_user_id=None, title="新对话"):
         if session_id in self.sessions:
             raise ValueError("duplicate")
-        self.sessions[session_id] = []
+        self.sessions[session_id] = {
+            "messages": [],
+            "owner_user_id": owner_user_id,
+            "title": title,
+        }
 
     def exists(self, session_id):
         return session_id in self.sessions
 
     def get_messages(self, session_id):
-        return list(self.sessions.get(session_id, []))
+        session = self.sessions.get(session_id)
+        return list(session["messages"] if session else [])
 
     def clear(self, session_id):
-        self.sessions[session_id] = []
+        self.sessions[session_id]["messages"] = []
 
     def delete(self, session_id):
         self.sessions.pop(session_id, None)
 
-    def list_sessions(self, prefix):
+    def rename(self, session_id, owner_user_id, title):
+        session = self.sessions.get(session_id)
+        if not session or session["owner_user_id"] != owner_user_id:
+            return False
+        session["title"] = title
+        return True
+
+    def list_sessions(self, owner_user_id):
         return [
-            {"session_id": key}
-            for key in self.sessions
-            if key.startswith(prefix)
+            {"session_id": key, "title": session["title"]}
+            for key, session in self.sessions.items()
+            if session["owner_user_id"] == owner_user_id
         ]
+
+
+class MemoryAuthRepository:
+    def __init__(self):
+        self.users = {}
+        self.tokens = {}
+        self.next_user_id = 1
+
+    def create_user(self, username, password_hash):
+        from auth.repository import DuplicateUsernameError
+
+        if username in self.users:
+            raise DuplicateUsernameError
+        user_id = self.next_user_id
+        self.next_user_id += 1
+        self.users[username] = {
+            "id": user_id,
+            "username": username,
+            "password_hash": password_hash,
+        }
+        return user_id
+
+    def find_user(self, username):
+        return self.users.get(username)
+
+    def create_token(self, jti, user_id, expires_at):
+        self.tokens[jti] = {
+            "user_id": user_id,
+            "expires_at": expires_at,
+            "revoked": False,
+        }
+
+    def is_token_active(self, jti, username):
+        token = self.tokens.get(jti)
+        user = self.users.get(username)
+        return bool(
+            token
+            and user
+            and token["user_id"] == user["id"]
+            and not token["revoked"]
+            and token["expires_at"] > datetime.now(timezone.utc)
+        )
+
+    def revoke_token(self, jti, username):
+        token = self.tokens.get(jti)
+        user = self.users.get(username)
+        if token and user and token["user_id"] == user["id"]:
+            token["revoked"] = True
 
 
 class ASGIFakeAgent:
@@ -65,40 +122,53 @@ class ASGIFakeAgent:
 @pytest.fixture
 def asgi_app(monkeypatch):
     from auth.passwords import hash_password
+    import auth.jwt_auth as jwt_auth
 
-    monkeypatch.setenv(
-        "AUTH_USERS_JSON",
-        json.dumps({
-            "alice": hash_password("alice-password", iterations=100_000),
-            "bob": hash_password("bob-password", iterations=100_000),
-        }),
+    auth_repository = MemoryAuthRepository()
+    auth_repository.create_user(
+        "alice", hash_password("alice-password", iterations=100_000)
     )
+    auth_repository.create_user(
+        "bob", hash_password("bob-password", iterations=100_000)
+    )
+    monkeypatch.setattr(jwt_auth, "auth_repository", auth_repository)
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-more-than-32-characters")
-    monkeypatch.setenv("JWT_EXPIRE_MINUTES", "30")
     fake_agent = ASGIFakeAgent()
     fake_main = ModuleType("main")
     fake_main.agent = fake_agent
-    fake_logging = ModuleType("logging_config")
+    fake_logs = ModuleType("logs")
+    fake_logs.__path__ = []
+    fake_logging = ModuleType("logs.logging_config")
     fake_logging.logger = MagicMock()
+    monkeypatch.setitem(sys.modules, "logs", fake_logs)
+    monkeypatch.setitem(sys.modules, "logs.logging_config", fake_logging)
     monkeypatch.setitem(sys.modules, "main", fake_main)
-    monkeypatch.setitem(sys.modules, "logging_config", fake_logging)
-    sys.modules.pop("app", None)
+    for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+        sys.modules.pop(module_name, None)
     app_module = importlib.import_module("app")
     global ALICE_HEADERS, BOB_HEADERS
-    alice_token, _ = app_module.create_access_token("alice")
-    bob_token, _ = app_module.create_access_token("bob")
+    alice_token, _ = jwt_auth.create_access_token(
+        "alice", auth_repository.users["alice"]["id"]
+    )
+    bob_token, _ = jwt_auth.create_access_token(
+        "bob", auth_repository.users["bob"]["id"]
+    )
     ALICE_HEADERS = {"Authorization": f"Bearer {alice_token}"}
     BOB_HEADERS = {"Authorization": f"Bearer {bob_token}"}
 
     try:
         yield app_module.app, fake_agent
     finally:
-        sys.modules.pop("app", None)
+        for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+            sys.modules.pop(module_name, None)
 
 
 def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
     app, fake_agent = asgi_app
-    fake_agent.session_manager.sessions[stored_session_id("alice", "asgi-1")] = [
+    fake_agent.session_manager.sessions[make_stored_session_id("alice", "asgi-1")] = {
+        "owner_user_id": 1,
+        "title": "查询办公地点",
+        "messages": [
         {"role": "user", "content": "查询办公地点"},
         {
             "role": "tool",
@@ -114,7 +184,8 @@ def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
                 ]
             }, ensure_ascii=False),
         },
-    ]
+        ],
+    }
 
     async def make_requests():
         transport = httpx.ASGITransport(app=app)
@@ -159,7 +230,7 @@ def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
         },
     ]
     assert fake_agent.calls == [
-        ("stream", "测试流式", stored_session_id("alice", "asgi-1"))
+        ("stream", "测试流式", make_stored_session_id("alice", "asgi-1"))
     ]
 
 
@@ -173,11 +244,15 @@ def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
         "keyword_score": 0.0,
     }
     fake_agent.session_manager.sessions[
-        stored_session_id("alice", "asgi-citation")
-    ] = [
-        {"role": "user", "content": "公司在哪里？"},
-        {"role": "tool", "content": json.dumps({"citations": [citation]})},
-    ]
+        make_stored_session_id("alice", "asgi-citation")
+    ] = {
+        "owner_user_id": 1,
+        "title": "公司在哪里？",
+        "messages": [
+            {"role": "user", "content": "公司在哪里？"},
+            {"role": "tool", "content": json.dumps({"citations": [citation]})},
+        ],
+    }
 
     async def make_request():
         transport = httpx.ASGITransport(app=app)
@@ -228,7 +303,7 @@ def test_asgi_preserves_json_chat_mode_and_validates_requests(asgi_app):
     assert invalid.status_code == 422
     assert invalid.json()["code"] == 422
     assert fake_agent.calls == [
-        ("json", "兼容请求", stored_session_id("alice", "asgi-2"))
+        ("json", "兼容请求", make_stored_session_id("alice", "asgi-2"))
     ]
 
 
@@ -289,6 +364,18 @@ def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
             transport=transport,
             base_url="http://testserver",
         ) as client:
+            registered = await client.post(
+                "/auth/register",
+                json={"username": "new-user", "password": "new-password"},
+            )
+            duplicate = await client.post(
+                "/auth/register",
+                json={"username": "new-user", "password": "new-password"},
+            )
+            registered_login = await client.post(
+                "/auth/token",
+                json={"username": "new-user", "password": "new-password"},
+            )
             success = await client.post(
                 "/auth/token",
                 json={"username": "alice", "password": "alice-password"},
@@ -297,14 +384,52 @@ def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
                 "/auth/token",
                 json={"username": "alice", "password": "wrong-password"},
             )
-            return success, failure
+            logged_out = await client.post(
+                "/auth/logout",
+                headers={
+                    "Authorization": (
+                        "Bearer " + success.json()["data"]["access_token"]
+                    )
+                },
+            )
+            revoked_request = await client.get(
+                "/sessions",
+                headers={
+                    "Authorization": (
+                        "Bearer " + success.json()["data"]["access_token"]
+                    )
+                },
+            )
+            return (
+                registered,
+                duplicate,
+                registered_login,
+                success,
+                failure,
+                logged_out,
+                revoked_request,
+            )
 
-    success, failure = anyio.run(make_requests)
+    (
+        registered,
+        duplicate,
+        registered_login,
+        success,
+        failure,
+        logged_out,
+        revoked_request,
+    ) = anyio.run(make_requests)
+    assert registered.status_code == 201
+    assert registered.json()["data"]["username"] == "new-user"
+    assert duplicate.status_code == 409
+    assert registered_login.status_code == 200
     assert success.status_code == 200
     assert success.json()["data"]["token_type"] == "bearer"
     assert success.json()["data"]["expires_in"] == 1800
     assert success.json()["data"]["access_token"]
     assert failure.status_code == 401
+    assert logged_out.status_code == 200
+    assert revoked_request.status_code == 401
 
 
 def test_asgi_session_ownership_and_list_are_scoped_per_user(asgi_app):

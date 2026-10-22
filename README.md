@@ -85,7 +85,7 @@ python -m pip install -r requirements.txt
 
 ### 4. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和 JWT 认证配置。认证账号由 `AUTH_USERS_JSON` 配置，键是用户名，值是 PBKDF2 密码哈希；JWT 使用 `JWT_SECRET_KEY` 签名，默认有效期为 30 分钟。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
+复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和随机 `JWT_SECRET_KEY`。账号通过前端注册或 `POST /auth/register` 创建，用户名和 PBKDF2 密码哈希保存在 MySQL 的 `auth_users` 表；JWT 会话登记保存在 `auth_tokens` 表，有效期固定为 30 分钟。首次注册/登录时应用会自动创建认证表。首次访问会话功能时，`sessions.owner_user_id` 会关联到 `auth_users.id`，并按旧会话的用户哈希前缀回填归属；未匹配到用户的旧会话保留为未归属记录。前端侧栏可查看并打开当前账号的历史会话。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
 
 PowerShell：
 
@@ -94,16 +94,15 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-先生成登录密码哈希和 JWT 签名密钥，再将它们填入 `.env`：
+生成随机 JWT 签名密钥并填入 `.env`：
 
 ```powershell
-python -m auth.passwords
 python -c "import secrets; print(secrets.token_urlsafe(48))"
 ```
 
-将第一条命令输出的哈希配置成 `AUTH_USERS_JSON` 中对应用户名的值；第二条命令的输出填入 `JWT_SECRET_KEY`。`DEMO_AUTH_USERNAME` 和 `DEMO_AUTH_PASSWORD` 只供本地 smoke 脚本登录，并须和已配置账号一致。`.env.example` 中的认证值均为占位示例。不要把 `.env`、真实密码或签名密钥提交到仓库。
+将命令输出填入 `JWT_SECRET_KEY`。用户名和密码由用户注册接口提交，后端只把密码哈希写入 MySQL。`.env.example` 中密钥是占位值，必须替换。不要把 `.env` 或真实签名密钥提交到仓库。
 
-确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次访问会话数据时会自动创建 `sessions` 表。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时会自动创建 `sessions`、`auth_users` 和 `auth_tokens` 表。
 
 ### 5. 演示语料与模型
 
@@ -124,7 +123,7 @@ HTTP/ASGI 测试使用内存 Agent 和会话存储，不读取 API Key、不连�
 在项目根目录运行：
 
 ```bash
-uvicorn app:app --reload
+uvicorn app.main:app --reload
 ```
 
 服务启动后访问：
@@ -141,7 +140,19 @@ uvicorn app:app --reload
 python scripts/smoke_demo.py
 ```
 
-该检查会通过真实 HTTP 流程调用 LLM 和检索工具、确认 MySQL 中写入了工具结果及完整回答，最后删除专用临时会话。它会产生一次模型 API 调用，并在 MySQL 中短暂创建一条演示会话；检查脚本不会打印密钥或完整回答。
+该检查会先提示输入已注册账号，然后通过真实 HTTP 流程调用 LLM 和检索工具、确认 MySQL 中写入了工具结果及完整回答，最后删除专用临时会话。它会产生一次模型 API 调用，并在 MySQL 中短暂创建一条演示会话；检查脚本不会打印密码、令牌或完整回答。
+
+## React + TypeScript 前端
+
+前端代码位于 `frontend/`，支持注册、JWT 登录、SSE 流式聊天、引用来源展示和新建会话。注册数据写入后端 MySQL。启动后端 API，再在项目根目录运行：
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+默认通过 Vite 代理将 `/api` 请求转发至 `http://127.0.0.1:8000`。生产构建运行 `npm run build`；部署时需让同源 `/api` 转发到 FastAPI，或配置 `VITE_API_BASE_URL` 与后端 CORS。更多前端说明见 [frontend/README.md](frontend/README.md)。
 
 ## API 示例
 
@@ -163,15 +174,15 @@ python scripts/smoke_demo.py
 
 需要兼容原有 JSON 响应时传入 `"stream": false`，返回统一响应结构 `data.answer`、`data.session_id` 和 `data.citations`。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
 
-先调用 `POST /auth/token`，请求体为：
+注册新用户时调用 `POST /auth/register`：
 
 ```json
-{"username": "demo-user", "password": "你的登录密码"}
+{"username": "demo-user", "password": "至少 8 位的密码"}
 ```
 
-成功响应中的 `data.access_token` 是 JWT。除 `GET /health` 和登录接口外，所有 API 路由都需要 `Authorization: Bearer <access_token>`。JWT 的用户身份对应配置中的用户名；密码只以 PBKDF2 哈希形式存储在环境变量配置中。会话在存储层按用户隔离。省略 `session_id` 会为该次请求生成新会话，后续请求应带回响应中的 ID 以继续对话。会话列表只返回当前认证用户的会话。
+注册成功后调用 `POST /auth/token` 提交同一用户名和密码登录，响应中的 `data.access_token` 是 JWT。令牌有效期为 30 分钟，并在 MySQL 的 `auth_tokens` 表登记令牌 ID 和过期时间；退出登录 `POST /auth/logout` 会撤销当前令牌。除 `GET /health`、注册和登录接口外，所有 API 路由都需要 `Authorization: Bearer <access_token>`。密码以 PBKDF2 哈希保存在 `auth_users` 表。会话仍按认证用户名隔离。省略 `session_id` 会为该次请求生成新会话，后续请求应带回响应中的 ID 以继续对话。会话列表只返回当前认证用户的会话。
 
-升级前已存在的未分配用户会话不会自动显示或归属给任何用户；需要先确认所有者，再单独迁移，避免把旧对话暴露给错误用户。
+升级时会按旧会话 ID 中的用户名哈希前缀回填用户关联；无法匹配现存用户的记录不会显示在任何账号的历史列表中，需要确认归属后再迁移。
 
 ### 2. 创建会话
 
@@ -193,11 +204,19 @@ python scripts/smoke_demo.py
 
 `GET /sessions/demo-session/messages`
 
-### 5. 清空会话消息
+### 5. 修改会话名称
+
+`PATCH /sessions/demo-session/title`，请求体示例：
+
+```json
+{"title": "招聘政策问题"}
+```
+
+### 6. 清空会话消息
 
 `POST /sessions/demo-session/clear`
 
-### 6. 删除会话
+### 7. 删除会话
 
 `DELETE /sessions/demo-session`
 

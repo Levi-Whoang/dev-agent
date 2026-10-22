@@ -137,22 +137,26 @@ def test_get_messages_accepts_driver_json_formats(monkeypatch, stored_messages):
     assert connection.closed is True
 
 
-def test_list_sessions_queries_only_the_requested_owner_prefix(monkeypatch):
+def test_list_sessions_queries_only_the_requested_database_user(monkeypatch):
     connection = FakeConnection(
-        fetchall=[("owner-hash:session-1", None), ("owner-hash:session-2", None)]
+        fetchall=[
+            ("owner-hash:session-1", "标题一", None),
+            ("owner-hash:session-2", "标题二", None),
+        ]
     )
     install_fake_pymysql(monkeypatch, lambda **config: connection)
     manager = SessionManager()
 
-    sessions = manager.list_sessions(prefix="owner-hash:")
+    sessions = manager.list_sessions(owner_user_id=42)
 
     query, params = connection.queries[-1]
-    assert "WHERE session_id LIKE %s" in query
-    assert params == ("owner-hash:%",)
+    assert "WHERE owner_user_id = %s" in query
+    assert params == (42,)
     assert [session["session_id"] for session in sessions] == [
         "owner-hash:session-1",
         "owner-hash:session-2",
     ]
+    assert [session["title"] for session in sessions] == ["标题一", "标题二"]
 
 
 def test_failed_lazy_initialization_closes_connection_and_can_retry(monkeypatch):

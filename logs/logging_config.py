@@ -1,7 +1,8 @@
 import logging
-import os
+from pathlib import Path
 
-os.makedirs("logs", exist_ok=True)
+LOG_DIR = Path(__file__).resolve().parent
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -9,7 +10,7 @@ logging.basicConfig(
     handlers=[
         logging.StreamHandler(),
         logging.FileHandler(
-            "logs/app.log",
+            LOG_DIR / "app.log",
             encoding="utf-8",
         ),
     ],

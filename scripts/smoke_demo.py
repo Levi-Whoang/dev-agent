@@ -6,22 +6,20 @@ session. It never prints environment values or the full generated answer.
 """
 
 import argparse
+from getpass import getpass
 import json
-import os
 import re
 import sys
 from uuid import uuid4
 
 import httpx
-from dotenv import load_dotenv
 
 
 def get_auth_headers(client: httpx.Client) -> dict[str, str]:
-    load_dotenv()
-    username = os.getenv("DEMO_AUTH_USERNAME", "")
-    password = os.getenv("DEMO_AUTH_PASSWORD", "")
+    username = input("演示账号用户名：").strip()
+    password = getpass("演示账号密码：")
     if not username or not password:
-        raise RuntimeError("DEMO_AUTH_USERNAME and DEMO_AUTH_PASSWORD are required")
+        raise RuntimeError("用户名和密码不能为空")
     response = client.post(
         "/auth/token",
         json={"username": username, "password": password},

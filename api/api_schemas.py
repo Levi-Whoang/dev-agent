@@ -28,3 +28,7 @@ class CreateSessionRequest(BaseModel):
         min_length=1,
         max_length=75
     )
+
+
+class SessionTitleRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)

@@ -5,6 +5,13 @@ __pycache__/
 .venv-demo/
 venv/
 .env
-sessions.db
-logs/*.log
+**/*.log
+*.db
+*.sqlite
+*.sqlite3
+sessions.json
 .mcp.json
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local

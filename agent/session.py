@@ -1,5 +1,6 @@
 
 import json
+import hashlib
 import os
 from threading import Lock
 
@@ -38,10 +39,59 @@ class SessionManager:
                                 CREATE TABLE IF NOT EXISTS sessions (
                                     session_id VARCHAR(100) PRIMARY KEY,
                                     messages JSON NOT NULL,
+                                    owner_user_id BIGINT UNSIGNED NULL,
+                                    title VARCHAR(120) NOT NULL DEFAULT '新对话',
                                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                                        ON UPDATE CURRENT_TIMESTAMP
+                                        ON UPDATE CURRENT_TIMESTAMP,
+                                    KEY idx_sessions_owner_updated (owner_user_id, updated_at),
+                                    CONSTRAINT fk_sessions_owner
+                                        FOREIGN KEY (owner_user_id) REFERENCES auth_users(id)
+                                        ON DELETE CASCADE
                                 )
                             """)
+                            try:
+                                cursor.execute(
+                                    "ALTER TABLE sessions ADD COLUMN owner_user_id BIGINT UNSIGNED NULL"
+                                )
+                            except Exception as error:
+                                if getattr(error, "args", (None,))[0] != 1060:
+                                    raise
+
+                            try:
+                                cursor.execute(
+                                    "ALTER TABLE sessions ADD COLUMN title VARCHAR(120) NOT NULL DEFAULT '新对话'"
+                                )
+                            except Exception as error:
+                                if getattr(error, "args", (None,))[0] != 1060:
+                                    raise
+
+                            try:
+                                cursor.execute(
+                                    "CREATE INDEX idx_sessions_owner_updated ON sessions (owner_user_id, updated_at)"
+                                )
+                            except Exception as error:
+                                if getattr(error, "args", (None,))[0] != 1061:
+                                    raise
+                            cursor.execute(
+                                "SELECT id, username FROM auth_users"
+                            )
+                            for user in cursor.fetchall():
+                                owner_prefix = hashlib.sha256(
+                                    user[1].encode("utf-8")
+                                ).hexdigest()[:24] + ":%"
+                                cursor.execute(
+                                    "UPDATE sessions SET owner_user_id = %s "
+                                    "WHERE owner_user_id IS NULL AND session_id LIKE %s",
+                                    (user[0], owner_prefix),
+                                )
+                            try:
+                                cursor.execute(
+                                    "ALTER TABLE sessions ADD CONSTRAINT fk_sessions_owner "
+                                    "FOREIGN KEY (owner_user_id) REFERENCES auth_users(id) ON DELETE CASCADE"
+                                )
+                            except Exception as error:
+                                if getattr(error, "args", (None,))[0] != 1826:
+                                    raise
                         conn.commit()
                         self._initialized = True
         except Exception:
@@ -119,37 +169,60 @@ class SessionManager:
                 )
             conn.commit()
 
-    def create(self, session_id: str):
+    def create(
+        self,
+        session_id: str,
+        owner_user_id: int | None = None,
+        title: str = "新对话",
+    ):
         with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO sessions (session_id, messages)
-                    VALUES (%s, %s)
+                    INSERT INTO sessions (session_id, messages, owner_user_id, title)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (session_id, json.dumps([], ensure_ascii=False))
+                    (session_id, json.dumps([], ensure_ascii=False), owner_user_id, title)
                 )
             conn.commit()
 
+    def rename(self, session_id: str, owner_user_id: int, title: str) -> bool:
+        with self._connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM sessions WHERE session_id = %s AND owner_user_id = %s",
+                    (session_id, owner_user_id),
+                )
+                if cursor.fetchone() is None:
+                    return False
+                cursor.execute(
+                    "UPDATE sessions SET title = %s "
+                    "WHERE session_id = %s AND owner_user_id = %s",
+                    (title, session_id, owner_user_id),
+                )
+                updated = cursor.rowcount > 0
+            conn.commit()
+        return updated
 
-    def list_sessions(self, prefix: str):
+    def list_sessions(self, owner_user_id: int):
         with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT session_id, updated_at
+                    SELECT session_id, title, updated_at
                     FROM sessions
-                    WHERE session_id LIKE %s
+                    WHERE owner_user_id = %s
                     ORDER BY updated_at DESC
                     """,
-                    (f"{prefix}%",),
+                    (owner_user_id,),
                 )
                 rows = cursor.fetchall()
 
         return [
             {
                 "session_id": row[0],
-                "updated_at": row[1].isoformat() if row[1] else None,
+                "title": row[1],
+                "updated_at": row[2].isoformat() if row[2] else None,
             }
             for row in rows
         ]
