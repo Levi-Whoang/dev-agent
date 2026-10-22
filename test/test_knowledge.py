@@ -122,13 +122,28 @@ def test_search_context_formats_evidence_and_empty_result(monkeypatch):
     )
 
     context = knowledge.knowledge_search_context("公司在哪里？")
+    parsed = __import__("json").loads(context)
 
-    assert "来源：company.txt" in context
-    assert "证据：公司在深圳。" in context
-    assert "综合分：0.91" in context
+    assert "来源：company.txt" in parsed["evidence"]
+    assert "证据：公司在深圳。" in parsed["evidence"]
+    assert "综合分：0.91" in parsed["evidence"]
+    assert parsed["citations"] == [
+        {
+            "source": "company.txt",
+            "content": "公司在深圳。",
+            "score": 0.91,
+            "dense_score": None,
+            "keyword_score": None,
+        }
+    ]
 
     monkeypatch.setattr(knowledge, "knowledge_search", lambda query: [])
-    assert knowledge.knowledge_search_context("没有答案的问题") == "NO_RELEVANT_EVIDENCE"
+    no_answer = __import__("json").loads(
+        knowledge.knowledge_search_context("没有答案的问题")
+    )
+    assert no_answer["status"] == "no_relevant_evidence"
+    assert no_answer["evidence"] == "NO_RELEVANT_EVIDENCE"
+    assert no_answer["citations"] == []
 
 
 def test_keyword_search_recovers_low_dense_match_and_returns_component_scores(

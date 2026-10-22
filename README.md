@@ -85,7 +85,7 @@ python -m pip install -r requirements.txt
 
 ### 4. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API 和 MySQL 配置。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
+复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和 JWT 认证配置。认证账号由 `AUTH_USERS_JSON` 配置，键是用户名，值是 PBKDF2 密码哈希；JWT 使用 `JWT_SECRET_KEY` 签名，默认有效期为 30 分钟。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
 
 PowerShell：
 
@@ -94,7 +94,14 @@ Copy-Item .env.example .env
 notepad .env
 ```
 
-`.env.example` 中的模型地址和模型名是占位示例，须替换成所选服务商支持流式输出与 Tool Calling 的 OpenAI 兼容配置。不要提交 `.env` 或真实知识库资料。
+先生成登录密码哈希和 JWT 签名密钥，再将它们填入 `.env`：
+
+```powershell
+python -m auth.passwords
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+将第一条命令输出的哈希配置成 `AUTH_USERS_JSON` 中对应用户名的值；第二条命令的输出填入 `JWT_SECRET_KEY`。`DEMO_AUTH_USERNAME` 和 `DEMO_AUTH_PASSWORD` 只供本地 smoke 脚本登录，并须和已配置账号一致。`.env.example` 中的认证值均为占位示例。不要把 `.env`、真实密码或签名密钥提交到仓库。
 
 确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次访问会话数据时会自动创建 `sessions` 表。
 
@@ -152,9 +159,19 @@ python scripts/smoke_demo.py
 }
 ```
 
-`stream` 默认为 `true`。流式模式返回 `Content-Type: text/event-stream`，采用 SSE 格式：`delta` 事件逐段包含 `content`，结束时发送带 `session_id` 的 `done` 事件；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。
+`stream` 默认为 `true`。流式模式返回 `Content-Type: text/event-stream`，采用 SSE 格式：`delta` 事件逐段包含 `content`，结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。
 
-需要兼容原有 JSON 响应时传入 `"stream": false`，返回统一响应结构 `data.answer` 和 `data.session_id`。实际回答取决于模型配置和知识库内容。
+需要兼容原有 JSON 响应时传入 `"stream": false`，返回统一响应结构 `data.answer`、`data.session_id` 和 `data.citations`。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
+
+先调用 `POST /auth/token`，请求体为：
+
+```json
+{"username": "demo-user", "password": "你的登录密码"}
+```
+
+成功响应中的 `data.access_token` 是 JWT。除 `GET /health` 和登录接口外，所有 API 路由都需要 `Authorization: Bearer <access_token>`。JWT 的用户身份对应配置中的用户名；密码只以 PBKDF2 哈希形式存储在环境变量配置中。会话在存储层按用户隔离。省略 `session_id` 会为该次请求生成新会话，后续请求应带回响应中的 ID 以继续对话。会话列表只返回当前认证用户的会话。
+
+升级前已存在的未分配用户会话不会自动显示或归属给任何用户；需要先确认所有者，再单独迁移，避免把旧对话暴露给错误用户。
 
 ### 2. 创建会话
 
@@ -208,7 +225,7 @@ LLM 分析问题并决定是否调用工具
 
 当涉及知识库的问题时，Agent 可以调用知识检索工具获取相关文本，再结合检索结果生成回答。文本切分优先沿段落、句子和换行边界进行；遇到超长句或无标点文本时，再按空白或字符长度切分，并保留相邻片段重叠。检索同时使用向量语义分和 BM25 关键词分：默认权重分别为 0.7 和 0.3，默认向量相似度阈值为 0.60；通用词不参与关键词分，关键词召回还需达到有效查询词覆盖门槛。没有充分关键词证据时，仅由向量阈值决定是否返回。结果中的 `score` 是综合分，`dense_score` 和 `keyword_score` 可用于观察两路召回。
 
-`test/retrieval_dataset.py` 包含 45 条按知识库主题整理的问题（35 条可回答、10 条无答案）；正例标注了标准证据词和允许来源。运行 `python test/evaluate_retrieval.py` 可比较分块、阈值和 Top-K 配置，查看 Recall@K、按相关来源排名计算的 MRR、无答案误召回率和问题类别命中率。当前数据集仍是小规模开发集，评估结果不能代表通用检索准确率。
+`test/retrieval_dataset.py` 当前是 `rag-eval-2.0`，包含 80 条按真实提问方式编写的样例：50 条可回答、10 条一般无答案、20 条与已有知识相近但缺少目标事实的干扰问题。正例标注标准证据词和允许来源。运行 `python test/evaluate_retrieval.py` 比较分块、阈值和 Top-K 配置，查看 Recall@K、MRR、误召回率和分类结果。每次运行会在 `test/evaluation_results/` 保存 JSON 报告，其中包含评估集版本与 SHA-256 指纹、配置、指标及失败问题；报告不复制检索片段正文，只记录来源、分数和正文摘要哈希。该评估集仍是开发集，指标不能代表通用检索准确率。
 
 ## 运行测试
 

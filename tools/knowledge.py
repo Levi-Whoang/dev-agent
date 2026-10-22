@@ -1,5 +1,6 @@
 
 import math
+import json
 import os
 import re
 from collections import Counter
@@ -284,11 +285,18 @@ def knowledge_search(query: str) -> list[dict]:
 
 
 def knowledge_search_context(query: str) -> str:
-    """检索知识库并整理为供 LLM 使用的证据。"""
+    """以结构化 JSON 返回模型证据和 API 可展示的引用。"""
     results = knowledge_search(query)
 
     if not results:
-        return "NO_RELEVANT_EVIDENCE"
+        return json.dumps(
+            {
+                "status": "no_relevant_evidence",
+                "evidence": "NO_RELEVANT_EVIDENCE",
+                "citations": [],
+            },
+            ensure_ascii=False,
+        )
 
     evidence = []
 
@@ -304,4 +312,20 @@ def knowledge_search_context(query: str) -> str:
             )
         )
 
-    return "\n\n".join(evidence)
+    return json.dumps(
+        {
+            "status": "ok",
+            "evidence": "\n\n".join(evidence),
+            "citations": [
+                {
+                    "source": item["source"],
+                    "content": item["content"],
+                    "score": item["score"],
+                    "dense_score": item.get("dense_score"),
+                    "keyword_score": item.get("keyword_score"),
+                }
+                for item in results
+            ],
+        },
+        ensure_ascii=False,
+    )

@@ -13,7 +13,7 @@ class Agent:
         self.tool_registry = tool_registry
         self.session_manager = SessionManager()
 
-    def run(self, user_input, session_id="default"):
+    def run(self, user_input, session_id):
 
         messages = self.session_manager.get_messages(session_id)
 
@@ -143,7 +143,7 @@ class Agent:
             self.session_manager.save(session_id, messages)
             raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
 
-    def run_stream(self, user_input, session_id="default"):
+    def run_stream(self, user_input, session_id):
         """逐段输出最终回答；工具调用轮次先执行工具，再继续生成。"""
         messages = self.session_manager.get_messages(session_id)
         messages.append({"role": "user", "content": user_input})

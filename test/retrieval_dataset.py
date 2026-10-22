@@ -1,5 +1,7 @@
 """RAG 检索评估集：问题、相关证据词和允许的知识来源。"""
 
+EVALUATION_SET_VERSION = "rag-eval-2.0"
+
 EVALUATION_CASES = [
     # 企业与岗位信息：包括改写、细节查询和相近问题。
     {"query": "这家公司的办公地点在哪个区？", "expected": ["深圳市南山区"], "sources": ["company.txt", "faq.txt"], "category": "paraphrase"},
@@ -57,4 +59,43 @@ EVALUATION_CASES = [
     {"query": "实习岗位每周需要到岗几天？", "expected": None, "category": "no_answer"},
     {"query": "公司是否提供餐补和住房补贴？", "expected": None, "category": "no_answer"},
     {"query": "公司老板的手机号码是多少？", "expected": None, "category": "no_answer"},
+
+    # 更接近真实用户表达的可回答改写和组合问题。
+    {"query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？", "expected": ["Python", "FastAPI", "LLM API", "RAG"], "sources": ["company.txt", "recruitment.txt"], "category": "realistic_paraphrase"},
+    {"query": "这家公司在深圳哪个片区办公？", "expected": ["深圳市南山区"], "sources": ["company.txt", "faq.txt"], "category": "realistic_paraphrase"},
+    {"query": "岗位介绍里提到要会调模型和知识库吗？", "expected": ["Tool Calling", "提示词设计", "知识检索"], "sources": ["company.txt", "recruitment.txt"], "category": "realistic_paraphrase"},
+    {"query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？", "expected": ["Pydantic", "独立校验"], "sources": ["demo_agent_schema.txt"], "category": "realistic_paraphrase"},
+    {"query": "为了避免模型一直重复调用工具，执行循环要加什么保护？", "expected": ["最大迭代次数", "最大轮数限制"], "sources": ["demo_agent_loop.txt"], "category": "realistic_paraphrase"},
+    {"query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？", "expected": ["按会话隔离"], "sources": ["demo_agent_history.txt"], "category": "multi_fact"},
+    {"query": "工具报错时，为什么不能把错误包装成正常业务结果？", "expected": ["失败不应被伪装成成功结果", "重试策略"], "sources": ["demo_agent_failures.txt"], "category": "realistic_paraphrase"},
+    {"query": "RAG 切分文档时留一点相邻内容，主要是为了什么？", "expected": ["重要信息", "重叠分块"], "sources": ["demo_rag_chunking.txt"], "category": "realistic_paraphrase"},
+    {"query": "向量相似度高，就能直接断定检索到的事实正确吗？", "expected": ["不等于事实正确性"], "sources": ["demo_rag_embeddings.txt"], "category": "realistic_paraphrase"},
+    {"query": "我有一个长文档要做 RAG，通常从导入到检索会经过哪些步骤？", "expected": ["文档加载", "文本清洗", "向量编码"], "sources": ["demo_rag_pipeline.txt"], "category": "multi_fact"},
+    {"query": "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？", "expected": ["Recall@K", "MRR"], "sources": ["demo_rag_evaluation.txt"], "category": "realistic_paraphrase"},
+    {"query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？", "expected": ["Field(min_length=1, max_length=4000)"], "sources": ["demo_fastapi_validation.txt"], "category": "realistic_paraphrase"},
+    {"query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？", "expected": ["同步阻塞操作", "事件循环"], "sources": ["demo_python_async.txt"], "category": "realistic_paraphrase"},
+    {"query": "写 MySQL 会话消息时，用参数占位而不是拼 SQL 字符串有什么意义？", "expected": ["参数化 SQL", "SQL 注入"], "sources": ["demo_database_mysql.txt"], "category": "realistic_paraphrase"},
+    {"query": "简历里写延迟降低 80% 之前，至少应该有什么依据？", "expected": ["不要使用没有实际测试依据"], "sources": ["demo_recruitment_resume.txt"], "category": "realistic_paraphrase"},
+
+    # 相似干扰：问题紧邻已有事实主题，但所问的具体属性未在资料中给出。
+    {"query": "公司在南山区的办公楼具体叫什么，在哪一层？", "expected": None, "category": "similar_distractor"},
+    {"query": "从深圳北站到公司办公室坐地铁要几站？", "expected": None, "category": "similar_distractor"},
+    {"query": "公司办公地点附近最近的地铁出口编号是多少？", "expected": None, "category": "similar_distractor"},
+    {"query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？", "expected": None, "category": "similar_distractor"},
+    {"query": "这个岗位是每周固定到岗五天，还是可以远程办公？", "expected": None, "category": "similar_distractor"},
+    {"query": "投递这份实习简历的截止日期是哪一天？", "expected": None, "category": "similar_distractor"},
+    {"query": "招聘方要求候选人的本科专业必须是哪一个？", "expected": None, "category": "similar_distractor"},
+    {"query": "公司面试一共有几轮，每轮分别由谁参加？", "expected": None, "category": "similar_distractor"},
+    {"query": "项目中的向量相似度阈值在生产环境精确配置成多少？", "expected": None, "category": "similar_distractor"},
+    {"query": "这套知识库目前一共有多少条文档和多少个向量？", "expected": None, "category": "similar_distractor"},
+    {"query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？", "expected": None, "category": "similar_distractor"},
+    {"query": "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？", "expected": None, "category": "similar_distractor"},
+    {"query": "MySQL 会话消息超过多少天会被自动清理？", "expected": None, "category": "similar_distractor"},
+    {"query": "这个 API 每分钟允许同一个用户调用多少次？", "expected": None, "category": "similar_distractor"},
+    {"query": "FastAPI 服务部署在生产环境时配了几个 worker？", "expected": None, "category": "similar_distractor"},
+    {"query": "项目的 CI 每天几点触发完整回归测试？", "expected": None, "category": "similar_distractor"},
+    {"query": "测试部门今年累计关闭了多少个缺陷？", "expected": None, "category": "similar_distractor"},
+    {"query": "这家公司今年智能问答产品的实际收入是多少？", "expected": None, "category": "similar_distractor"},
+    {"query": "招聘团队承诺多久之内一定会给候选人反馈？", "expected": None, "category": "similar_distractor"},
+    {"query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？", "expected": None, "category": "similar_distractor"},
 ]

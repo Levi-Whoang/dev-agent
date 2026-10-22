@@ -32,8 +32,12 @@ class FakeSessionManager:
     def delete(self, session_id):
         self.sessions.pop(session_id, None)
 
-    def list_sessions(self):
-        return [{"session_id": key} for key in self.sessions]
+    def list_sessions(self, prefix):
+        return [
+            {"session_id": key}
+            for key in self.sessions
+            if key.startswith(prefix)
+        ]
 
 
 class FakeAgent:
@@ -65,7 +69,7 @@ def api_module(monkeypatch):
     monkeypatch.setitem(sys.modules, "main", fake_main)
     monkeypatch.setitem(sys.modules, "logging_config", fake_logging)
 
-    # Prevent imports from constructing the real OpenAI client or touching logs.
+    # 防止导入应用时创建真实 OpenAI 客户端或写入日志。
     sys.modules.pop("app", None)
     module = importlib.import_module("app")
     try:
@@ -76,23 +80,35 @@ def api_module(monkeypatch):
 
 def test_chat_route_calls_agent_and_returns_standard_response(api_module):
     app, agent = api_module
+    user_id = "test-user"
+    stored_session_id = app._stored_session_id(user_id, "chat-1")
 
     response = app.chat(
-        ChatRequest(message="你好", session_id="chat-1", stream=False)
+        ChatRequest(message="你好", session_id="chat-1", stream=False),
+        current_user=user_id,
     )
 
     assert response == {
         "code": 0,
         "message": "success",
-        "data": {"answer": "回答：你好", "session_id": "chat-1"},
+        "data": {
+            "answer": "回答：你好",
+            "session_id": "chat-1",
+            "citations": [],
+        },
     }
-    assert agent.calls == [("你好", "chat-1")]
+    assert agent.calls == [("你好", stored_session_id)]
 
 
 def test_chat_route_streams_sse_deltas_and_completion_event(api_module):
     app, agent = api_module
-    response = app.chat(ChatRequest(message="你好", session_id="stream-1"))
-    events = list(app.chat_event_stream("你好", "stream-1"))
+    user_id = "test-user"
+    stored_session_id = app._stored_session_id(user_id, "stream-1")
+    response = app.chat(
+        ChatRequest(message="你好", session_id="stream-1"),
+        current_user=user_id,
+    )
+    events = list(app.chat_event_stream("你好", "stream-1", stored_session_id))
 
     assert response.media_type == "text/event-stream"
     assert response.headers["cache-control"] == "no-cache"
@@ -101,7 +117,7 @@ def test_chat_route_streams_sse_deltas_and_completion_event(api_module):
     assert '"type": "delta", "content": "回答：你"' in body
     assert '"type": "delta", "content": "好"' in body
     assert '"type": "done", "session_id": "stream-1"' in body
-    assert agent.stream_calls == [("你好", "stream-1")]
+    assert agent.stream_calls == [("你好", stored_session_id)]
 
 
 @pytest.mark.parametrize(
@@ -114,26 +130,31 @@ def test_chat_request_rejects_invalid_message_lengths(message):
         ChatRequest(message=message)
 
 
+def test_chat_request_has_no_shared_default_session():
+    assert ChatRequest(message="新对话").session_id is None
+
+
 def test_session_routes_cover_create_list_read_clear_delete_and_missing(api_module):
     app, _ = api_module
-    app.create_session(CreateSessionRequest(session_id="session-1"))
-    assert app.list_sessions()["data"] == [{"session_id": "session-1"}]
-    assert app.get_session_messages("session-1")["data"]["messages"] == []
+    user_id = "test-user"
+    app.create_session(CreateSessionRequest(session_id="session-1"), current_user=user_id)
+    assert app.list_sessions(current_user=user_id)["data"] == [{"session_id": "session-1"}]
+    assert app.get_session_messages("session-1", current_user=user_id)["data"]["messages"] == []
 
-    assert app.clear_session("session-1")["message"] == "会话已清空"
-    assert app.delete_session("session-1")["message"] == "会话删除成功"
+    assert app.clear_session("session-1", current_user=user_id)["message"] == "会话已清空"
+    assert app.delete_session("session-1", current_user=user_id)["message"] == "会话删除成功"
 
     with pytest.raises(HTTPException) as error:
-        app.get_session_messages("session-1")
+        app.get_session_messages("session-1", current_user=user_id)
     assert error.value.status_code == 404
 
 
 def test_create_duplicate_session_raises_conflict(api_module):
     app, _ = api_module
     request = CreateSessionRequest(session_id="duplicate")
-    app.create_session(request)
+    app.create_session(request, current_user="test-user")
 
     with pytest.raises(HTTPException) as error:
-        app.create_session(request)
+        app.create_session(request, current_user="test-user")
 
     assert error.value.status_code == 409

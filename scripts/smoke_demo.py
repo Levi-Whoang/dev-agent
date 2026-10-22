@@ -7,26 +7,50 @@ session. It never prints environment values or the full generated answer.
 
 import argparse
 import json
+import os
 import re
 import sys
 from uuid import uuid4
 
 import httpx
+from dotenv import load_dotenv
+
+
+def get_auth_headers(client: httpx.Client) -> dict[str, str]:
+    load_dotenv()
+    username = os.getenv("DEMO_AUTH_USERNAME", "")
+    password = os.getenv("DEMO_AUTH_PASSWORD", "")
+    if not username or not password:
+        raise RuntimeError("DEMO_AUTH_USERNAME and DEMO_AUTH_PASSWORD are required")
+    response = client.post(
+        "/auth/token",
+        json={"username": username, "password": password},
+    )
+    response.raise_for_status()
+    token = response.json().get("data", {}).get("access_token")
+    if not isinstance(token, str) or not token:
+        raise RuntimeError("Token endpoint returned no access token")
+    return {"Authorization": f"Bearer {token}"}
 
 
 def run(base_url: str) -> None:
     session_id = f"demo-smoke-{uuid4().hex}"
     timeout = httpx.Timeout(120.0, connect=5.0)
 
-    with httpx.Client(base_url=base_url.rstrip("/"), timeout=timeout) as client:
+    with httpx.Client(
+        base_url=base_url.rstrip("/"),
+        timeout=timeout,
+    ) as client:
         health = client.get("/health")
         health.raise_for_status()
         if health.json().get("status") != "ok":
             raise RuntimeError("API health check returned an unexpected status")
         print("PASS API health")
+        client.headers.update(get_auth_headers(client))
 
         answer_parts = []
         received_done = False
+        citations = []
         try:
             with client.stream(
                 "POST",
@@ -51,6 +75,7 @@ def run(base_url: str) -> None:
                         answer_parts.append(event["content"])
                     elif event["type"] == "done":
                         received_done = event.get("session_id") == session_id
+                        citations = event.get("citations", [])
                     elif event["type"] == "error":
                         raise RuntimeError("The streamed Agent request returned an error")
 
@@ -60,6 +85,13 @@ def run(base_url: str) -> None:
                 raise RuntimeError("The stream did not finish with a done event")
             if "星河市演示区样例路1号" not in normalized_answer:
                 raise RuntimeError("RAG response did not contain the demo evidence")
+            normalized_citations = re.sub(
+                r"\s+",
+                "",
+                "".join(item.get("content", "") for item in citations),
+            )
+            if "星河市演示区样例路1号" not in normalized_citations:
+                raise RuntimeError("RAG response did not return its source citation")
             print("PASS streaming LLM + RAG answer")
 
             history = client.get(f"/sessions/{session_id}/messages")

@@ -132,15 +132,17 @@ class SessionManager:
             conn.commit()
 
 
-    def list_sessions(self):
+    def list_sessions(self, prefix: str):
         with self._connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
                     SELECT session_id, updated_at
                     FROM sessions
+                    WHERE session_id LIKE %s
                     ORDER BY updated_at DESC
-                    """
+                    """,
+                    (f"{prefix}%",),
                 )
                 rows = cursor.fetchall()
 

@@ -4,10 +4,10 @@ from typing import Any
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
-    session_id: str = Field(
-        default="default",
+    session_id: str | None = Field(
+        default=None,
         min_length=1,
-        max_length=100
+        max_length=75
     )
     stream: bool = True
 
@@ -26,5 +26,5 @@ class CreateSessionRequest(BaseModel):
     session_id: str | None = Field(
         default=None,
         min_length=1,
-        max_length=100
+        max_length=75
     )

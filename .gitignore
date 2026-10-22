@@ -6,5 +6,5 @@ __pycache__/
 venv/
 .env
 sessions.db
-knowledge_base
+logs/*.log
 .mcp.json
