@@ -24,7 +24,7 @@
 | Agent 核心 | Tool Calling、工具注册与参数校验 |
 | RAG | Sentence Transformers、余弦相似度、BM25 关键词检索 |
 | 参数校验 | Pydantic |
-| 数据库 | MySQL、PyMySQL |
+| 数据库 | MySQL、SQLAlchemy ORM、PyMySQL 驱动 |
 | 测试 | pytest |
 
 ## 项目结构
@@ -47,8 +47,11 @@ dev-agent/
 ├── auth/
 │   ├── jwt_auth.py          # JWT 认证与令牌验证
 │   ├── passwords.py         # 密码哈希与校验
-│   ├── repository.py        # 用户和令牌数据库操作
+│   ├── repository.py        # 用户和令牌数据访问层
 │   └── schemas.py           # 认证请求模型
+├── modules/
+│   ├── database.py          # SQLAlchemy engine、Session 与数据库初始化
+│   └── models.py            # 用户、JWT 登记和聊天会话 ORM 模型
 ├── tools/
 │   ├── registry.py          # 工具注册
 │   ├── schema.py            # 工具参数模型与 Schema 生成
@@ -119,7 +122,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 将命令输出填入 `JWT_SECRET_KEY`。用户名和密码由用户注册接口提交，后端只把密码哈希写入 MySQL。`.env.example` 中密钥是占位值，必须替换。不要把 `.env` 或真实签名密钥提交到仓库。
 
-确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时会自动创建 `sessions`、`auth_users` 和 `auth_tokens` 表。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建 `sessions`、`auth_users` 和 `auth_tokens` 表，并为旧版 `sessions` 表补充所有者和标题字段。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
 
 ### 5. 演示语料与模型
 
