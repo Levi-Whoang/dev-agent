@@ -16,16 +16,16 @@
 
 ## 技术栈
 
-| 类别 | 技术 |
-|---|---|
-| 编程语言 | Python |
-| Web 框架 | FastAPI |
-| 大语言模型调用 | OpenAI 兼容 API |
-| Agent 核心 | Tool Calling、工具注册与参数校验 |
-| RAG | Sentence Transformers、余弦相似度、BM25 关键词检索 |
-| 参数校验 | Pydantic |
-| 数据库 | MySQL、SQLAlchemy ORM、PyMySQL 驱动 |
-| 测试 | pytest |
+| 类别           | 技术                                               |
+|----------------|----------------------------------------------------|
+| 编程语言       | Python                                             |
+| Web 框架       | FastAPI                                            |
+| 大语言模型调用 | OpenAI 兼容 API                                    |
+| Agent 核心     | Tool Calling、工具注册与参数校验                   |
+| RAG            | Sentence Transformers、余弦相似度、BM25 关键词检索 |
+| 参数校验       | Pydantic                                           |
+| 数据库         | MySQL、SQLAlchemy ORM、PyMySQL 驱动                |
+| 测试           | pytest                                             |
 
 ## 项目结构
 
@@ -122,7 +122,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 将命令输出填入 `JWT_SECRET_KEY`。用户名和密码由用户注册接口提交，后端只把密码哈希写入 MySQL。`.env.example` 中密钥是占位值，必须替换。不要把 `.env` 或真实签名密钥提交到仓库。
 
-确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建 `sessions`、`auth_users` 和 `auth_tokens` 表，并为旧版 `sessions` 表补充所有者和标题字段。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`auth_users` 和 `auth_tokens` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
 
 ### 5. 演示语料与模型
 
@@ -204,7 +204,7 @@ npm run dev
 
 注册成功后调用 `POST /auth/token` 提交同一用户名和密码登录，响应中的 `data.access_token` 是 JWT。令牌有效期为 30 分钟，并在 MySQL 的 `auth_tokens` 表登记令牌 ID 和过期时间；退出登录 `POST /auth/logout` 会撤销当前令牌。除 `GET /health`、注册和登录接口外，所有 API 路由都需要 `Authorization: Bearer <access_token>`。密码以 PBKDF2 哈希保存在 `auth_users` 表。会话仍按认证用户名隔离。省略 `session_id` 会为该次请求生成新会话，后续请求应带回响应中的 ID 以继续对话。会话列表只返回当前认证用户的会话。
 
-升级时会按旧会话 ID 中的用户名哈希前缀回填用户关联；无法匹配现存用户的记录不会显示在任何账号的历史列表中，需要确认归属后再迁移。
+会话列表通过数据库中的 `owner_user_id` 关联当前用户。旧版本数据不会自动迁移或回填归属；若旧表结构不兼容，请按安装说明改用空数据库。
 
 ### 2. 创建会话
 
