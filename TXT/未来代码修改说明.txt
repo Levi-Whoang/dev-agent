@@ -1,0 +1,224 @@
+代码修改记录（2026-10-17）：解除应用导入时的模型和数据库初始化耦合
+
+修改前：
+- tools/knowledge.py 在模块导入时立即创建 SentenceTransformer 模型，并在模块级导入 scikit-learn。模型加载/下载及 ML 依赖因此影响应用导入。
+- SessionManager 在构造时立即连接 MySQL 并创建 sessions 表；Agent 随应用模块初始化时创建 SessionManager，因此 MySQL 不可用会阻止应用导入/启动。
+
+修改后：
+- tools/knowledge.py 提供带 lru_cache 的 get_embedding_model()，只在首次实际知识检索时导入并加载 SentenceTransformer；模型在进程内复用。scikit-learn 也延迟到检索操作中导入。
+- SessionManager 构造时只读取配置并准备初始化锁。首次会话数据操作调用 _connect() 时才导入 PyMySQL、连接数据库并按需创建 sessions 表；同一实例的并发首次访问由锁保护。
+- README 已改为说明模型和数据库的按需初始化行为；项目分析报告已注明该项调整尚未运行验证。
+
+影响与边界：
+- 导入应用模块不再要求模型已下载或 MySQL 在线。
+- 首次实际使用知识检索仍要求 Sentence Transformers/模型可用；首次会话数据操作仍要求 PyMySQL 和 MySQL 可用。
+- 本次没有运行测试或端到端验证。
+- 修改位置：agent/session.py、tools/knowledge.py、README.md；TXT/项目代码分析与简历评估.txt。
+测试代码修改记录（2026-10-19）：扩展自动化测试覆盖
+
+修改前：
+- Agent 测试主要覆盖单条成功工具调用，缺少 JSON 解码失败、未知工具、Pydantic 参数不合法、工具执行异常和最大迭代次数等分支。
+- 知识检索测试直接加载真实 embedding 模型，普通 pytest 依赖模型缓存或下载，结果容易受环境影响。
+- 没有 SessionManager 的单元测试，也没有 API 路由函数和请求模型约束测试。
+
+修改后：
+- test/test_agent.py 覆盖成功调用、五类工具错误/参数问题及十轮上限，并断言工具结果会回传给模型、最终回答会保存。
+- test/test_knowledge.py 用确定性向量替身，离线检查 TXT 加载与来源、缺失/空知识库、模型首次加载缓存、相似度排序、阈值过滤、去重、Top-K 和证据上下文。
+- 新增 test/test_session.py，以伪 PyMySQL 驱动检查构造阶段不连接、首次建表、Unicode JSON 保存、驱动返回字符串/对象两种 JSON 格式，以及初始化失败可重试。
+- 新增 test/test_api.py，检查 chat 路由函数响应、会话路由流程、重复会话冲突和请求消息长度约束。此处是路由函数级测试，没有覆盖真实 HTTP/ASGI 请求传输。
+- 当前测试运行结果：30 passed；测试没有连接真实 MySQL 或 LLM。为适应沙箱临时目录权限，运行时将 pytest basetemp 指到已忽略的 .pytest_cache 子目录。
+
+未修改应用运行时代码；没有触碰工作区已有的 notes.md 修改。
+代码修改记录（2026-10-19）：加入 RAG 向量与 BM25 混合检索
+
+修改前：
+- `tools/knowledge.py` 只按余弦相似度和阈值筛选知识片段；精确词项或缩写与 embedding 语义相似度不一致时，可能漏召回。
+- 检索结果只有单一相似度分；评测脚本仅清理文本和向量缓存，评测集有效样本较少。
+
+修改后：
+- `tools/knowledge.py` 新增 BM25 索引和打分：英文切分为词，连续中文生成重叠的 2/3 字片段；向量召回与词面召回合并，关键词命中的结果使用 0.7 向量分 + 0.3 归一化关键词分排序，向量单路结果保留原分数/排序。
+- 返回结果增加 `dense_score`、`keyword_score`，`score` 表示综合分；证据上下文展示综合分及两路分数。
+- `test/test_knowledge.py` 覆盖中英文分词、BM25 精确词项排序、低向量分被关键词召回及分数输出。
+- `test/evaluate_retrieval.py` 会清理关键词索引缓存；`test/retrieval_dataset.py` 启用更多正例和无答案样本；README 说明混合策略和评测入口。
+
+验证：完整测试 33 passed（1.85 秒），没有运行真实模型检索评测。当前评测集规模有限；中文分词采用字符片段，不是词典分词，仍应通过项目实际查询集校准权重、阈值与误召回情况。
+
+代码修改记录（2026-10-19）：扩展 RAG 检索评估集和评估指标
+
+修改前：
+- 评估集共 12 条问题，知识库主题覆盖有限；正例没有指定相关来源，可能把检索到重复主题的错误文档算作命中。
+- 评估脚本只统计所有标准词是否在 Top-K 拼接文本出现，以及无答案问题是否返回任何结果；没有排序指标或失败问题明细。
+
+修改后：
+- `test/retrieval_dataset.py` 扩为 45 条（35 正例、10 无答案），覆盖多主题、语义改写、多事实与精确词问题。正例包含标准证据词、允许来源和类别。
+- `test/evaluate_retrieval.py` 的 Recall@K 需要在标注来源中命中全部标准词；增加首个允许来源排名的 MRR、类别 Recall@K、未命中问题和无答案误召回问题明细。
+- 新增 `test/test_retrieval_dataset.py`，确保正例有合法来源、标准证据词存在于来源文档，并保持无答案样本数量。
+- README 记录评估集规模、指标与运行命令。
+
+验证：完整 pytest 34 passed（2.19 秒）。未运行 `python test/evaluate_retrieval.py` 的真实模型评测；因此尚无该评测集上的实际 Recall@K、MRR 或误召回率结果。
+
+代码修改记录（2026-10-19）：降低 RAG 无答案误召回
+
+修改前：
+- BM25 任意正分即可绕过向量阈值；中文 2/3 字重叠片段令通用词也匹配到文档。
+- 实测 10 条无答案问题在全部 6 组检索参数下均返回结果，误召回率为 100%。
+
+修改后：
+- `tools/knowledge.py` 过滤通用词/疑问词，计算 BM25 有效查询词覆盖率；低于 0.4 的关键词重合不再单独触发召回或参与分数融合。
+- 默认 `SIMILARITY_THRESHOLD` 调整为 0.60。
+- `test/evaluate_retrieval.py` 增加 0.60 和 0.61 配置用于观察精确率/召回率折中；README 说明默认阈值与关键词覆盖门槛。
+- `test/test_knowledge.py` 新增泛词不触发检索、部分关键词重合不能绕过向量阈值的回归测试。
+
+验证：离线使用本地缓存的 BAAI/bge-small-zh-v1.5 运行评测。chunk=300、overlap=50：阈值 0.55 为 32/35 正例命中、2/10 负例误召回；0.60 为 31/35、1/10；0.61 为 30/35、0/10。全量 pytest 36 passed（2.38 秒）。选择 0.60 平衡当前数据的召回率和误召回率。评估集仅 10 条负例，指标仍需扩大样本验证。
+
+代码修改记录（2026-10-19）：按句子边界优化文本切分
+
+修改前：
+- `tools/text_splitter.py` 每次严格按字符数切片，只保持固定字符重叠；可能从中文句子或英文单词中间截断。
+
+修改后：
+- 切分点优先选择句末标点、段落/换行边界；没有合适自然边界时选择空白位置，超长句或连续无标点文本最终按字符长度硬切，仍遵守 chunk_size。
+- 重叠窗口尽量从句子/换行边界开始；纯连续文本继续使用精确字符 overlap。
+- `test/test_text_splitter.py` 新增中文句子边界、英文空格边界、长无标点兜底测试；README 说明策略。
+
+验证：全量 pytest 39 passed（1.87 秒）。真实模型检索评估中，chunk=300/overlap=50 各指标与固定切片持平；chunk=100/overlap=20、阈值 0.45 的命中率从 74% 提升到 77%。当前小评测集未证明 300 字默认配置带来召回率提升，改进主要保证片段边界更完整。
+
+代码修改记录（2026-10-21）：聊天接口默认改为 SSE 流式输出
+
+修改前：
+- `Agent.run` 等完整模型响应及工具调用链结束后才返回完整字符串。
+- `POST /chat` 一直等 Agent 完成，随后用统一 JSON 响应一次性返回答案。
+
+修改后：
+- `Agent.run_stream` 请求模型 stream 模式，逐个 yield 文本增量；如遇工具调用，会拼接流式 tool call 的 ID、函数名和参数，执行工具后继续下一轮，最后保存完整 assistant 消息。
+- `POST /chat` 默认返回 `text/event-stream`，以 JSON SSE `delta` 事件发送文本，以 `done` 结束，以 `error` 报告流内异常。响应设置禁止缓存和代理缓冲的 Header。
+- `ChatRequest.stream` 默认为 true；传 `false` 使用原有 JSON 路径。
+- 新增流式 Agent/API 单测，README 说明 SSE 协议和兼容方式。
+
+验证：完整 pytest 41 passed（2.27 秒）。仅 Mock 验证 Agent 流及 SSE 事件生成；未连接真实模型 API 或进行实际 HTTP 流传输验证。
+
+代码修改记录（2026-10-21）：准备可重复演示和集成验证
+修改前：
+- 新克隆项目没有安全的最小 `.env` 示例；知识检索目录只能固定指向未随仓库提供的 `knowledge_base/`，缺少可公开演示的样例语料。
+- 没有不依赖真实密钥的 HTTP/ASGI API 测试；健康检查和真实链路 smoke 检查缺失，启动、离线测试、MySQL 和模型准备步骤不集中。
+
+修改后：
+- 新增 `.env.example`（仅占位配置）和虚构演示语料；`tools/knowledge.py` 支持由 `KNOWLEDGE_DIR` 配置语料目录。
+- `app.py` 新增不触碰模型和数据库的 `/health` 存活接口。
+- `test/test_api_http.py` 使用 ASGITransport、内存会话管理器和假 Agent 测试真实 HTTP 路由层，无需真实 Key、LLM 或 MySQL。
+- `scripts/smoke_demo.py` 对运行中的服务验证 API、流式 LLM/RAG 证据、MySQL 会话写入/读取/清理。
+- README 整理安装、环境配置、演示数据、启动、离线测试和在线集成 smoke 步骤；`.gitignore` 忽略 `.venv-demo/`。
+
+验证：全新 `.venv-demo` Python 3.12.13 安装 requirements 成功，`pip check` 无冲突；全量 pytest 44 passed（2.07 秒）；真实 HTTP smoke 三项通过（API health、LLM + RAG 演示证据、MySQL 会话历史）；`git diff --check` 通过。真实 smoke 使用现存本地 `.env`，没有显示密钥；脚本创建的临时会话已删除。
+
+[2026-10-21 19:49 +08:00] 记录规则调整：每条 TXT 追加项必须包含准确时间
+修改前：skill 要求追加带日期的记录，但没有规定时间精度或时区。
+修改后：conversation-change-log/SKILL.md 要求每条 TXT 记录在写入时标注本地日期、时间、时区，至少精确到分钟（YYYY-MM-DD HH:mm），不能只记日期或事后推断。
+原因：让用户能准确追溯每次对话/修改记录的发生时间。
+验证：确认 skill 文本包含新规则；本次对话总结和本文件记录均以写入时本地时间 2026-10-21 19:49 +08:00 标记。没有修改项目源代码。
+
+[2026-10-21 20:17 +08:00] 代码修改说明：RAG API 引用和评估追溯
+修改前：
+- `knowledge_search_context` 只返回格式化字符串；Agent 会话中虽保存工具结果，但 `/chat` JSON/SSE 没有结构化引用字段。
+- 检索评估集为 45 条；评估脚本只打印结果，缺少评估集版本指纹和可持久查看的分配置失败明细。
+
+修改后：
+- `tools/knowledge.py` 的上下文工具返回 JSON，包含 evidence、状态和 citations；`app.py` 从最新用户轮次的工具结果中取出引用，JSON 放在 `data.citations`，流式结果放在 `done.citations`。
+- `test/retrieval_dataset.py` 升至 `rag-eval-2.0`，新增真实表达改写与相似干扰问题，合计 80 条（50 可回答、10 一般无答案、20 相似干扰）。
+- `test/evaluate_retrieval.py` 为每次运行生成带时间戳的 JSON 报告，保存评估集版本和 SHA-256、分类计数、检索器设置、参数组合、指标和逐例失败；正文仅留哈希，避免把知识库片段复制进评估文件。
+- README 更新 API 引用协议和评估使用方式；新增评估报告数据完整性测试，并更新知识检索、API 和 ASGI 测试。
+
+验证：全量 pytest 47 passed（1.41 秒）；离线评估 80 条 × 8 组配置成功，报告保存至 `test/evaluation_results/rag_retrieval_20261021_201635_731902_+0800.json`；默认当前配置为可回答命中 40/50、无答案误召回 6/30；`git diff --check` 通过。当前结果仅代表这版开发集和现有知识库。
+
+[2026-10-21 20:32 +08:00] 代码修改说明：Bearer 认证与用户会话隔离
+修改前：
+- 所有 API 可匿名调用；聊天请求默认使用共享 `default` session_id。
+- 会话表按裸 session_id 操作，列表接口返回数据库中的全部会话，未检查调用者身份。
+- 本地跟踪的 `sessions.db` 内有 2 个会话、18 条 user/assistant 对话消息；跟踪的 `logs/app.log` 保存运行日志。
+
+修改后：
+- `app.py` 使用 HTTPBearer 和 `API_AUTH_USERS_JSON` 校验 Bearer Token 并映射到用户 ID；除 `/health` 外的聊天和会话接口都需要认证。
+- `ChatRequest.session_id` 可省略但默认是 None；每次无 session_id 请求生成新 UUID。`Agent.run`/`run_stream` 取消共享默认参数。
+- `app.py` 以用户 ID 的哈希前缀生成数据库内部 session key；CRUD 和引用读取仅使用该 key。`SessionManager.list_sessions(prefix)` 通过 SQL 前缀过滤，API 将内部 key 转回用户持有的公开 session_id。不同用户相同公开 ID 也落到不同存储 key。旧的无前缀记录不自动迁移或对外显示。
+- `.env.example`、README 和 smoke 脚本补充 Token 配置与认证使用方式；ASGI 测试增加认证、归属、列表隔离和独立新会话覆盖。
+- 确认 SQLite 文件含真实对话正文后，`sessions.db` 与 `logs/app.log` 从当前 Git index 移除（工作区本地文件保留），并用 `.gitignore` 忽略。日志当前只有请求活动元数据，但同样停止跟踪以免累积运行信息。
+
+验证：全量 pytest 52 passed（1.33 秒）；认证样例 JSON 解析通过；`git diff --check` 通过。未连 MySQL/LLM。旧提交仍保留历史文件对象，当前操作未重写历史；旧会话数据也没有被删除。
+
+
+[2026-10-21 20:47 +08:00] 代码修改说明：JWT 登录认证与模块规划
+修改前：
+- app.py 内联解析 API_AUTH_USERS_JSON，用静态、不透明 Bearer Token 匹配用户；没有登录换令牌流程。
+- 认证逻辑与 API 路由耦合在 app.py；演示 smoke 脚本直接读取配置中的静态 Token。
+
+修改后：
+- 新增 auth/jwt_auth.py：读取 AUTH_USERS_JSON、JWT_SECRET_KEY、JWT_EXPIRE_MINUTES；校验 PBKDF2 密码、使用固定 HS256 算法签发 JWT，并验证签名、签发者、有效期、用户身份。
+- 新增 auth/passwords.py：以 PBKDF2-HMAC-SHA256 和随机盐生成/验证密码哈希，并提供 python -m auth.passwords 命令。
+- 新增 auth/schemas.py：定义登录请求和令牌数据模型；auth/__init__.py 标记模块包。
+- app.py 移除静态 Token 校验，新增 POST /auth/token。其它受保护路由仍调用 get_current_user，因此此前的会话归属隔离维持按认证用户名执行。
+- .env.example 和 README 更新为密码哈希、JWT 密钥、有效期及登录使用说明；scripts/smoke_demo.py 先请求 /auth/token，再用 JWT 进行原有 API 检查。
+- requirements.txt 固定 PyJWT==2.15.1；ASGI 测试改用账号密码及 JWT，并新增登录成功/错误密码场景。
+
+验证：py_compile 成功；git diff --check 成功；PyJWT 已安装到两个本地虚拟环境。pytest 已尝试，但因沙箱阻塞 Windows asyncio 本地 socket pair 而停在用例执行前，测试结果未验证。未连接真实 LLM/MySQL。配置中的 AUTH_USERS_JSON 需要用户为每个用户名生成并填入密码哈希；JWT_SECRET_KEY 需要替换成随机密钥。
+
+[2026-10-21 20:48 +08:00] 补充：auth/passwords.py 的命令行模式改为 getpass 隐藏输入并要求确认，README 与 .env.example 同步为 python -m auth.passwords。密码不再通过命令参数传入，减少进入 shell 历史的机会。
+
+[2026-10-22 11:36 +08:00] 代码修改说明：隔离 app.py 辅助逻辑
+修改前：app.py 本地定义会话命名空间生成、存储 ID 校验、聊天会话初始化、引用提取和 SSE 流生成函数，路由与这些实现混在同一模块；测试直接访问 app 内部函数。
+修改后：新增 api/session_helpers.py，集中管理用户会话前缀、内部会话 ID 和会话初始化；新增 api/chat_helpers.py，集中管理最近轮次引用提取与 SSE 事件生成。app.py 保留路由、中间件和异常处理，改为调用新模块。测试改为直接引用 helper 模块。
+验证：app.py、新 helper 和相关测试文件通过 py_compile；git diff --check 通过。按本次要求未运行 pytest，运行行为尚未由测试执行验证。
+
+[2026-10-22 11:58 +08:00] 代码修改说明：新增 React + TypeScript 前端
+修改前：项目没有浏览器聊天界面，需直接调用 API 或使用 API 文档交互。
+修改后：新增 frontend/ 独立 Vite + React + TypeScript 应用，包含登录页面、JWT 请求头、流式响应解析、对话增量展示、引用来源折叠展示、新对话/退出登录交互和响应式样式。API 地址开发期由 Vite 代理转发；生产期需配置同源 /api 反向代理，或提供 API 地址并配置后端 CORS。新增 package-lock.json 锁定依赖，根 .gitignore 忽略 frontend 的 node_modules、dist 和本地 env 文件。更新根 README 及 frontend/README.md。
+验证：npm install 成功，审计 0 vulnerabilities；npm run build 成功（TypeScript 检查和 Vite 生产构建）；git diff --check 通过。没有连接真实服务，也未运行自动化测试。
+
+[2026-10-22 16:05 +08:00] 代码修改说明：数据库用户注册与 30 分钟 JWT 登录
+修改前：账号从 AUTH_USERS_JSON 环境变量读取，只有登录换令牌接口；没有注册页面或用户表，也没有令牌持久撤销检查。演示脚本凭据从 DEMO_AUTH_* 读取。
+修改后：新增 auth/repository.py 管理 MySQL auth_users/auth_tokens 表；新增 POST /auth/register，用户名与 PBKDF2-SHA256 密码哈希入库；POST /auth/token 验证数据库用户并发放固定 30 分钟 HS256 JWT，数据库保存令牌 JTI、用户和过期时间；新增 POST /auth/logout 撤销令牌，所有受保护请求检查令牌状态。前端提供注册/登录模式及退出操作；smoke_demo.py 改为交互式输入账号密码；.env.example、README 与测试夹具同步新认证方式。
+涉及文件：auth/repository.py、auth/jwt_auth.py、auth/schemas.py、auth/passwords.py、app.py、scripts/smoke_demo.py、test/test_api_http.py、test/test_api.py、.env.example、README.md、frontend/src/api.ts、frontend/src/App.tsx、frontend/src/styles.css、frontend/README.md。
+验证：py_compile 通过；frontend 中 npm run build（tsc -b 与 Vite production build）通过；git diff --check 通过。未运行 pytest；未连接真实 MySQL 或 LLM，因此数据库建表、注册登录和撤销的真实服务集成尚未实测。未修改本地 .env。
+
+[2026-10-22 16:35 +08:00] 代码修改说明：增加用户关联的历史会话列表
+修改前：sessions 表没有用户外键列；列表查询依赖 session_id 的用户名哈希前缀；前端没有历史会话列表，点击新建后旧会话只能留在数据库，不能从页面恢复。
+修改后：sessions 增加 owner_user_id，可关联 auth_users.id 并级联删除；旧表首次访问时补充列、索引、外键，并尝试按历史前缀回填；创建会话时写入当前用户主键，列表以该主键过滤。前端侧栏读取历史会话，点击可加载对话内容与引用；发送新会话首条消息后刷新列表。
+涉及文件：agent/session.py、api/session_helpers.py、app.py、frontend/src/api.ts、frontend/src/App.tsx、frontend/src/styles.css、test/test_api.py、test/test_api_http.py、test/test_session.py、README.md。
+验证：相关 Python 文件 py_compile 通过；frontend npm run build（tsc -b 与 Vite production build）通过；git diff --check 通过。未运行 pytest，未连接真实 MySQL；外键 DDL、迁移回填及实际列表读取尚未在数据库实例上验证。未修改 .env。
+
+[2026-10-22 16:40 +08:00] 代码修改说明：会话改名
+修改前：sessions 没有标题字段；历史列表只能显示会话 ID，用户不能自定义名称。
+修改后：sessions 增加 VARCHAR(120) title 字段，既有表首次访问时自动补列；新会话以首条消息（压缩空白并截取 120 字符）作为初始标题。新增 PATCH /sessions/{session_id}/title，更新时在 SQL 中同时校验 session_id 和 owner_user_id。前端历史列表展示标题，提供行内编辑、保存、取消，并在当前会话卡片展示名称。
+涉及文件：agent/session.py、api/api_schemas.py、api/session_helpers.py、app.py、frontend/src/api.ts、frontend/src/App.tsx、frontend/src/styles.css、frontend/README.md、README.md、test/test_api.py、test/test_api_http.py、test/test_session.py。
+验证：py_compile 通过；frontend npm run build（tsc -b 与 Vite build）通过；git diff --check 通过。未运行 pytest；未连接 MySQL，无法验证实际 DDL、标题写入及用户归属约束。
+
+[2026-10-22 17:12 +08:00] 代码修改说明：拆分 FastAPI 应用模块
+修改前：用户注册/登录、聊天与会话操作、请求日志和异常响应都集中在根目录 app.py，路由与应用装配耦合。
+修改后：新增 app/users.py 负责注册、登录、退出接口；app/sessions.py 负责聊天和会话 CRUD/改名；app/errors.py 负责日志中间件和异常响应；app/main.py 创建 FastAPI 应用、注册健康检查并挂载路由；app/__init__.py 导出应用。根目录 app.py 保留轻量兼容入口，旧 import app 与 app:app 仍可导入应用；README 推荐启动路径更新为 app.main:app。
+涉及文件：新增 app/__init__.py、app/main.py、app/users.py、app/sessions.py、app/errors.py；替换 app.py；更新 README.md、test/test_api.py、test/test_api_http.py。
+验证：相关代码 py_compile 通过；运行 Python import 检查确认 app 解析为 app 包并可构建应用；git diff --check 通过。未运行 pytest，运行时 API 行为尚未经自动化测试执行。
+
+[2026-10-22 17:20 +08:00] 代码修改说明：适配 logging_config 移入 logs
+修改前：生产导入 app/sessions.py 与 app/errors.py 使用 logs.logging_config，但该配置中 os.makedirs("") 会在导入时失败；FileHandler("app.log") 依赖启动工作目录；测试夹具仍 mock 顶层 logging_config。
+修改后：logs/logging_config.py 通过 Path(__file__).resolve().parent 创建并定位 logs/app.log；新增 logs/__init__.py；测试夹具改为 mock logs.logging_config 包路径。
+涉及文件：logs/logging_config.py、logs/__init__.py、test/test_api.py、test/test_api_http.py。
+验证：py_compile 通过；实际 import app 成功；git diff --check 通过。未运行 pytest，日志文件输出位置未通过服务运行观察验证。
+
+[2026-10-22 17:39 +08:00] 文档修改说明：更新 README
+修改前：README 的项目结构仍将 FastAPI 路由和日志配置描述为旧布局，未列出认证模块、前端、脚本等当前目录，也未说明 .mcp.json 与 Agent MCP 接入状态。
+修改后：目录树反映现有模块组织，补充 .mcp.json 当前仅供本地开发工具使用、Agent 尚未接入 MCP 的说明，并更新项目改进方向。
+涉及文件：README.md。
+验证：对照实际文件结构检查说明；未运行测试（本次仅修改文档）。
+
+[2026-10-23 16:25:39 +08:00] 代码修改说明：数据库操作改用 SQLAlchemy
+修改前：agent/session.py 和 auth/repository.py 各自管理 PyMySQL 连接、游标、SQL 字符串、建表和事务，模型定义与业务数据访问没有统一入口。
+修改后：modules/models.py 集中定义用户、JWT 登记及聊天会话 ORM 模型；modules/database.py 统一惰性创建 Engine、ORM Session、自动提交/回滚，并执行缺少字段补齐和旧会话所有者回填。会话与认证数据操作改为 SQLAlchemy ORM，保留既有 repository/manager 方法接口。测试夹具改为内存 SQLite。
+涉及文件：新增 modules/__init__.py、modules/database.py、modules/models.py；修改 agent/session.py、auth/repository.py、requirements.txt、README.md、test/test_session.py。
+验证：Python py_compile 通过；git diff --check 通过。未运行 pytest；当前环境尚未安装 SQLAlchemy，未验证依赖安装、MySQL 建表/迁移和端到端数据库行为。
+
+[2026-10-24 20:15:13 +08:00] 代码修改说明：移除旧数据库兼容迁移
+修改前：modules/database.py 除 ORM 建表外还会对既有 sessions 表执行补列、补索引、旧会话 owner 回填和补外键。
+修改后：数据库初始化仅调用 SQLAlchemy metadata.create_all 创建缺失表，不检查或变更已有表；现存数据库文件和数据未删除。README 说明旧结构不兼容时改用空数据库或由用户自行迁移。
+涉及文件：modules/database.py、README.md。
+验证：modules/database.py py_compile 通过；git diff --check 通过。未运行 pytest；未验证真实数据库。
+
+[2026-10-24 20:15:30 +08:00] 验证补充：全局 git diff --check 被未修改的 notes.md 尾随空格提示影响；本次涉及的 README.md、modules/database.py、modules/models.py 单独检查通过。notes.md 属于工作区现有修改，未触碰。

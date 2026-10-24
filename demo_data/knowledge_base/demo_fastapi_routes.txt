@@ -1,0 +1,5 @@
+FastAPI 路由设计
+
+FastAPI 使用装饰器声明 HTTP 路由，例如 @app.get("/sessions") 对应 GET 请求，@app.post("/chat") 对应 POST 请求。路由负责接收请求、调用业务逻辑并返回响应。
+
+路由设计应明确路径、请求方法、输入模型、输出格式和错误状态码。API 文档可以由 FastAPI 根据路由和 Pydantic 模型自动生成，便于前端开发和接口调试。

@@ -1,0 +1,5 @@
+Python 模块与包
+
+Python 模块通常对应一个 .py 文件，包用于组织多个相关模块。使用 from tools.schema import create_args_model 时，Python 会根据模块搜索路径定位 tools 包及其中的 schema 模块，再导入指定名称。
+
+将 API、Agent、工具实现和数据访问分开，可以降低模块之间的耦合。但拆分目录并不自动保证架构合理，仍需注意循环导入、依赖方向和模块初始化时执行的副作用。

@@ -1,0 +1,125 @@
+本次对话总结
+日期：2026-10-17
+
+用户要求：先不要改动项目代码，先通读项目，说明项目当前能完成的任务、技术栈是否足够、是否适合写进简历、与成熟 Agent 的差距及项目不足；将总结写入项目目录中新建的 TXT 文件夹。另要求再生成一个本次对话总结文件，以及一个未来记录代码修改说明的文件（当前先不填写），总计三个 TXT 文件。
+
+处理记录：只读检查了项目结构、README、Python 源码、工具、API、知识库与测试/评估脚本；没有读取 .env、sessions.db 或日志内容，没有运行项目或测试，也没有改动代码。分析结论和运行验证边界见“项目代码分析与简历评估.txt”。“未来代码修改说明.txt”按要求留空，供之后记录。
+后续记录约定与本次代码修改（2026-10-17）
+用户要求：今后每次对话都更新“本次对话总结.txt”；发生代码修改时，在“未来代码修改说明.txt”记录修改前后分别实现的能力。
+本次工作：按用户要求修改启动依赖耦合，并同步更新 README 和项目分析报告。未运行测试。
+创建记录 Skill（2026-10-17）
+用户询问能否生成 Skill。已创建个人 Skill：conversation-change-log，路径为 C:\Users\22418\.codex\skills\conversation-change-log\SKILL.md。Skill 用于持续维护项目对话总结，以及在代码变更时记录变更前后、涉及位置和验证状态；默认沿用用户指定文件路径。使用 skill-creator 的 quick_validate.py 验证通过。本次未修改项目代码，因此未新增代码修改说明。
+自动化测试完善（2026-10-19）
+用户要求完善项目自动化测试。新增/扩展了 Agent 工具调用、参数/执行错误及最大循环次数测试；将知识库测试改为模拟 embedding 的离线测试，并覆盖文件加载、空语料、懒加载、排序/阈值/去重/Top-K 和证据格式；增加会话层伪数据库测试及 API 路由函数/请求模型测试。运行命令：.venv\Scripts\python.exe -m pytest test/ -v --basetemp=.pytest_cache/codex-test-tmp-20261019-final，结果 30 passed（1.70 秒）。测试未连接真实 MySQL/LLM，也未覆盖真实 HTTP/ASGI 请求链路。没有修改应用运行时代码。工作区中 notes.md 已有用户修改，本次保留未动。
+RAG 混合检索优化（2026-10-19）
+用户要求：优化 RAG 知识检索，实现向量检索与关键词检索结合。
+处理结果：在原向量余弦检索上新增 BM25 关键词检索，英文按词匹配、中文使用重叠二元/三元字片段；对有词面命中的候选按 0.7 向量分与 0.3 归一化关键词分融合排序，纯向量候选沿用原相似度分数。检索结果提供综合分、向量分、关键词分及来源。补充混合检索和 BM25 离线测试，评测集增加有答案/无答案样本，并更新 README 和缓存重置逻辑。
+验证：完整测试命令 `.venv\Scripts\python.exe -m pytest test/ -v --basetemp=.pytest_cache/codex-test-tmp-20261019-hybrid-rerun`，33 passed（1.85 秒）。没有运行依赖真实 embedding 模型的检索评测脚本；实际效果仍需用更大、标注充分的数据集验证。
+
+RAG 评估集完善（2026-10-19）
+用户要求：完善 RAG 评估集。
+处理结果：将评估集扩展为 45 条，覆盖企业/招聘、Agent 工具流程、RAG、Python、FastAPI、数据库、安全和项目交付主题；其中 35 条可回答问题（包含改写、多事实和关键词问题），10 条无答案问题。正例增加允许来源文件和标准证据词。评估脚本新增来源约束 Recall@K、MRR、类别命中率及未命中/误召回查询明细；新增数据集完整性测试，检查来源和标准证据词。
+验证：`.venv\Scripts\python.exe -m pytest test/ -v --basetemp=.pytest_cache/codex-test-tmp-20261019-rag-dataset`，34 passed（2.19 秒）。没有运行真实 embedding 检索参数评测；测试集的标注完整性经过验证，实际检索表现仍需要运行评测脚本测量。
+
+RAG 误召回率全为 100% 的排查与修复（2026-10-19）
+用户反馈：评测中无答案问题的误召回率各配置均为 100%。
+排查结果：关键词通道原先只要 BM25 分数大于 0 就能绕过向量阈值；中文重叠字片段使“公司”等泛词产生大量匹配。评测前基线各参数均误召回 10/10 个无答案问题。
+处理结果：BM25 查询词过滤通用词/疑问词；关键词候选需满足 0.4 有效查询词覆盖率；默认向量阈值从 0.55 调到 0.60，并在参数集加入 0.60、0.61 对照。
+实测（真实缓存 embedding 模型、45 条当前评测集）：chunk=300、overlap=50 时，阈值 0.55 为 Recall@K 91%、误召回 20%；阈值 0.60 为 89%、10%；阈值 0.61 为 86%、0%；阈值 0.65 为 74%、0%。采用 0.60 作为默认折中。全量 pytest：36 passed（2.38 秒）。
+限制：负例仅 10 条，阈值效果可能对当前小评测集过拟合，应继续收集真实无答案问题。
+
+RAG 文本切分优化（2026-10-19）
+用户要求：优化 RAG 文本切分。
+处理结果：`tools/text_splitter.py` 从固定长度切片改为优先沿句子结束符、段落/换行及空白位置切分；长句、无标点文本仍受 chunk_size 限制并采用字符兜底。重叠起点尽量对齐自然边界，同时保持长文本覆盖和 overlap 行为。新增中文句界、英文单词边界及长无标点文本测试；README 更新分块策略。
+验证：完整 pytest 39 passed（1.87 秒）。离线重跑真实 embedding 检索评估：300/50 下现有评估指标与旧切分持平；100/20、阈值 0.45 时命中率由 74% 到 77%，其他小块/高阈值配置结果有轻微变化。分块提升主要体现在边界完整性，当前评估集没有显示 300/50 的召回提升。
+
+[补录时间：2026-10-21 20:04 +08:00] 恢复近期对话总结
+检查发现：本文件旧记录仍在，但末尾停在 2026-10-19 的文本切分记录；2026-10-21 之后的若干摘要没有保留。现有文件无法确认这些内容具体在哪次写入中丢失，因此不推断具体原因。以下根据仍保留的“未来代码修改说明.txt”和本对话历史补录，方括号中的时间是本次补录时间，不冒充原始对话时间。
+
+项目代码复核（2026-10-21）
+复核当前 Agent、FastAPI、工具、RAG、会话和测试代码，说明项目能力、技术栈、简历表达、成熟 Agent 差距与改进建议。该轮按用户要求未改代码；分析报告保存在项目分析 TXT 文件中。
+
+流式输出（2026-10-21）
+Agent 增加流式生成和流式工具调用处理，`POST /chat` 默认 SSE，保留 `stream:false` 的 JSON 兼容模式；增加流式测试。此前测试记录为 41 passed。
+
+可重复演示交付（2026-10-21）
+新增占位 `.env.example`、虚构演示语料、`KNOWLEDGE_DIR` 配置、`/health`、ASGI HTTP 测试和真实 HTTP smoke 脚本；README 补充干净环境安装、配置与启动步骤。在全新 Python 3.12.13 虚拟环境安装成功，`pip check` 无冲突；完整测试 44 passed。真实 smoke 验证 API、流式 LLM + RAG 演示证据、MySQL 会话历史，临时会话已清理。
+
+TXT 时间戳规则与注释语言偏好（2026-10-21）
+更新 `conversation-change-log` skill，要求每条 TXT 记录写入当时本地日期、时间和时区，至少精确到分钟；后续新增或修改代码注释使用中文。
+
+本次咨询：向量检索优化（：2026-10-21 20:04 +08:00）
+检查 `tools/knowledge.py`：知识片段、BM25 索引和文档向量在进程内由 `lru_cache` 缓存；服务进程存活时不会每次查询都重新编码整库，但每次查询仍需编码 query，并与所有片段做精确相似度比较。持久化文档向量可避免重启后重新编码，普通数据库字段本身不等于检索加速；需要向量索引/ANN 才可能减少最近邻搜索工作。建议先测耗时，再按需做带语料指纹和模型版本的持久缓存、增量更新；继续扩充评估集，语料规模上升后再引入 ANN。仅提供建议，本次未改代码。
+
+[2026-10-21 20:17 +08:00] RAG 引用展示与评估集可追溯性
+用户要求：完善 RAG 证据体验和评估；API 返回引用来源；扩大真实风格的可回答、无答案和相似干扰问题；保存评估集版本、配置和失败案例。
+处理结果：知识检索工具现在返回结构化 JSON，包含给模型使用的 evidence 和供客户端展示的 citations（来源、原始片段、综合/向量/关键词分数）；`/chat` JSON 响应在 `data.citations` 返回本轮真实工具结果的引用，SSE 在 `done.citations` 返回，不另行重复检索。无证据时返回空引用。评估集升为 `rag-eval-2.0`，80 条（50 可回答、10 一般无答案、20 相似干扰）。评估运行会在 `test/evaluation_results/` 写 JSON，记录生成时间、评估集 SHA-256、分类分布、向量模型与融合参数、各组分块/阈值/Top-K 配置、指标及失败问题；为避免复制知识正文，失败结果只保存来源、分数和内容哈希。
+验证：全量 pytest 47 passed（1.41 秒）；离线用本机 `knowledge_base` 与缓存 embedding 跑完 8 组检索配置并生成报告；`git diff --check` 通过。当前配置 chunk=300/overlap=50/threshold=0.60/top_k=3，命中 40/50 可回答，误召回 6/30 无答案（20%）；这只是当前小型开发评估集结果。报告文件为 `test/evaluation_results/rag_retrieval_20261021_201635_731902_+0800.json`。未调用真实 LLM 或 MySQL。
+
+[2026-10-21 20:20 +08:00] 解释 RAG 引用与评估改动
+用户要求：详细解释刚完成的 RAG 证据体验、API 引用和评估集/报告功能。
+答复说明：解释结构化检索工具结果如何含 evidence/citations，Agent 会话如何保留工具结果，API 如何提取最新轮次引用并分别返回 JSON/SSE；说明 80 条评估集分类、失败判定、配置扫描和 JSON 报告字段；解释当前 300/50/0.60/3 配置的 40/50 可回答命中与 6/30 无答案误召回仅适用于当前知识库和开发集。提醒引用作为独立字段由前端展示，并非自动插入模型自然语言回答。没有新增代码改动。
+
+[2026-10-21 20:32 +08:00] API 认证、会话所有权隔离与敏感文件跟踪处理
+用户要求：增加认证和会话所有权校验，移除共享默认会话行为，限制会话列表访问；先检查数据库和日志是否包含真实对话，再决定 Git 跟踪处理。该需求也涉及会话隔离。
+检查结果（未输出正文）：Git 跟踪的 `sessions.db` 可读为 SQLite，含 `sessions` 表、2 个会话和 18 条 user/assistant 消息（各 9 条），确认包含对话正文；`logs/app.log` 72 行、13 条 `/chat` 请求元数据，未发现消息正文/角色内容、Authorization 头或对话标签。`logging_config.py` 也只设置请求日志，不记录请求正文。历史记录显示数据库/日志在多个旧提交中出现。
+处理结果：新增 Bearer Token 认证，使用 `API_AUTH_USERS_JSON` 中用户 ID 到唯一 32 字符以上 Token 的映射；未配置时除健康检查外拒绝访问，`/health` 保持公开。所有会话路由需认证。会话 ID 在存储层按用户 ID 哈希前缀隔离；创建/读取/清空/删除及列表均在该命名空间执行，列表 SQL 只查当前用户前缀。未提供 session_id 时生成新的随机 ID，不再共用 `default`；Agent.run/run_stream 要求显式传入 session_id。旧的未命名空间会话不自动归属或展示。新增 `.env.example` 配置和 README 说明，smoke 脚本发送 Bearer Token 并检查引用。按检查结果将 `sessions.db`、`logs/app.log` 从当前 Git 索引移除并忽略，保留本地文件；未重写旧 Git 历史。
+验证：全量 pytest 52 passed（1.33 秒），覆盖无认证拒绝、health 公开、跨用户会话不可读/清空/删除、列表隔离、无 ID 时生成独立会话，以及 SQL 按前缀过滤。`.env.example` 的认证映射可解析；`git diff --check` 通过。没有连接真实 MySQL 或运行真实 LLM。当前索引已不再跟踪这两个文件且本地文件仍存在；旧提交中仍保留历史版本。
+
+
+[2026-10-21 20:47 +08:00] 将 API 静态 Bearer Token 认证改为 JWT
+用户要求：接入 JWT，并按功能规划代码，可新增 Python 文件或目录。
+处理结果：新增 auth/ 包，将 PBKDF2 密码哈希、登录用户校验、JWT 签发/校验和认证模型独立存放；新增 POST /auth/token 以 JSON 账号密码换取 JWT。现有 API 路由继续按 JWT 用户名隔离会话。更新环境变量示例、README 和真实链路 smoke 脚本；PyJWT 2.15.1 已加入 requirements.txt，并安装到 .venv 与 .venv-demo。密码哈希生成方式为 python -m auth.passwords <密码>，令牌默认 30 分钟过期。
+检查：py_compile 对 app、auth 模块、smoke 脚本和 ASGI 测试文件通过；git diff --check 无空白错误。尝试运行 ASGI pytest，但运行停在 Windows asyncio 创建本地 socket pair，未进入测试断言，原因是沙箱环境阻塞该本地 socket 操作；因此没有可报告的测试通过数。未调用真实 LLM 或 MySQL。
+
+[2026-10-21 20:48 +08:00] 补充：密码哈希命令已调整为隐藏输入并二次确认，实际用法为 python -m auth.passwords（不再把明文密码放在命令行参数中）。
+
+[2026-10-22 11:36 +08:00] 将 app.py 辅助函数拆分到 api 模块
+用户要求：把 app.py 中的辅助函数隔离出去。已将用户会话命名空间/创建逻辑移入 api/session_helpers.py，将本轮引用提取及 SSE 生成移入 api/chat_helpers.py；app.py 通过导入调用这些功能，路由行为保持一致。更新 test/test_api.py 与 test/test_api_http.py 中的辅助函数引用。py_compile 和 git diff --check 通过；本次未运行 pytest。
+
+[2026-10-22 11:58 +08:00] 新增 React + TypeScript 聊天前端
+用户要求：使用 React + TypeScript 构建简单前端，并放入新文件夹。已新建 frontend/，使用 Vite，提供 JWT 登录、sessionStorage 保存当前标签页令牌、SSE 流式聊天、展示检索引用和新建对话。Vite 开发代理将 /api 转发至本地 FastAPI。添加前端 README、环境示例和根 README 启动步骤。npm install 成功，审计报告 0 vulnerabilities；npm run build 成功。未连接真实 API/LLM/MySQL，未运行自动化测试。
+
+[2026-10-22 15:38 +08:00] 说明当前 JWT 账号管理方式
+用户询问是否有注册/登录接口、账号密码是否存入数据库。核对结果：只有 POST /auth/token 登录换取 JWT 的接口，没有注册接口或注册页面；AUTH_USERS_JSON 从环境配置加载用户名到 PBKDF2 密码哈希的映射，没有用户数据库表，密码和 JWT 均未写入 MySQL。DEMO_AUTH_PASSWORD 是 smoke 脚本专用本地配置项，不供登录认证使用。说明账号需管理员预先配置；当前无自助注册、改密或重置密码功能。
+
+[2026-10-22 15:42 +08:00] 说明前端运行所需软件与启动方法
+用户询问如何使用新建的前端、需要安装什么。核对前端 Vite 代理默认连接 127.0.0.1:8000，开发服务器位于 frontend/。说明当前开发环境已检测到 Node.js v26.0.0 与 npm 11.12.1，npm install 已完成，通常无需在此环境再下载；另一设备需要 Node.js（推荐官方 LTS，含 npm）和浏览器。说明启动 MySQL/配置后端 .env 与 AUTH_USERS_JSON 账号、启动 FastAPI，再在 frontend 运行 npm run dev 并访问 localhost:5173；换干净环境需 npm install。没有代码修改。
+
+[2026-10-22 15:49 +08:00] 解释 JWT 环境变量配置段
+用户询问 AUTH_USERS_JSON、JWT_SECRET_KEY、JWT_EXPIRE_MINUTES、DEMO_AUTH_USERNAME 和 DEMO_AUTH_PASSWORD 的用途。说明 AUTH_USERS_JSON 存用户名到 PBKDF2 密码哈希的映射，登录时前端提交原密码但后端只校验哈希；JWT_SECRET_KEY 用于签名，改动会使旧令牌失效；JWT_EXPIRE_MINUTES 控制令牌有效期；DEMO_AUTH_* 仅供 smoke_demo.py 登录调用，不是账号数据库或认证来源，须与 AUTH_USERS_JSON 中账号对应。提醒这些占位值需替换并写入不提交的 .env。无代码修改。
+
+[2026-10-22 16:05 +08:00] 重做注册与登录
+用户要求：移除依赖环境变量预置账号的登录方式，增加 FastAPI 注册/登录，用户名和密码哈希存数据库，前端提供对应入口，并签发有效 30 分钟的 JWT。已新增 auth/repository.py，自动创建 auth_users 和 auth_tokens 表；注册将规范化用户名与 PBKDF2-SHA256 哈希写入用户表，登录验证数据库哈希并签发 JWT，数据库只登记 jti/用户 ID/到期时间，不保存 JWT 原文；受保护 API 每次检查令牌是否过期或撤销。新增注册、退出接口，前端增加注册模式及登出撤销，smoke_demo 改为交互输入凭据；移除了 .env.example 中旧 AUTH_USERS_JSON、DEMO_AUTH_* 和可调过期时间配置。验证：Python py_compile 通过；前端 npm run build 通过；git diff --check 通过。未运行 pytest，也未连接真实 MySQL/LLM，数据库端到端行为仍需在配置好的 MySQL 环境验证。实际 .env 未修改。
+
+[2026-10-22 16:22 +08:00] 排查注册用户名未在数据库中出现
+用户反馈注册后用户名在数据库中没看到。检查代码确认 POST /auth/register 会调用 AuthRepository.create_user，插入 auth_users 并显式 commit；用户名会 trim 并转成小写；数据库连接从 MYSQL_HOST/PORT/USER/PASSWORD/DATABASE 环境变量读取。当前不能安全确认用户实际使用的 MySQL 实例/库名，也未读取密钥和密码值，未连接真实数据库。建议检查注册响应是否为 HTTP 201/提示“注册成功”，并在应用相同 host/schema 下查询 auth_users；确认查看的 MYSQL_DATABASE 与运行 FastAPI 的 .env 一致。若界面提示成功但表中仍无记录，需提供脱敏的注册 HTTP 状态/错误信息，以及所查数据库名和表名继续定位。
+
+[2026-10-22 16:28 +08:00] 排查前端新会话似乎覆盖旧会话
+用户反馈点击新会话后旧会话被覆盖。核对前端 startNewChat 只清空当前页面的 messages 并将 sessionId 置为 null；它不会删除数据库记录。下一条消息不带 session_id，后端 resolve_chat_session 会生成新的 UUID；agent.session_manager.save 使用该会话 ID 写入独立 sessions 行。当前界面没有会话历史列表/切换入口，因此旧会话从画面消失但通常仍在数据库。未改代码，未连接数据库；建议通过 sessions 表确认记录，并区分页面状态清空与数据库删除。
+
+[2026-10-22 16:35 +08:00] 增加历史会话列表并关联用户表
+用户要求：前端增加历史会话列表，并将 sessions 表关联到用户表。新增 sessions.owner_user_id 外键指向 auth_users.id；首次会话访问时为旧表补列、索引和外键，并尝试根据旧 session_id 的用户哈希前缀回填；新建会话写入数据库用户 ID，历史列表按 owner_user_id 查询。前端侧栏可查看会话、点击加载消息和引用，新对话后刷新历史列表。更新 README 和相关测试夹具。验证：Python py_compile、前端 npm run build、git diff --check 通过；未运行 pytest，未连接真实 MySQL，数据库迁移和旧数据回填仍需在目标 MySQL 首次访问时实测。
+
+[2026-10-22 16:40 +08:00] 新增会话修改名称
+用户要求：为会话增加修改名称功能。sessions 表新增 title 字段，旧表首次访问自动补列；列表 API 返回名称；新会话首条消息被截取为初始名称。新增 PATCH /sessions/{session_id}/title，更新 SQL 同时匹配 session_id 和 owner_user_id；前端历史列表显示标题并提供编辑、保存和取消入口，当前会话卡片显示名称。更新 API/前端说明和测试夹具。验证：涉及 Python 文件 py_compile 通过；frontend npm run build（TypeScript 与 Vite）通过；git diff --check 通过。未运行 pytest，未连接真实 MySQL，title 字段迁移与改名接口数据库写入未端到端验证。
+
+[2026-10-22 17:03 +08:00] 静态检查项目冗余代码
+用户要求检查是否有多余代码，本次只读检查未修改代码。确认 Agent.run 用于 JSON 聊天及评估流程，run_stream 用于 SSE，二者都有调用场景，不是可直接删除的重复函数；但 system prompt、工具参数校验/执行和循环控制存在重复实现，后续可抽取共享逻辑。api/api_schemas.py 的 ChatResponse 当前无项目代码引用，可列为低风险清理候选。运行 Ruff 检查因环境未安装 ruff 而无法完成；rg 静态搜索已用于引用核对。未执行测试。
+
+[2026-10-22 17:12 +08:00] 将 FastAPI app.py 拆分为三类模块
+用户要求创建 app 文件夹并把原 app.py 按会话操作、用户操作、异常处理拆分。新增 app/sessions.py、app/users.py、app/errors.py；新增 app/main.py 组装 FastAPI 和路由；app/__init__.py 导出 app；根目录 app.py 改成兼容旧入口的转发模块。README 启动命令更新为 uvicorn app.main:app --reload。调整 API 测试夹具从会话路由模块引用，并避免 app 子模块缓存导致 fake 依赖串用。验证：相关 Python 文件 py_compile 通过；实际 import app 时解析到 app/__init__.py 且应用可导入；git diff --check 通过。未运行 pytest。
+
+[2026-10-22 17:20 +08:00] logging_config 移入 logs 目录后的导入检查
+用户将 logging_config.py 移入 logs。核对 app/errors.py、app/sessions.py 已改为 logs.logging_config 导入；发现移动后的 logs/logging_config.py 仍含 os.makedirs("")，导入会失败，且日志目标会落在进程工作目录。已修为以 __file__ 定位 logs 目录、确保目录存在并写到 logs/app.log；新增 logs/__init__.py；测试夹具的 logger mock 更新为 logs.logging_config。验证：相关 Python 文件 py_compile 通过；实际 import app 成功；rg 未发现旧生产导入；git diff --check 通过。未运行 pytest。
+
+[2026-10-22 17:39 +08:00] 更新 README
+用户要求更新 README。已对照实际项目结构调整目录树，补充 app 路由拆分、auth 认证模块、日志配置、前端、脚本、演示语料与 MCP 配置说明；说明当前 Agent 尚未接入 MCP，并更新后续改进方向。仅修改文档，没有改动应用代码；未运行测试。
+
+[2026-10-23 16:25:39 +08:00] 将数据库访问重构为 SQLAlchemy ORM
+用户要求用 SQLAlchemy 管理数据库并改善代码结构，将 ORM 模型放在 modules 目录。新增 modules/database.py 统一配置惰性 Engine、Session 生命周期、建表和旧 sessions 表兼容迁移；新增 modules/models.py 定义 AuthUser、AuthToken、ChatSession。重写 agent/session.py 与 auth/repository.py，保留原有数据访问方法和认证接口，通过 ORM 查询、增删改；增加 SQLAlchemy 依赖并更新 README。将原 PyMySQL 字符串 SQL 假对象测试替换为 SQLite ORM 测试夹具。未上传 GitHub；未运行 pytest。Python py_compile 和 git diff --check 已通过；当前虚拟环境没有安装 SQLAlchemy，尚未验证依赖安装后及真实 MySQL 的运行行为。
+
+[2026-10-24 20:15:13 +08:00] 移除旧数据库自动兼容逻辑
+用户补充说明可以忽略旧数据库。已从 modules/database.py 移除旧 sessions 表补列、补索引、回填 owner_user_id、补外键等迁移逻辑，初始化现在只按 SQLAlchemy ORM 模型创建缺失表；未删除现存数据库文件或数据。更新 README 说明 create_all 不会修改已有表，旧表不兼容时应使用空数据库或自行迁移。未运行 pytest；py_compile 与 git diff --check 通过。未提交或上传 GitHub。
+
+[2026-10-24 20:15:30 +08:00] 检查记录更正：全局 git diff --check 因工作区 notes.md 中已有的尾随空格提示失败；本次改动文件 README.md、modules/database.py、modules/models.py 单独检查通过。未修改 notes.md。

@@ -1,0 +1,4904 @@
+{
+  "report_schema_version": 1,
+  "generated_at": "2026-10-21T20:16:35+08:00",
+  "dataset": {
+    "version": "rag-eval-2.0",
+    "sha256": "2706f41e55e792aaff57e490585823e52fc53236a978277ca455b2c81e03fe8a",
+    "case_count": 80,
+    "category_counts": {
+      "keyword": 9,
+      "multi_fact": 11,
+      "no_answer": 10,
+      "paraphrase": 17,
+      "realistic_paraphrase": 13,
+      "similar_distractor": 20
+    }
+  },
+  "retriever_settings": {
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "dense_weight": 0.7,
+    "keyword_weight": 0.3,
+    "bm25_k1": 1.5,
+    "bm25_b": 0.75,
+    "keyword_min_coverage": 0.4
+  },
+  "configurations": [
+    {
+      "chunk_size": 100,
+      "overlap": 20,
+      "threshold": 0.45,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 100,
+      "overlap": 20,
+      "threshold": 0.55,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.45,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.55,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.6,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.61,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.65,
+      "top_k": 3
+    },
+    {
+      "chunk_size": 500,
+      "overlap": 50,
+      "threshold": 0.55,
+      "top_k": 3
+    }
+  ],
+  "results": [
+    {
+      "chunk_size": 100,
+      "overlap": 20,
+      "threshold": 0.45,
+      "top_k": 3,
+      "hit_rate": 0.76,
+      "mrr": 0.7766666666666666,
+      "false_positive_rate": 0.9,
+      "positive_hits": 38,
+      "positive_total": 50,
+      "false_positives": 27,
+      "negative_total": 30,
+      "missed_queries": [
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "工具调用参数应该如何防止模型生成错误？",
+        "Agent 怎么避免陷入无限次调用工具？",
+        "工具执行失败后，错误应该怎样反馈？",
+        "Python 的 finally 代码块什么时候运行？",
+        "FastAPI 出错时如何区分资源不存在和服务端故障？",
+        "项目里应该怎样保存 API Key？",
+        "RAG 项目验收应该记录哪些检索结果？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+        "简历里写延迟降低 80% 之前，至少应该有什么依据？"
+      ],
+      "false_positive_queries": [
+        "公司老板的姓氏是什么？",
+        "公司的具体月薪范围是多少？",
+        "公司是哪一年成立的？",
+        "公司总部的街道和门牌号是什么？",
+        "公司目前有多少名员工？",
+        "公司的产品今年收入是多少？",
+        "这家公司的正式法定名称是什么？",
+        "实习岗位每周需要到岗几天？",
+        "公司是否提供餐补和住房补贴？",
+        "公司在南山区的办公楼具体叫什么，在哪一层？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "这个岗位是每周固定到岗五天，还是可以远程办公？",
+        "投递这份实习简历的截止日期是哪一天？",
+        "招聘方要求候选人的本科专业必须是哪一个？",
+        "公司面试一共有几轮，每轮分别由谁参加？",
+        "项目中的向量相似度阈值在生产环境精确配置成多少？",
+        "这套知识库目前一共有多少条文档和多少个向量？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "这个 API 每分钟允许同一个用户调用多少次？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "项目的 CI 每天几点触发完整回归测试？",
+        "测试部门今年累计关闭了多少个缺陷？",
+        "这家公司今年智能问答产品的实际收入是多少？",
+        "招聘团队承诺多久之内一定会给候选人反馈？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 10
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 11
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 8
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 1
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 9
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 2
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6251,
+              "dense_score": 0.6251,
+              "keyword_score": 2.85,
+              "content_sha256": "c1ac4e297831a0813d087cf260f8dc38dd23cc06fc8fd762e062f3df6c67f119"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5799,
+              "dense_score": 0.5799,
+              "keyword_score": 9.7512,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5752,
+              "dense_score": 0.5752,
+              "keyword_score": 2.8968,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            }
+          ]
+        },
+        {
+          "case_id": "R006",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "工具调用参数应该如何防止模型生成错误？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6991,
+              "dense_score": 0.6991,
+              "keyword_score": 18.1857,
+              "content_sha256": "9866a9d12ee2a1c0e7c5f73e70a9d37802fe37011c7a086db840e80f3fd711d1"
+            },
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6739,
+              "dense_score": 0.6739,
+              "keyword_score": 23.1089,
+              "content_sha256": "04722be816ecc53b796f2927f1b19450da868b16fbf234a412e1dd2e32c4e666"
+            },
+            {
+              "source": "demo_agent_schema.txt",
+              "score": 0.6738,
+              "dense_score": 0.6738,
+              "keyword_score": 32.4148,
+              "content_sha256": "a0050a2663cbb2c838139604f9e617cb7be60f28bf7c9f63a997d6417c62475e"
+            }
+          ]
+        },
+        {
+          "case_id": "R007",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "Agent 怎么避免陷入无限次调用工具？",
+          "expected_evidence": [
+            "最大迭代次数",
+            "最大轮数限制"
+          ],
+          "allowed_sources": [
+            "demo_agent_loop.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6599,
+              "dense_score": 0.6599,
+              "keyword_score": 5.3228,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6222,
+              "dense_score": 0.6222,
+              "keyword_score": 7.928,
+              "content_sha256": "6d599f2424260e067fc3dfca809827e6f5cb153e36395a923f65a305aa37e98a"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6175,
+              "dense_score": 0.6175,
+              "keyword_score": 1.7331,
+              "content_sha256": "71c7e0bb5dfff347ddac410033141b108d4999702dc06a007a6efb8ed3c3a9f2"
+            }
+          ]
+        },
+        {
+          "case_id": "R009",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "工具执行失败后，错误应该怎样反馈？",
+          "expected_evidence": [
+            "失败不应被伪装成成功结果",
+            "重试策略"
+          ],
+          "allowed_sources": [
+            "demo_agent_failures.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.8042,
+              "dense_score": 0.738,
+              "keyword_score": 28.0858,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.7187,
+              "dense_score": 0.7187,
+              "keyword_score": 6.9608,
+              "content_sha256": "d8a7e42de88e114ac74996f99e26846dd9e590ea8dfcfc2a91ebe788ebe2af23"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.718,
+              "dense_score": 0.5971,
+              "keyword_score": 29.2974,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            }
+          ]
+        },
+        {
+          "case_id": "R018",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "Python 的 finally 代码块什么时候运行？",
+          "expected_evidence": [
+            "finally",
+            "无论成功或失败"
+          ],
+          "allowed_sources": [
+            "demo_python_exceptions.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6394,
+              "dense_score": 0.6394,
+              "keyword_score": 3.0437,
+              "content_sha256": "eb0b38ac2b2b092d397244442bed0f79a4bbf0632409a61ba453307a92416815"
+            },
+            {
+              "source": "demo_python_exceptions.txt",
+              "score": 0.6369,
+              "dense_score": 0.6369,
+              "keyword_score": 9.9432,
+              "content_sha256": "03496608b2353b8ba1c1edf0280ee535f6c0e10f981c008c559e7a0d2b85747f"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6289,
+              "dense_score": 0.6289,
+              "keyword_score": 3.9461,
+              "content_sha256": "dc5e7425edc950c3dc204177647558df21c52d98c61bfa04fd79530370d4d17d"
+            }
+          ]
+        },
+        {
+          "case_id": "R023",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "FastAPI 出错时如何区分资源不存在和服务端故障？",
+          "expected_evidence": [
+            "合理的状态码",
+            "HTTPException"
+          ],
+          "allowed_sources": [
+            "demo_fastapi_errors.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6973,
+              "dense_score": 0.6973,
+              "keyword_score": 1.7356,
+              "content_sha256": "ed53d407082d5bde05f868e5b59c6fb24497c96cdd10d229a26ff0678e4a2b59"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6773,
+              "dense_score": 0.6773,
+              "keyword_score": 2.2965,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6753,
+              "dense_score": 0.6753,
+              "keyword_score": 1.947,
+              "content_sha256": "251395691d329d5ff6d03f8ab2d5ec587626978c3761da0668fada71266ec4e2"
+            }
+          ]
+        },
+        {
+          "case_id": "R028",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "项目里应该怎样保存 API Key？",
+          "expected_evidence": [
+            "环境变量",
+            "密钥管理机制"
+          ],
+          "allowed_sources": [
+            "demo_company_security.txt",
+            "demo_deployment_config.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6324,
+              "dense_score": 0.6324,
+              "keyword_score": 2.1059,
+              "content_sha256": "1b73cbeaf349f35655a7fcb95d5354fcb16ebcfe74e4d56759c856b7c3c735e9"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6217,
+              "dense_score": 0.6217,
+              "keyword_score": 1.8218,
+              "content_sha256": "32367e5e0bd965584512de451a9367bd4d8665e3eba93bb68b43604694ac3d02"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6187,
+              "dense_score": 0.6187,
+              "keyword_score": 0.0,
+              "content_sha256": "14c2af34d8b1d30c3200b4d440c321afd806de791573c7cecf049025603b1aba"
+            }
+          ]
+        },
+        {
+          "case_id": "R034",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "RAG 项目验收应该记录哪些检索结果？",
+          "expected_evidence": [
+            "正确证据是否被检索",
+            "无答案"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_evaluation.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7116,
+              "dense_score": 0.7116,
+              "keyword_score": 15.4582,
+              "content_sha256": "5cc113ad8e8b1a7452dc6a6b9da9001c067b23aed0b55b512a6616fcf93a93da"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.7047,
+              "dense_score": 0.7047,
+              "keyword_score": 5.5391,
+              "content_sha256": "c10cd2a598414f28168bffa2f86b92f115c54ef3cd439d5610faefaae288c323"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6914,
+              "dense_score": 0.6914,
+              "keyword_score": 7.1527,
+              "content_sha256": "2a1bc341623a997b4f9e2380edc322be0a8aeee417862853ba34ece62323f2bf"
+            }
+          ]
+        },
+        {
+          "case_id": "R036",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司老板的姓氏是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4718,
+              "dense_score": 0.4718,
+              "keyword_score": 0.0,
+              "content_sha256": "1ed9b26d74f6eb43143dda993f3d5dabae2df80c22306897cea8c4acae02b491"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4611,
+              "dense_score": 0.4611,
+              "keyword_score": 0.0,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            }
+          ]
+        },
+        {
+          "case_id": "R037",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的具体月薪范围是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.559,
+              "dense_score": 0.559,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5413,
+              "dense_score": 0.5413,
+              "keyword_score": 5.9185,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5412,
+              "dense_score": 0.5412,
+              "keyword_score": 6.7874,
+              "content_sha256": "71c69aeded33c388363229fc7c3c63a246c82bc3e58e406512630452f9efc83c"
+            }
+          ]
+        },
+        {
+          "case_id": "R038",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司是哪一年成立的？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5147,
+              "dense_score": 0.5147,
+              "keyword_score": 0.0,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            }
+          ]
+        },
+        {
+          "case_id": "R039",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司总部的街道和门牌号是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.4576,
+              "dense_score": 0.4576,
+              "keyword_score": 0.0,
+              "content_sha256": "ad316a044fcdcb53ef3686e5b8a0b04caf8c8cc539bcf138b9abc21d8b59953e"
+            }
+          ]
+        },
+        {
+          "case_id": "R040",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司目前有多少名员工？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5063,
+              "dense_score": 0.5063,
+              "keyword_score": 0.0,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4971,
+              "dense_score": 0.4971,
+              "keyword_score": 0.0,
+              "content_sha256": "71c69aeded33c388363229fc7c3c63a246c82bc3e58e406512630452f9efc83c"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.4777,
+              "dense_score": 0.4777,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R041",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的产品今年收入是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4781,
+              "dense_score": 0.4781,
+              "keyword_score": 6.7874,
+              "content_sha256": "71c69aeded33c388363229fc7c3c63a246c82bc3e58e406512630452f9efc83c"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4511,
+              "dense_score": 0.4511,
+              "keyword_score": 5.9185,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            }
+          ]
+        },
+        {
+          "case_id": "R042",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "这家公司的正式法定名称是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4708,
+              "dense_score": 0.4708,
+              "keyword_score": 2.157,
+              "content_sha256": "1ed9b26d74f6eb43143dda993f3d5dabae2df80c22306897cea8c4acae02b491"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4575,
+              "dense_score": 0.4575,
+              "keyword_score": 9.3007,
+              "content_sha256": "71c69aeded33c388363229fc7c3c63a246c82bc3e58e406512630452f9efc83c"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4533,
+              "dense_score": 0.4533,
+              "keyword_score": 5.9185,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 12.6115,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "recruitment.txt",
+              "score": 0.5439,
+              "dense_score": 0.5439,
+              "keyword_score": 0.0,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5232,
+              "dense_score": 0.5232,
+              "keyword_score": 0.0,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            }
+          ]
+        },
+        {
+          "case_id": "R044",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司是否提供餐补和住房补贴？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.4626,
+              "dense_score": 0.4626,
+              "keyword_score": 2.0581,
+              "content_sha256": "c8ab0c4545bacc33567efc74a84163d5eda060de035ebd8cb188612597cc5861"
+            }
+          ]
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.6359,
+              "dense_score": 0.6359,
+              "keyword_score": 8.6247,
+              "content_sha256": "716aa4c8c947988f309bd846bacf2d954ff4243cd04ce1e001731279372f37b3"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6017,
+              "dense_score": 0.6017,
+              "keyword_score": 10.2521,
+              "content_sha256": "c8ab0c4545bacc33567efc74a84163d5eda060de035ebd8cb188612597cc5861"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.597,
+              "dense_score": 0.597,
+              "keyword_score": 1.1962,
+              "content_sha256": "695362e9b1977b885e28d4b85c5aced24765a7c52743af647eebe08f0cf3c785"
+            }
+          ]
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6747,
+              "dense_score": 0.6747,
+              "keyword_score": 4.3059,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6025,
+              "dense_score": 0.6025,
+              "keyword_score": 0.0,
+              "content_sha256": "eb0b38ac2b2b092d397244442bed0f79a4bbf0632409a61ba453307a92416815"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.5994,
+              "dense_score": 0.5994,
+              "keyword_score": 3.3882,
+              "content_sha256": "e441815f3689c9ee1ee1a3a3aae68e8262ad447c2e26f9d0153fffd02c59ba14"
+            }
+          ]
+        },
+        {
+          "case_id": "R057",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+          "expected_evidence": [
+            "Field(min_length=1, max_length=4000)"
+          ],
+          "allowed_sources": [
+            "demo_fastapi_validation.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.6783,
+              "dense_score": 0.6783,
+              "keyword_score": 10.1741,
+              "content_sha256": "e21518ad7a6c6ddf0253554cd03982b87e4555bbd9373d7a54af7f5331ff6144"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6665,
+              "dense_score": 0.6665,
+              "keyword_score": 4.6785,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6622,
+              "dense_score": 0.6622,
+              "keyword_score": 9.153,
+              "content_sha256": "00d8a1f7cf9b60beb80f06db03e3cf7c7a3316a02ba0d08d541c8291f2dee0f4"
+            }
+          ]
+        },
+        {
+          "case_id": "R060",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "expected_evidence": [
+            "不要使用没有实际测试依据"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_resume.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.5835,
+              "dense_score": 0.5835,
+              "keyword_score": 0.0,
+              "content_sha256": "6e76df7fa97666fa2d26a07b25a4f17999543faf9d7684b0f092bf09599bf47c"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.5691,
+              "dense_score": 0.5691,
+              "keyword_score": 0.0,
+              "content_sha256": "7f5b3c864682f0f92ae3fb562ec37f13344311c34eb40aa2e125a74afb8bbd2a"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.5674,
+              "dense_score": 0.5674,
+              "keyword_score": 0.0,
+              "content_sha256": "14c2af34d8b1d30c3200b4d440c321afd806de791573c7cecf049025603b1aba"
+            }
+          ]
+        },
+        {
+          "case_id": "R061",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "公司在南山区的办公楼具体叫什么，在哪一层？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "company.txt",
+              "score": 0.5031,
+              "dense_score": 0.5031,
+              "keyword_score": 14.4261,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.4862,
+              "dense_score": 0.4862,
+              "keyword_score": 24.3428,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 41.9664,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5974,
+              "dense_score": 0.5974,
+              "keyword_score": 33.734,
+              "content_sha256": "dff88bf83da07915a39c8916379f3ef85b16ce1cd7a9ac839072844e54e973b0"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5822,
+              "dense_score": 0.5822,
+              "keyword_score": 41.6254,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            }
+          ]
+        },
+        {
+          "case_id": "R065",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个岗位是每周固定到岗五天，还是可以远程办公？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.4551,
+              "dense_score": 0.4551,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.4536,
+              "dense_score": 0.4536,
+              "keyword_score": 0.0,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            }
+          ]
+        },
+        {
+          "case_id": "R066",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "投递这份实习简历的截止日期是哪一天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.5376,
+              "dense_score": 0.5376,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.4997,
+              "dense_score": 0.4997,
+              "keyword_score": 0.0,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            },
+            {
+              "source": "recruitment.txt",
+              "score": 0.4948,
+              "dense_score": 0.4948,
+              "keyword_score": 0.0,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            }
+          ]
+        },
+        {
+          "case_id": "R067",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "招聘方要求候选人的本科专业必须是哪一个？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.5451,
+              "dense_score": 0.5451,
+              "keyword_score": 8.7724,
+              "content_sha256": "0f0de56c2f56b7b8a00add574c10f1d802692887fc5a2c97b6ddc66f49f1d92a"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.5167,
+              "dense_score": 0.5167,
+              "keyword_score": 11.7439,
+              "content_sha256": "85609995c4ccc6a382cc77a457acfdbe5c77c3dcfdfc0606228aa547820ff297"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.4992,
+              "dense_score": 0.4992,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R068",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "公司面试一共有几轮，每轮分别由谁参加？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.526,
+              "dense_score": 0.526,
+              "keyword_score": 0.0,
+              "content_sha256": "2a1bc341623a997b4f9e2380edc322be0a8aeee417862853ba34ece62323f2bf"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4893,
+              "dense_score": 0.4893,
+              "keyword_score": 0.0,
+              "content_sha256": "1ed9b26d74f6eb43143dda993f3d5dabae2df80c22306897cea8c4acae02b491"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.4781,
+              "dense_score": 0.4781,
+              "keyword_score": 0.0,
+              "content_sha256": "0f0de56c2f56b7b8a00add574c10f1d802692887fc5a2c97b6ddc66f49f1d92a"
+            }
+          ]
+        },
+        {
+          "case_id": "R069",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6137,
+              "dense_score": 0.6137,
+              "keyword_score": 22.8906,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            },
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.5711,
+              "dense_score": 0.5711,
+              "keyword_score": 18.7534,
+              "content_sha256": "8668f22fc5802c606537f4b5a117ad402356a3346ddc59ff800ec8b80f03c2b1"
+            },
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.571,
+              "dense_score": 0.571,
+              "keyword_score": 24.1362,
+              "content_sha256": "8304fc7c94c6f92aa1e7693c6c9dfd29a60be300b13230127cd9515ed385dd3f"
+            }
+          ]
+        },
+        {
+          "case_id": "R070",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这套知识库目前一共有多少条文档和多少个向量？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.563,
+              "dense_score": 0.563,
+              "keyword_score": 5.6379,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5516,
+              "dense_score": 0.5516,
+              "keyword_score": 6.996,
+              "content_sha256": "ce3e45946b140970beb31b600fa492167b1c0aa0e5e58d13c6fdaa8a2cb6bf16"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.5191,
+              "dense_score": 0.5191,
+              "keyword_score": 7.6318,
+              "content_sha256": "716aa4c8c947988f309bd846bacf2d954ff4243cd04ce1e001731279372f37b3"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6019,
+              "dense_score": 0.6019,
+              "keyword_score": 6.7664,
+              "content_sha256": "ce3e45946b140970beb31b600fa492167b1c0aa0e5e58d13c6fdaa8a2cb6bf16"
+            },
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.5801,
+              "dense_score": 0.5801,
+              "keyword_score": 1.3434,
+              "content_sha256": "e21518ad7a6c6ddf0253554cd03982b87e4555bbd9373d7a54af7f5331ff6144"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5292,
+              "dense_score": 0.5292,
+              "keyword_score": 15.3332,
+              "content_sha256": "c1ac4e297831a0813d087cf260f8dc38dd23cc06fc8fd762e062f3df6c67f119"
+            }
+          ]
+        },
+        {
+          "case_id": "R072",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.4935,
+              "dense_score": 0.4935,
+              "keyword_score": 0.0,
+              "content_sha256": "8304fc7c94c6f92aa1e7693c6c9dfd29a60be300b13230127cd9515ed385dd3f"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.4782,
+              "dense_score": 0.4782,
+              "keyword_score": 0.0,
+              "content_sha256": "5cc113ad8e8b1a7452dc6a6b9da9001c067b23aed0b55b512a6616fcf93a93da"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.4753,
+              "dense_score": 0.4753,
+              "keyword_score": 0.0,
+              "content_sha256": "251395691d329d5ff6d03f8ab2d5ec587626978c3761da0668fada71266ec4e2"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6402,
+              "dense_score": 0.6402,
+              "keyword_score": 12.8415,
+              "content_sha256": "787c989f1d43e21a8bb1ed317f3202dee542a8599531faa020afedefe80f0207"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5917,
+              "dense_score": 0.5917,
+              "keyword_score": 6.07,
+              "content_sha256": "031da1040e5fc54d3f27caa39ae8d1f7a7f1350413e07144ad244b8805750925"
+            },
+            {
+              "source": "demo_api_rest.txt",
+              "score": 0.5566,
+              "dense_score": 0.5566,
+              "keyword_score": 4.9651,
+              "content_sha256": "9ace192d443142b0060ca01e5a59fce321341f8256f14ef7f9b790bcc4fc6565"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.605,
+              "dense_score": 0.605,
+              "keyword_score": 3.5876,
+              "content_sha256": "32367e5e0bd965584512de451a9367bd4d8665e3eba93bb68b43604694ac3d02"
+            },
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.5739,
+              "dense_score": 0.5739,
+              "keyword_score": 1.7908,
+              "content_sha256": "2e5b2497077f5b6635fe01c5ba841e30c2003b3f77a2bfa5ba347985b152377a"
+            },
+            {
+              "source": "demo_api_rest.txt",
+              "score": 0.5579,
+              "dense_score": 0.5579,
+              "keyword_score": 0.0,
+              "content_sha256": "9ace192d443142b0060ca01e5a59fce321341f8256f14ef7f9b790bcc4fc6565"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.647,
+              "dense_score": 0.647,
+              "keyword_score": 3.7709,
+              "content_sha256": "00d8a1f7cf9b60beb80f06db03e3cf7c7a3316a02ba0d08d541c8291f2dee0f4"
+            },
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6241,
+              "dense_score": 0.6241,
+              "keyword_score": 1.7356,
+              "content_sha256": "ed53d407082d5bde05f868e5b59c6fb24497c96cdd10d229a26ff0678e4a2b59"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6211,
+              "dense_score": 0.6211,
+              "keyword_score": 5.4039,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            }
+          ]
+        },
+        {
+          "case_id": "R076",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目的 CI 每天几点触发完整回归测试？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.534,
+              "dense_score": 0.534,
+              "keyword_score": 1.2024,
+              "content_sha256": "7078615f215a349414008596621b21879a44d57d096c384ed37ad00bcb5b7967"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.5251,
+              "dense_score": 0.5251,
+              "keyword_score": 3.1882,
+              "content_sha256": "32367e5e0bd965584512de451a9367bd4d8665e3eba93bb68b43604694ac3d02"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5216,
+              "dense_score": 0.5216,
+              "keyword_score": 4.3217,
+              "content_sha256": "5e27a4ca8554f84a3debc7c01a4f49a7cc7bcdd3130f7fdc41a07183ce1c7fdd"
+            }
+          ]
+        },
+        {
+          "case_id": "R077",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "测试部门今年累计关闭了多少个缺陷？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5766,
+              "dense_score": 0.5766,
+              "keyword_score": 1.6075,
+              "content_sha256": "5e27a4ca8554f84a3debc7c01a4f49a7cc7bcdd3130f7fdc41a07183ce1c7fdd"
+            },
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.5577,
+              "dense_score": 0.5577,
+              "keyword_score": 17.2244,
+              "content_sha256": "a3d6e638220bc430016fc54e650b7db230055696a66c51ab533244254a363548"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.5288,
+              "dense_score": 0.5288,
+              "keyword_score": 1.2024,
+              "content_sha256": "7078615f215a349414008596621b21879a44d57d096c384ed37ad00bcb5b7967"
+            }
+          ]
+        },
+        {
+          "case_id": "R078",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这家公司今年智能问答产品的实际收入是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.535,
+              "dense_score": 0.535,
+              "keyword_score": 0.0,
+              "content_sha256": "c8ab0c4545bacc33567efc74a84163d5eda060de035ebd8cb188612597cc5861"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.51,
+              "dense_score": 0.51,
+              "keyword_score": 17.7287,
+              "content_sha256": "d3fd4410c582effa862c6f236ea7264c46f448a5ca7d8bfe921e3a2c12a7ef6e"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.5059,
+              "dense_score": 0.5059,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R079",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "招聘团队承诺多久之内一定会给候选人反馈？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.537,
+              "dense_score": 0.537,
+              "keyword_score": 5.7121,
+              "content_sha256": "0f0de56c2f56b7b8a00add574c10f1d802692887fc5a2c97b6ddc66f49f1d92a"
+            },
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.5212,
+              "dense_score": 0.5212,
+              "keyword_score": 0.0,
+              "content_sha256": "6e76df7fa97666fa2d26a07b25a4f17999543faf9d7684b0f092bf09599bf47c"
+            },
+            {
+              "source": "demo_database_transactions.txt",
+              "score": 0.5171,
+              "dense_score": 0.5171,
+              "keyword_score": 0.0,
+              "content_sha256": "0c2cd30e471324119ff45335101d9c51141ce6f16e2966c067845cfef6134e06"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6304,
+              "dense_score": 0.6304,
+              "keyword_score": 5.6185,
+              "content_sha256": "dff88bf83da07915a39c8916379f3ef85b16ce1cd7a9ac839072844e54e973b0"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6004,
+              "dense_score": 0.6004,
+              "keyword_score": 6.8587,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5983,
+              "dense_score": 0.5983,
+              "keyword_score": 4.1354,
+              "content_sha256": "e11e3219fdfa5055128288482bdbba24c924ac9bc96fd89bb82e3c9357913777"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 100,
+      "overlap": 20,
+      "threshold": 0.55,
+      "top_k": 3,
+      "hit_rate": 0.72,
+      "mrr": 0.7366666666666666,
+      "false_positive_rate": 0.36666666666666664,
+      "positive_hits": 36,
+      "positive_total": 50,
+      "false_positives": 11,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "工具调用参数应该如何防止模型生成错误？",
+        "Agent 怎么避免陷入无限次调用工具？",
+        "工具执行失败后，错误应该怎样反馈？",
+        "Python 的 finally 代码块什么时候运行？",
+        "FastAPI 出错时如何区分资源不存在和服务端故障？",
+        "项目里应该怎样保存 API Key？",
+        "RAG 项目验收应该记录哪些检索结果？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+        "简历里写延迟降低 80% 之前，至少应该有什么依据？"
+      ],
+      "false_positive_queries": [
+        "公司的具体月薪范围是多少？",
+        "实习岗位每周需要到岗几天？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "项目中的向量相似度阈值在生产环境精确配置成多少？",
+        "这套知识库目前一共有多少条文档和多少个向量？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "这个 API 每分钟允许同一个用户调用多少次？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "测试部门今年累计关闭了多少个缺陷？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 9
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 11
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 8
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 8
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 8
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 11
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6251,
+              "dense_score": 0.6251,
+              "keyword_score": 2.85,
+              "content_sha256": "c1ac4e297831a0813d087cf260f8dc38dd23cc06fc8fd762e062f3df6c67f119"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5799,
+              "dense_score": 0.5799,
+              "keyword_score": 9.7512,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5752,
+              "dense_score": 0.5752,
+              "keyword_score": 2.8968,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            }
+          ]
+        },
+        {
+          "case_id": "R006",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "工具调用参数应该如何防止模型生成错误？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6991,
+              "dense_score": 0.6991,
+              "keyword_score": 18.1857,
+              "content_sha256": "9866a9d12ee2a1c0e7c5f73e70a9d37802fe37011c7a086db840e80f3fd711d1"
+            },
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6739,
+              "dense_score": 0.6739,
+              "keyword_score": 23.1089,
+              "content_sha256": "04722be816ecc53b796f2927f1b19450da868b16fbf234a412e1dd2e32c4e666"
+            },
+            {
+              "source": "demo_agent_schema.txt",
+              "score": 0.6738,
+              "dense_score": 0.6738,
+              "keyword_score": 32.4148,
+              "content_sha256": "a0050a2663cbb2c838139604f9e617cb7be60f28bf7c9f63a997d6417c62475e"
+            }
+          ]
+        },
+        {
+          "case_id": "R007",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "Agent 怎么避免陷入无限次调用工具？",
+          "expected_evidence": [
+            "最大迭代次数",
+            "最大轮数限制"
+          ],
+          "allowed_sources": [
+            "demo_agent_loop.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6599,
+              "dense_score": 0.6599,
+              "keyword_score": 5.3228,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6222,
+              "dense_score": 0.6222,
+              "keyword_score": 7.928,
+              "content_sha256": "6d599f2424260e067fc3dfca809827e6f5cb153e36395a923f65a305aa37e98a"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6175,
+              "dense_score": 0.6175,
+              "keyword_score": 1.7331,
+              "content_sha256": "71c7e0bb5dfff347ddac410033141b108d4999702dc06a007a6efb8ed3c3a9f2"
+            }
+          ]
+        },
+        {
+          "case_id": "R009",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "工具执行失败后，错误应该怎样反馈？",
+          "expected_evidence": [
+            "失败不应被伪装成成功结果",
+            "重试策略"
+          ],
+          "allowed_sources": [
+            "demo_agent_failures.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.8042,
+              "dense_score": 0.738,
+              "keyword_score": 28.0858,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.7187,
+              "dense_score": 0.7187,
+              "keyword_score": 6.9608,
+              "content_sha256": "d8a7e42de88e114ac74996f99e26846dd9e590ea8dfcfc2a91ebe788ebe2af23"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.718,
+              "dense_score": 0.5971,
+              "keyword_score": 29.2974,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            }
+          ]
+        },
+        {
+          "case_id": "R018",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "Python 的 finally 代码块什么时候运行？",
+          "expected_evidence": [
+            "finally",
+            "无论成功或失败"
+          ],
+          "allowed_sources": [
+            "demo_python_exceptions.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6394,
+              "dense_score": 0.6394,
+              "keyword_score": 3.0437,
+              "content_sha256": "eb0b38ac2b2b092d397244442bed0f79a4bbf0632409a61ba453307a92416815"
+            },
+            {
+              "source": "demo_python_exceptions.txt",
+              "score": 0.6369,
+              "dense_score": 0.6369,
+              "keyword_score": 9.9432,
+              "content_sha256": "03496608b2353b8ba1c1edf0280ee535f6c0e10f981c008c559e7a0d2b85747f"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6289,
+              "dense_score": 0.6289,
+              "keyword_score": 3.9461,
+              "content_sha256": "dc5e7425edc950c3dc204177647558df21c52d98c61bfa04fd79530370d4d17d"
+            }
+          ]
+        },
+        {
+          "case_id": "R023",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "FastAPI 出错时如何区分资源不存在和服务端故障？",
+          "expected_evidence": [
+            "合理的状态码",
+            "HTTPException"
+          ],
+          "allowed_sources": [
+            "demo_fastapi_errors.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6973,
+              "dense_score": 0.6973,
+              "keyword_score": 1.7356,
+              "content_sha256": "ed53d407082d5bde05f868e5b59c6fb24497c96cdd10d229a26ff0678e4a2b59"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6773,
+              "dense_score": 0.6773,
+              "keyword_score": 2.2965,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6753,
+              "dense_score": 0.6753,
+              "keyword_score": 1.947,
+              "content_sha256": "251395691d329d5ff6d03f8ab2d5ec587626978c3761da0668fada71266ec4e2"
+            }
+          ]
+        },
+        {
+          "case_id": "R028",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "项目里应该怎样保存 API Key？",
+          "expected_evidence": [
+            "环境变量",
+            "密钥管理机制"
+          ],
+          "allowed_sources": [
+            "demo_company_security.txt",
+            "demo_deployment_config.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6324,
+              "dense_score": 0.6324,
+              "keyword_score": 2.1059,
+              "content_sha256": "1b73cbeaf349f35655a7fcb95d5354fcb16ebcfe74e4d56759c856b7c3c735e9"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6217,
+              "dense_score": 0.6217,
+              "keyword_score": 1.8218,
+              "content_sha256": "32367e5e0bd965584512de451a9367bd4d8665e3eba93bb68b43604694ac3d02"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6187,
+              "dense_score": 0.6187,
+              "keyword_score": 0.0,
+              "content_sha256": "14c2af34d8b1d30c3200b4d440c321afd806de791573c7cecf049025603b1aba"
+            }
+          ]
+        },
+        {
+          "case_id": "R034",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "RAG 项目验收应该记录哪些检索结果？",
+          "expected_evidence": [
+            "正确证据是否被检索",
+            "无答案"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_evaluation.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7116,
+              "dense_score": 0.7116,
+              "keyword_score": 15.4582,
+              "content_sha256": "5cc113ad8e8b1a7452dc6a6b9da9001c067b23aed0b55b512a6616fcf93a93da"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.7047,
+              "dense_score": 0.7047,
+              "keyword_score": 5.5391,
+              "content_sha256": "c10cd2a598414f28168bffa2f86b92f115c54ef3cd439d5610faefaae288c323"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6914,
+              "dense_score": 0.6914,
+              "keyword_score": 7.1527,
+              "content_sha256": "2a1bc341623a997b4f9e2380edc322be0a8aeee417862853ba34ece62323f2bf"
+            }
+          ]
+        },
+        {
+          "case_id": "R037",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的具体月薪范围是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.559,
+              "dense_score": 0.559,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 12.6115,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.6359,
+              "dense_score": 0.6359,
+              "keyword_score": 8.6247,
+              "content_sha256": "716aa4c8c947988f309bd846bacf2d954ff4243cd04ce1e001731279372f37b3"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6017,
+              "dense_score": 0.6017,
+              "keyword_score": 10.2521,
+              "content_sha256": "c8ab0c4545bacc33567efc74a84163d5eda060de035ebd8cb188612597cc5861"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.597,
+              "dense_score": 0.597,
+              "keyword_score": 1.1962,
+              "content_sha256": "695362e9b1977b885e28d4b85c5aced24765a7c52743af647eebe08f0cf3c785"
+            }
+          ]
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6747,
+              "dense_score": 0.6747,
+              "keyword_score": 4.3059,
+              "content_sha256": "5274fd15a1cd130a227ec2dac1a25e83059e1e8e5019b7030e5369b441bf8e86"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6025,
+              "dense_score": 0.6025,
+              "keyword_score": 0.0,
+              "content_sha256": "eb0b38ac2b2b092d397244442bed0f79a4bbf0632409a61ba453307a92416815"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.5994,
+              "dense_score": 0.5994,
+              "keyword_score": 3.3882,
+              "content_sha256": "e441815f3689c9ee1ee1a3a3aae68e8262ad447c2e26f9d0153fffd02c59ba14"
+            }
+          ]
+        },
+        {
+          "case_id": "R057",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+          "expected_evidence": [
+            "Field(min_length=1, max_length=4000)"
+          ],
+          "allowed_sources": [
+            "demo_fastapi_validation.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.6783,
+              "dense_score": 0.6783,
+              "keyword_score": 10.1741,
+              "content_sha256": "e21518ad7a6c6ddf0253554cd03982b87e4555bbd9373d7a54af7f5331ff6144"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6665,
+              "dense_score": 0.6665,
+              "keyword_score": 4.6785,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6622,
+              "dense_score": 0.6622,
+              "keyword_score": 9.153,
+              "content_sha256": "00d8a1f7cf9b60beb80f06db03e3cf7c7a3316a02ba0d08d541c8291f2dee0f4"
+            }
+          ]
+        },
+        {
+          "case_id": "R060",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "expected_evidence": [
+            "不要使用没有实际测试依据"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_resume.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.5835,
+              "dense_score": 0.5835,
+              "keyword_score": 0.0,
+              "content_sha256": "6e76df7fa97666fa2d26a07b25a4f17999543faf9d7684b0f092bf09599bf47c"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.5691,
+              "dense_score": 0.5691,
+              "keyword_score": 0.0,
+              "content_sha256": "7f5b3c864682f0f92ae3fb562ec37f13344311c34eb40aa2e125a74afb8bbd2a"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.5674,
+              "dense_score": 0.5674,
+              "keyword_score": 0.0,
+              "content_sha256": "14c2af34d8b1d30c3200b4d440c321afd806de791573c7cecf049025603b1aba"
+            }
+          ]
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 41.9664,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5974,
+              "dense_score": 0.5974,
+              "keyword_score": 33.734,
+              "content_sha256": "dff88bf83da07915a39c8916379f3ef85b16ce1cd7a9ac839072844e54e973b0"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5822,
+              "dense_score": 0.5822,
+              "keyword_score": 41.6254,
+              "content_sha256": "43c14278edd75eb02559251f36a9a521c1f59968f0e79e3175cdc8e682740e14"
+            }
+          ]
+        },
+        {
+          "case_id": "R069",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6137,
+              "dense_score": 0.6137,
+              "keyword_score": 22.8906,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            },
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.5711,
+              "dense_score": 0.5711,
+              "keyword_score": 18.7534,
+              "content_sha256": "8668f22fc5802c606537f4b5a117ad402356a3346ddc59ff800ec8b80f03c2b1"
+            },
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.571,
+              "dense_score": 0.571,
+              "keyword_score": 24.1362,
+              "content_sha256": "8304fc7c94c6f92aa1e7693c6c9dfd29a60be300b13230127cd9515ed385dd3f"
+            }
+          ]
+        },
+        {
+          "case_id": "R070",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这套知识库目前一共有多少条文档和多少个向量？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.563,
+              "dense_score": 0.563,
+              "keyword_score": 5.6379,
+              "content_sha256": "93540d6c758901310ee725c83bc0c96a42ef604d9d7bd2c56f41aa3b64fb5bc3"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5516,
+              "dense_score": 0.5516,
+              "keyword_score": 6.996,
+              "content_sha256": "ce3e45946b140970beb31b600fa492167b1c0aa0e5e58d13c6fdaa8a2cb6bf16"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6019,
+              "dense_score": 0.6019,
+              "keyword_score": 6.7664,
+              "content_sha256": "ce3e45946b140970beb31b600fa492167b1c0aa0e5e58d13c6fdaa8a2cb6bf16"
+            },
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.5801,
+              "dense_score": 0.5801,
+              "keyword_score": 1.3434,
+              "content_sha256": "e21518ad7a6c6ddf0253554cd03982b87e4555bbd9373d7a54af7f5331ff6144"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6402,
+              "dense_score": 0.6402,
+              "keyword_score": 12.8415,
+              "content_sha256": "787c989f1d43e21a8bb1ed317f3202dee542a8599531faa020afedefe80f0207"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5917,
+              "dense_score": 0.5917,
+              "keyword_score": 6.07,
+              "content_sha256": "031da1040e5fc54d3f27caa39ae8d1f7a7f1350413e07144ad244b8805750925"
+            },
+            {
+              "source": "demo_api_rest.txt",
+              "score": 0.5566,
+              "dense_score": 0.5566,
+              "keyword_score": 4.9651,
+              "content_sha256": "9ace192d443142b0060ca01e5a59fce321341f8256f14ef7f9b790bcc4fc6565"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.605,
+              "dense_score": 0.605,
+              "keyword_score": 3.5876,
+              "content_sha256": "32367e5e0bd965584512de451a9367bd4d8665e3eba93bb68b43604694ac3d02"
+            },
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.5739,
+              "dense_score": 0.5739,
+              "keyword_score": 1.7908,
+              "content_sha256": "2e5b2497077f5b6635fe01c5ba841e30c2003b3f77a2bfa5ba347985b152377a"
+            },
+            {
+              "source": "demo_api_rest.txt",
+              "score": 0.5579,
+              "dense_score": 0.5579,
+              "keyword_score": 0.0,
+              "content_sha256": "9ace192d443142b0060ca01e5a59fce321341f8256f14ef7f9b790bcc4fc6565"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.647,
+              "dense_score": 0.647,
+              "keyword_score": 3.7709,
+              "content_sha256": "00d8a1f7cf9b60beb80f06db03e3cf7c7a3316a02ba0d08d541c8291f2dee0f4"
+            },
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6241,
+              "dense_score": 0.6241,
+              "keyword_score": 1.7356,
+              "content_sha256": "ed53d407082d5bde05f868e5b59c6fb24497c96cdd10d229a26ff0678e4a2b59"
+            },
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6211,
+              "dense_score": 0.6211,
+              "keyword_score": 5.4039,
+              "content_sha256": "3165088134fb7921d4dd78da1cd4d72b9a6cfc2b89996dbe94771f559106cf55"
+            }
+          ]
+        },
+        {
+          "case_id": "R077",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "测试部门今年累计关闭了多少个缺陷？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5766,
+              "dense_score": 0.5766,
+              "keyword_score": 1.6075,
+              "content_sha256": "5e27a4ca8554f84a3debc7c01a4f49a7cc7bcdd3130f7fdc41a07183ce1c7fdd"
+            },
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.5577,
+              "dense_score": 0.5577,
+              "keyword_score": 17.2244,
+              "content_sha256": "a3d6e638220bc430016fc54e650b7db230055696a66c51ab533244254a363548"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6304,
+              "dense_score": 0.6304,
+              "keyword_score": 5.6185,
+              "content_sha256": "dff88bf83da07915a39c8916379f3ef85b16ce1cd7a9ac839072844e54e973b0"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6004,
+              "dense_score": 0.6004,
+              "keyword_score": 6.8587,
+              "content_sha256": "8edc60b7b6ba7d5df4569f1eaa8895ccaad85996e828eea5e7503b3178df243c"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5983,
+              "dense_score": 0.5983,
+              "keyword_score": 4.1354,
+              "content_sha256": "e11e3219fdfa5055128288482bdbba24c924ac9bc96fd89bb82e3c9357913777"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.45,
+      "top_k": 3,
+      "hit_rate": 0.94,
+      "mrr": 0.84,
+      "false_positive_rate": 0.9,
+      "positive_hits": 47,
+      "positive_total": 50,
+      "false_positives": 27,
+      "negative_total": 30,
+      "missed_queries": [
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？"
+      ],
+      "false_positive_queries": [
+        "公司老板的姓氏是什么？",
+        "公司的具体月薪范围是多少？",
+        "公司是哪一年成立的？",
+        "公司总部的街道和门牌号是什么？",
+        "公司目前有多少名员工？",
+        "公司的产品今年收入是多少？",
+        "这家公司的正式法定名称是什么？",
+        "实习岗位每周需要到岗几天？",
+        "公司老板的手机号码是多少？",
+        "公司在南山区的办公楼具体叫什么，在哪一层？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "这个岗位是每周固定到岗五天，还是可以远程办公？",
+        "投递这份实习简历的截止日期是哪一天？",
+        "招聘方要求候选人的本科专业必须是哪一个？",
+        "公司面试一共有几轮，每轮分别由谁参加？",
+        "项目中的向量相似度阈值在生产环境精确配置成多少？",
+        "这套知识库目前一共有多少条文档和多少个向量？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "这个 API 每分钟允许同一个用户调用多少次？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "项目的 CI 每天几点触发完整回归测试？",
+        "测试部门今年累计关闭了多少个缺陷？",
+        "这家公司今年智能问答产品的实际收入是多少？",
+        "招聘团队承诺多久之内一定会给候选人反馈？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 16
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 11
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 9
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 1
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 11
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 2
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5376,
+              "dense_score": 0.5376,
+              "keyword_score": 19.6863,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.5215,
+              "dense_score": 0.5215,
+              "keyword_score": 8.3056,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_testing_metrics.txt",
+              "score": 0.5192,
+              "dense_score": 0.5192,
+              "keyword_score": 7.679,
+              "content_sha256": "c97ded7cb6c74bafbfd547250ba2a8b0f277605082e121ea89ae4b1700a3e5a1"
+            }
+          ]
+        },
+        {
+          "case_id": "R036",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司老板的姓氏是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.476,
+              "dense_score": 0.476,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R037",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的具体月薪范围是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.559,
+              "dense_score": 0.559,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5451,
+              "dense_score": 0.5451,
+              "keyword_score": 4.6561,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.4989,
+              "dense_score": 0.4989,
+              "keyword_score": 0.0,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            }
+          ]
+        },
+        {
+          "case_id": "R038",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司是哪一年成立的？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5,
+              "dense_score": 0.5,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R039",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司总部的街道和门牌号是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.4661,
+              "dense_score": 0.4661,
+              "keyword_score": 0.0,
+              "content_sha256": "cec901695b0888c5db65404862ff695c716a435f7fccd4ee590a1e8e3516b6c7"
+            }
+          ]
+        },
+        {
+          "case_id": "R040",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司目前有多少名员工？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5018,
+              "dense_score": 0.5018,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.4777,
+              "dense_score": 0.4777,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.4629,
+              "dense_score": 0.4629,
+              "keyword_score": 0.0,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            }
+          ]
+        },
+        {
+          "case_id": "R041",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的产品今年收入是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4559,
+              "dense_score": 0.4559,
+              "keyword_score": 4.6561,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R042",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "这家公司的正式法定名称是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4526,
+              "dense_score": 0.4526,
+              "keyword_score": 6.3221,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 10.9738,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "recruitment.txt",
+              "score": 0.5439,
+              "dense_score": 0.5439,
+              "keyword_score": 0.0,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.5345,
+              "dense_score": 0.5345,
+              "keyword_score": 6.9032,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            }
+          ]
+        },
+        {
+          "case_id": "R045",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司老板的手机号码是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.4564,
+              "dense_score": 0.4564,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.598,
+              "dense_score": 0.598,
+              "keyword_score": 6.3803,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5788,
+              "dense_score": 0.5788,
+              "keyword_score": 1.0587,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.5606,
+              "dense_score": 0.5606,
+              "keyword_score": 7.6028,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.3452,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5066,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.5923,
+              "dense_score": 0.5923,
+              "keyword_score": 5.6594,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        },
+        {
+          "case_id": "R061",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "公司在南山区的办公楼具体叫什么，在哪一层？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.4862,
+              "dense_score": 0.4862,
+              "keyword_score": 22.3498,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.4563,
+              "dense_score": 0.4563,
+              "keyword_score": 11.6694,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            }
+          ]
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 35.8126,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5827,
+              "dense_score": 0.5827,
+              "keyword_score": 33.9545,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5823,
+              "dense_score": 0.5823,
+              "keyword_score": 21.8634,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            }
+          ]
+        },
+        {
+          "case_id": "R065",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个岗位是每周固定到岗五天，还是可以远程办公？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.4551,
+              "dense_score": 0.4551,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R066",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "投递这份实习简历的截止日期是哪一天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.5376,
+              "dense_score": 0.5376,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5141,
+              "dense_score": 0.5141,
+              "keyword_score": 0.0,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            },
+            {
+              "source": "recruitment.txt",
+              "score": 0.4948,
+              "dense_score": 0.4948,
+              "keyword_score": 0.0,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            }
+          ]
+        },
+        {
+          "case_id": "R067",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "招聘方要求候选人的本科专业必须是哪一个？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.5395,
+              "dense_score": 0.5395,
+              "keyword_score": 13.1877,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.4992,
+              "dense_score": 0.4992,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "recruitment.txt",
+              "score": 0.499,
+              "dense_score": 0.499,
+              "keyword_score": 2.9522,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            }
+          ]
+        },
+        {
+          "case_id": "R068",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "公司面试一共有几轮，每轮分别由谁参加？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.462,
+              "dense_score": 0.462,
+              "keyword_score": 4.5081,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.4588,
+              "dense_score": 0.4588,
+              "keyword_score": 0.0,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            }
+          ]
+        },
+        {
+          "case_id": "R069",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.5966,
+              "dense_score": 0.5966,
+              "keyword_score": 29.8377,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5796,
+              "dense_score": 0.5796,
+              "keyword_score": 23.6557,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R070",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这套知识库目前一共有多少条文档和多少个向量？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.541,
+              "dense_score": 0.541,
+              "keyword_score": 5.4632,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.4931,
+              "dense_score": 0.4931,
+              "keyword_score": 5.6602,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.4874,
+              "dense_score": 0.4874,
+              "keyword_score": 9.4839,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2853,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            },
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.508,
+              "dense_score": 0.508,
+              "keyword_score": 1.2825,
+              "content_sha256": "ee7082d6cb223f44a57a8d9db868676b52818b8f9077fb0965c3547cb66a9745"
+            },
+            {
+              "source": "demo_deployment_config.txt",
+              "score": 0.4659,
+              "dense_score": 0.4659,
+              "keyword_score": 2.2094,
+              "content_sha256": "328b8864c81bd945f7a5168d0e06fa1fbdf1bbbf111f424d6921ebd07b9c2a3e"
+            }
+          ]
+        },
+        {
+          "case_id": "R072",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.488,
+              "dense_score": 0.488,
+              "keyword_score": 4.1597,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.4831,
+              "dense_score": 0.4831,
+              "keyword_score": 0.0,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.6579,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5638,
+              "dense_score": 0.5638,
+              "keyword_score": 5.7716,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            },
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.5176,
+              "dense_score": 0.5176,
+              "keyword_score": 2.6502,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.5519,
+              "dense_score": 0.5519,
+              "keyword_score": 2.0771,
+              "content_sha256": "b3bdda06dfaac14676fd490de95242c2c07d94755a8089a14738c8d4b41923d4"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.5372,
+              "dense_score": 0.5372,
+              "keyword_score": 2.4471,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            },
+            {
+              "source": "demo_database_transactions.txt",
+              "score": 0.528,
+              "dense_score": 0.528,
+              "keyword_score": 2.8401,
+              "content_sha256": "b3b4d17d36ba2fe29a907fc87416ab39773999cd23e0c948a3721bfa6924c181"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.4182,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.5939,
+              "dense_score": 0.5939,
+              "keyword_score": 1.3601,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_deployment_config.txt",
+              "score": 0.5554,
+              "dense_score": 0.5554,
+              "keyword_score": 7.1827,
+              "content_sha256": "328b8864c81bd945f7a5168d0e06fa1fbdf1bbbf111f424d6921ebd07b9c2a3e"
+            }
+          ]
+        },
+        {
+          "case_id": "R076",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目的 CI 每天几点触发完整回归测试？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.5213,
+              "dense_score": 0.5213,
+              "keyword_score": 1.2862,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            },
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.5155,
+              "dense_score": 0.5155,
+              "keyword_score": 3.8956,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.4845,
+              "dense_score": 0.4845,
+              "keyword_score": 2.702,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            }
+          ]
+        },
+        {
+          "case_id": "R077",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "测试部门今年累计关闭了多少个缺陷？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.4915,
+              "dense_score": 0.4915,
+              "keyword_score": 0.0,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.4906,
+              "dense_score": 0.4906,
+              "keyword_score": 1.2862,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.4796,
+              "dense_score": 0.4796,
+              "keyword_score": 0.0,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R078",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这家公司今年智能问答产品的实际收入是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.5059,
+              "dense_score": 0.5059,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5037,
+              "dense_score": 0.5037,
+              "keyword_score": 13.3559,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.4889,
+              "dense_score": 0.4889,
+              "keyword_score": 0.0,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            }
+          ]
+        },
+        {
+          "case_id": "R079",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "招聘团队承诺多久之内一定会给候选人反馈？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.4982,
+              "dense_score": 0.4982,
+              "keyword_score": 0.0,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            },
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.4972,
+              "dense_score": 0.4972,
+              "keyword_score": 0.0,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.4962,
+              "dense_score": 0.4962,
+              "keyword_score": 6.6786,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.3768,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.2245,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.593,
+              "dense_score": 0.593,
+              "keyword_score": 5.1021,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.55,
+      "top_k": 3,
+      "hit_rate": 0.86,
+      "mrr": 0.7733333333333334,
+      "false_positive_rate": 0.3,
+      "positive_hits": 43,
+      "positive_total": 50,
+      "false_positives": 9,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "公司目前在招什么职位？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？"
+      ],
+      "false_positive_queries": [
+        "公司的具体月薪范围是多少？",
+        "实习岗位每周需要到岗几天？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "项目中的向量相似度阈值在生产环境精确配置成多少？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "这个 API 每分钟允许同一个用户调用多少次？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 14
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 10
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 9
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 8
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 10
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 13
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "公司目前在招什么职位？",
+          "expected_evidence": [
+            "Agent 应用开发实习生"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.598,
+              "dense_score": 0.598,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5549,
+              "dense_score": 0.5549,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R037",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的具体月薪范围是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.559,
+              "dense_score": 0.559,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 10.9738,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.598,
+              "dense_score": 0.598,
+              "keyword_score": 6.3803,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5788,
+              "dense_score": 0.5788,
+              "keyword_score": 1.0587,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.5606,
+              "dense_score": 0.5606,
+              "keyword_score": 7.6028,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.3452,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5066,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.5923,
+              "dense_score": 0.5923,
+              "keyword_score": 5.6594,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "failure_type": "missed_answerable",
+          "category": "multi_fact",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "expected_evidence": [
+            "按会话隔离"
+          ],
+          "allowed_sources": [
+            "demo_agent_history.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 35.8126,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5827,
+              "dense_score": 0.5827,
+              "keyword_score": 33.9545,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5823,
+              "dense_score": 0.5823,
+              "keyword_score": 21.8634,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            }
+          ]
+        },
+        {
+          "case_id": "R069",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.5966,
+              "dense_score": 0.5966,
+              "keyword_score": 29.8377,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5796,
+              "dense_score": 0.5796,
+              "keyword_score": 23.6557,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2853,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.6579,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5638,
+              "dense_score": 0.5638,
+              "keyword_score": 5.7716,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.5519,
+              "dense_score": 0.5519,
+              "keyword_score": 2.0771,
+              "content_sha256": "b3bdda06dfaac14676fd490de95242c2c07d94755a8089a14738c8d4b41923d4"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.4182,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.5939,
+              "dense_score": 0.5939,
+              "keyword_score": 1.3601,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_deployment_config.txt",
+              "score": 0.5554,
+              "dense_score": 0.5554,
+              "keyword_score": 7.1827,
+              "content_sha256": "328b8864c81bd945f7a5168d0e06fa1fbdf1bbbf111f424d6921ebd07b9c2a3e"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.3768,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.2245,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.593,
+              "dense_score": 0.593,
+              "keyword_score": 5.1021,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.6,
+      "top_k": 3,
+      "hit_rate": 0.8,
+      "mrr": 0.7266666666666667,
+      "false_positive_rate": 0.2,
+      "positive_hits": 40,
+      "positive_total": 50,
+      "false_positives": 6,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "公司目前在招什么职位？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "GET 和 POST 会话接口分别用来做什么？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+        "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+        "简历里写延迟降低 80% 之前，至少应该有什么依据？"
+      ],
+      "false_positive_queries": [
+        "实习岗位每周需要到岗几天？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 14
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 10
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 8
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 9
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 8
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 15
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "公司目前在招什么职位？",
+          "expected_evidence": [
+            "Agent 应用开发实习生"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R021",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "GET 和 POST 会话接口分别用来做什么？",
+          "expected_evidence": [
+            "GET /sessions",
+            "POST /sessions"
+          ],
+          "allowed_sources": [
+            "demo_api_rest.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6024,
+              "dense_score": 0.6024,
+              "keyword_score": 10.3634,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 10.9738,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.3452,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5066,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "failure_type": "missed_answerable",
+          "category": "multi_fact",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "expected_evidence": [
+            "按会话隔离"
+          ],
+          "allowed_sources": [
+            "demo_agent_history.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R058",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+          "expected_evidence": [
+            "同步阻塞操作",
+            "事件循环"
+          ],
+          "allowed_sources": [
+            "demo_python_async.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R060",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "expected_evidence": [
+            "不要使用没有实际测试依据"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_resume.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 35.8126,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2853,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.6579,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.4182,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.3768,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.2245,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.61,
+      "top_k": 3,
+      "hit_rate": 0.76,
+      "mrr": 0.6966666666666668,
+      "false_positive_rate": 0.16666666666666666,
+      "positive_hits": 38,
+      "positive_total": 50,
+      "false_positives": 5,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "公司目前在招什么职位？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "长文档为什么要切片并保留重叠？",
+        "GET 和 POST 会话接口分别用来做什么？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+        "向量相似度高，就能直接断定检索到的事实正确吗？",
+        "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+        "简历里写延迟降低 80% 之前，至少应该有什么依据？"
+      ],
+      "false_positive_queries": [
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 13
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 10
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 8
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 10
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 7
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 15
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "公司目前在招什么职位？",
+          "expected_evidence": [
+            "Agent 应用开发实习生"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R011",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "长文档为什么要切片并保留重叠？",
+          "expected_evidence": [
+            "文本分块",
+            "重要信息",
+            "重叠分块"
+          ],
+          "allowed_sources": [
+            "demo_rag_chunking.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R021",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "GET 和 POST 会话接口分别用来做什么？",
+          "expected_evidence": [
+            "GET /sessions",
+            "POST /sessions"
+          ],
+          "allowed_sources": [
+            "demo_api_rest.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.3452,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5066,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "failure_type": "missed_answerable",
+          "category": "multi_fact",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "expected_evidence": [
+            "按会话隔离"
+          ],
+          "allowed_sources": [
+            "demo_agent_history.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R054",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "向量相似度高，就能直接断定检索到的事实正确吗？",
+          "expected_evidence": [
+            "不等于事实正确性"
+          ],
+          "allowed_sources": [
+            "demo_rag_embeddings.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.6512,
+              "dense_score": 0.6512,
+              "keyword_score": 17.2283,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            }
+          ]
+        },
+        {
+          "case_id": "R058",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+          "expected_evidence": [
+            "同步阻塞操作",
+            "事件循环"
+          ],
+          "allowed_sources": [
+            "demo_python_async.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R060",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "expected_evidence": [
+            "不要使用没有实际测试依据"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_resume.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 35.8126,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2853,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.6579,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.4182,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.3768,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.2245,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chunk_size": 300,
+      "overlap": 50,
+      "threshold": 0.65,
+      "top_k": 3,
+      "hit_rate": 0.6,
+      "mrr": 0.56,
+      "false_positive_rate": 0.0,
+      "positive_hits": 30,
+      "positive_total": 50,
+      "false_positives": 0,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "公司目前在招什么职位？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "工具调用参数应该如何防止模型生成错误？",
+        "长文档为什么要切片并保留重叠？",
+        "Python 的 finally 代码块什么时候运行？",
+        "在异步 FastAPI 路由中直接执行阻塞函数有什么影响？",
+        "GET 和 POST 会话接口分别用来做什么？",
+        "项目里应该怎样保存 API Key？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "为了避免模型一直重复调用工具，执行循环要加什么保护？",
+        "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+        "工具报错时，为什么不能把错误包装成正常业务结果？",
+        "向量相似度高，就能直接断定检索到的事实正确吗？",
+        "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？",
+        "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+        "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+        "简历里写延迟降低 80% 之前，至少应该有什么依据？"
+      ],
+      "false_positive_queries": [],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 10
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 10
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 7
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 10
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 3
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 20
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "公司目前在招什么职位？",
+          "expected_evidence": [
+            "Agent 应用开发实习生"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R006",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "工具调用参数应该如何防止模型生成错误？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.7234,
+              "dense_score": 0.6048,
+              "keyword_score": 25.9893,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            }
+          ]
+        },
+        {
+          "case_id": "R011",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "长文档为什么要切片并保留重叠？",
+          "expected_evidence": [
+            "文本分块",
+            "重要信息",
+            "重叠分块"
+          ],
+          "allowed_sources": [
+            "demo_rag_chunking.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R018",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "Python 的 finally 代码块什么时候运行？",
+          "expected_evidence": [
+            "finally",
+            "无论成功或失败"
+          ],
+          "allowed_sources": [
+            "demo_python_exceptions.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R019",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "在异步 FastAPI 路由中直接执行阻塞函数有什么影响？",
+          "expected_evidence": [
+            "同步阻塞操作",
+            "事件循环"
+          ],
+          "allowed_sources": [
+            "demo_python_async.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R021",
+          "failure_type": "missed_answerable",
+          "category": "keyword",
+          "query": "GET 和 POST 会话接口分别用来做什么？",
+          "expected_evidence": [
+            "GET /sessions",
+            "POST /sessions"
+          ],
+          "allowed_sources": [
+            "demo_api_rest.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R028",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "项目里应该怎样保存 API Key？",
+          "expected_evidence": [
+            "环境变量",
+            "密钥管理机制"
+          ],
+          "allowed_sources": [
+            "demo_company_security.txt",
+            "demo_deployment_config.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R050",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "为了避免模型一直重复调用工具，执行循环要加什么保护？",
+          "expected_evidence": [
+            "最大迭代次数",
+            "最大轮数限制"
+          ],
+          "allowed_sources": [
+            "demo_agent_loop.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R051",
+          "failure_type": "missed_answerable",
+          "category": "multi_fact",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "expected_evidence": [
+            "按会话隔离"
+          ],
+          "allowed_sources": [
+            "demo_agent_history.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R052",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "工具报错时，为什么不能把错误包装成正常业务结果？",
+          "expected_evidence": [
+            "失败不应被伪装成成功结果",
+            "重试策略"
+          ],
+          "allowed_sources": [
+            "demo_agent_failures.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R054",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "向量相似度高，就能直接断定检索到的事实正确吗？",
+          "expected_evidence": [
+            "不等于事实正确性"
+          ],
+          "allowed_sources": [
+            "demo_rag_embeddings.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.6512,
+              "dense_score": 0.6512,
+              "keyword_score": 17.2283,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            }
+          ]
+        },
+        {
+          "case_id": "R056",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？",
+          "expected_evidence": [
+            "Recall@K",
+            "MRR"
+          ],
+          "allowed_sources": [
+            "demo_rag_evaluation.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R057",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+          "expected_evidence": [
+            "Field(min_length=1, max_length=4000)"
+          ],
+          "allowed_sources": [
+            "demo_fastapi_validation.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6665,
+              "dense_score": 0.6665,
+              "keyword_score": 2.7201,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            }
+          ]
+        },
+        {
+          "case_id": "R058",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+          "expected_evidence": [
+            "同步阻塞操作",
+            "事件循环"
+          ],
+          "allowed_sources": [
+            "demo_python_async.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R060",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "expected_evidence": [
+            "不要使用没有实际测试依据"
+          ],
+          "allowed_sources": [
+            "demo_recruitment_resume.txt"
+          ],
+          "retrieved": []
+        }
+      ]
+    },
+    {
+      "chunk_size": 500,
+      "overlap": 50,
+      "threshold": 0.55,
+      "top_k": 3,
+      "hit_rate": 0.86,
+      "mrr": 0.7733333333333334,
+      "false_positive_rate": 0.3,
+      "positive_hits": 43,
+      "positive_total": 50,
+      "false_positives": 9,
+      "negative_total": 30,
+      "missed_queries": [
+        "这家公司的办公地点在哪个区？",
+        "公司目前在招什么职位？",
+        "候选人还需要了解哪些模型交互和检索能力？",
+        "这家公司在深圳哪个片区办公？",
+        "岗位介绍里提到要会调模型和知识库吗？",
+        "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？"
+      ],
+      "false_positive_queries": [
+        "公司的具体月薪范围是多少？",
+        "实习岗位每周需要到岗几天？",
+        "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+        "项目中的向量相似度阈值在生产环境精确配置成多少？",
+        "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "MySQL 会话消息超过多少天会被自动清理？",
+        "这个 API 每分钟允许同一个用户调用多少次？",
+        "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "Agent 调用天气工具时使用的真实供应商 API Key 是什么？"
+      ],
+      "category_counts": {
+        "paraphrase": {
+          "total": 17,
+          "correct": 14
+        },
+        "multi_fact": {
+          "total": 11,
+          "correct": 10
+        },
+        "keyword": {
+          "total": 9,
+          "correct": 9
+        },
+        "no_answer": {
+          "total": 10,
+          "correct": 8
+        },
+        "realistic_paraphrase": {
+          "total": 13,
+          "correct": 10
+        },
+        "similar_distractor": {
+          "total": 20,
+          "correct": 13
+        }
+      },
+      "failure_cases": [
+        {
+          "case_id": "R001",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "这家公司的办公地点在哪个区？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "公司目前在招什么职位？",
+          "expected_evidence": [
+            "Agent 应用开发实习生"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.598,
+              "dense_score": 0.598,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.5549,
+              "dense_score": 0.5549,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R004",
+          "failure_type": "missed_answerable",
+          "category": "paraphrase",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R037",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "公司的具体月薪范围是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.559,
+              "dense_score": 0.559,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R043",
+          "failure_type": "false_positive",
+          "category": "no_answer",
+          "query": "实习岗位每周需要到岗几天？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 10.9738,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "这家公司在深圳哪个片区办公？",
+          "expected_evidence": [
+            "深圳市南山区"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "faq.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "expected_evidence": [
+            "Tool Calling",
+            "提示词设计",
+            "知识检索"
+          ],
+          "allowed_sources": [
+            "company.txt",
+            "recruitment.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.598,
+              "dense_score": 0.598,
+              "keyword_score": 6.3803,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5788,
+              "dense_score": 0.5788,
+              "keyword_score": 1.0587,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.5606,
+              "dense_score": 0.5606,
+              "keyword_score": 7.6028,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R049",
+          "failure_type": "missed_answerable",
+          "category": "realistic_paraphrase",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "expected_evidence": [
+            "Pydantic",
+            "独立校验"
+          ],
+          "allowed_sources": [
+            "demo_agent_schema.txt"
+          ],
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.3452,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5066,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.5923,
+              "dense_score": 0.5923,
+              "keyword_score": 5.6594,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "failure_type": "missed_answerable",
+          "category": "multi_fact",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "expected_evidence": [
+            "按会话隔离"
+          ],
+          "allowed_sources": [
+            "demo_agent_history.txt"
+          ],
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "recruitment.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 35.8126,
+              "content_sha256": "251dc9e12322bd341930a58c2f9633591985b0e1fdc20f134e45a99f20cb8d0e"
+            },
+            {
+              "source": "company.txt",
+              "score": 0.5827,
+              "dense_score": 0.5827,
+              "keyword_score": 33.9545,
+              "content_sha256": "0dc98ffae0a2bac3f91393e43c1ff8728bb2eb0de0fe2bc57f49db5b319de044"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.5823,
+              "dense_score": 0.5823,
+              "keyword_score": 21.8634,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            }
+          ]
+        },
+        {
+          "case_id": "R069",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.5966,
+              "dense_score": 0.5966,
+              "keyword_score": 29.8377,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.5796,
+              "dense_score": 0.5796,
+              "keyword_score": 23.6557,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R071",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2853,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R073",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.6579,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.5638,
+              "dense_score": 0.5638,
+              "keyword_score": 5.7716,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.5519,
+              "dense_score": 0.5519,
+              "keyword_score": 2.0771,
+              "content_sha256": "b3bdda06dfaac14676fd490de95242c2c07d94755a8089a14738c8d4b41923d4"
+            }
+          ]
+        },
+        {
+          "case_id": "R075",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.4182,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.5939,
+              "dense_score": 0.5939,
+              "keyword_score": 1.3601,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_deployment_config.txt",
+              "score": 0.5554,
+              "dense_score": 0.5554,
+              "keyword_score": 7.1827,
+              "content_sha256": "328b8864c81bd945f7a5168d0e06fa1fbdf1bbbf111f424d6921ebd07b9c2a3e"
+            }
+          ]
+        },
+        {
+          "case_id": "R080",
+          "failure_type": "false_positive",
+          "category": "similar_distractor",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "expected": null,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.3768,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.2245,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.593,
+              "dense_score": 0.593,
+              "keyword_score": 5.1021,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

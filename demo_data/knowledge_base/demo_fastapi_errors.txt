@@ -1,0 +1,5 @@
+FastAPI 统一异常响应
+
+API 可以通过异常处理器统一处理 HTTPException、RequestValidationError 和未预期异常。统一响应结构有助于调用方以一致的方式解析 code、message 和 data 字段。
+
+统一格式不意味着所有异常都应该返回相同的 HTTP 状态码。资源不存在、参数不合法和服务器内部故障应分别使用合理的状态码，并在服务端日志中保留排查所需的信息。
