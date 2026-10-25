@@ -1,0 +1,478 @@
+================================================================================
+WB 代码修改记录（dev-agent / WB 分支）
+说明：记录「改了什么 → 因此能做什么」。每次改代码追加一条，时间精确到分。
+最近更新：2026-10-25 19:27
+================================================================================
+
+
+================================================================================
+【2026-10-24 21:35】v2.0 · 七项改造（首个记录）
+================================================================================
+
+--------------------------------------------------------------------------------
+一、新增能力：现在能做到什么
+--------------------------------------------------------------------------------
+
+1. 前端页面（要求 1）
+   - 访问 http://127.0.0.1:8000/ 直接打开单页应用，无需 Node、无需构建。
+   - 登录 / 注册切换、JWT 存 localStorage、刷新自动续上登录态。
+   - 左侧会话列表：新建、切换、删除；标题自动取第一句提问。
+   - 右侧聊天区：SSE 打字机效果、工具调用过程提示（🔍 正在调用… / ✅ 已返回）。
+   - 文件：web/index.html、web/style.css、web/app.js
+
+2. SQLAlchemy + 用户体系（要求 2）
+   - 全异步 ORM：database/base.py（async engine / async_sessionmaker / get_db）。
+   - 三张表：users、chat_sessions、chat_messages（外键 + 级联删除）。
+   - 注册、登录、当前用户接口：/auth/register、/auth/login、/auth/me。
+   - 密码 PBKDF2-SHA256（26 万次迭代 + 随机盐），库里看不到明文。
+   - 能做什么：多用户各自独立的会话空间；别人拿到你的 session_id 也查不到（404）。
+
+3. JWT 鉴权（要求 3）
+   - auth/tokens.py：HS256 签发 / 校验，带 exp、iat、sub、username。
+   - auth/dependencies.py：get_current_user 依赖，路由签名里只写 CurrentUser 即可。
+   - 所有 /sessions 与 /chat 接口强制登录，401 时返回 WWW-Authenticate: Bearer。
+   - 能做什么：无状态登录，多实例部署不需要共享 session 存储。
+
+4. 流式输出（要求 4）
+   - POST /chat/stream 返回 text/event-stream。
+   - 事件：meta / tool_start / tool_result / delta / done / error。
+   - 前端 fetch + ReadableStream 逐块解析（EventSource 发不了 POST + Header）。
+   - 能做什么：首字延迟从「整段生成完」降到「第一个 token」；
+     工具调用过程对用户可见，长任务不再像卡死。
+
+5. 代码分层（要求 5）
+   旧 → 新 对照：
+
+   app.py（全部路由）        → app.py（只装配）+ api/routers/{auth,session,chat}_router.py
+   app.py 的异常处理器       → api/exceptions.py
+   app.py 的日志中间件       → api/middleware.py（改成纯 ASGI）
+   agent/session.py（pymysql）→ agent/store.py（SQLAlchemy）
+   agent/agent.py 里的 prompt → agent/prompts.py
+   agent/agent.py 里的工具执行 → agent/tools_runner.py
+   agent/agent.py 里的全局单例 → agent/factory.py（按请求装配）
+   tools/knowledge.py（检索）  → rag/{loader,splitter,embedder,bm25,hybrid,retriever}.py
+   tools/text_splitter.py      → rag/splitter.py（原文件保留为兼容层）
+   散落的 os.getenv           → config.py（唯一配置源）
+
+   能做什么：改一个接口只动一个文件；换检索策略不动 Agent；换 prompt 不动逻辑。
+
+6. 全异步（要求 6）
+   - 路由：全部 async def。
+   - 数据库：create_async_engine + aiosqlite（或 aiomysql）。
+   - LLM：openai.AsyncOpenAI；agent.run / agent.stream 都是协程 / 异步生成器。
+   - 工具：统一 async def；万一有同步工具，执行器用 asyncio.to_thread 兜住。
+   - 向量编码：sentence-transformers 是同步 CPU 操作，
+     用 asyncio.to_thread 丢线程池，避免卡住事件循环。
+   - 能做什么：一个用户等模型返回时，其他用户照常被服务。
+
+7. 混合检索 RAG（要求 7）
+   - 稠密：bge-small-zh-v1.5，归一化后点积 = 余弦，取前 10。
+   - 稀疏：自实现 BM25（k1=1.5, b=0.75），中文按连续汉字二元组切词，取前 10。
+   - 融合：RRF（k=60），score = Σ 1/(k + rank)。
+   - 门槛：余弦 ≥ 0.55 才算有证据；只靠关键词命中的，余弦至少要 0.45。
+   - 输出：每条证据带 来源 / 语义相似度 / 命中方式（dense / sparse / both）。
+   - 能做什么：专有名词、错误码这类「必须原样命中」的查询也能召回；
+     实测「今天股市怎么样？」这类库外问题仍能正确返回空 → 拒答链路不被破坏。
+
+--------------------------------------------------------------------------------
+二、行为变化 / 破坏性变更（升级时注意）
+--------------------------------------------------------------------------------
+
+1. 启动命令不变：uvicorn app:app --reload
+2. 接口变化：
+   - 新增 /auth/*、/chat/stream、/api/health。
+   - /chat、/sessions 系列现在**必须带 Authorization: Bearer <token>**，
+     原来裸调会被 401。
+   - /chat 的 session_id 变成可选：不传就新建会话并在响应里返回。
+   - /sessions/{id}/messages 返回的消息里不再有 tool 角色的中间消息，
+     也不会出现 content 为空的空气泡。
+3. 数据存储变化：
+   - 默认数据库从 MySQL 换成项目根目录的 dev_agent.db（SQLite）。
+   - 表结构由「sessions 表 + messages JSON」改为三张表。
+   - 旧的 sessions.db / sessions 表不再使用（文件保留，未删除）。
+4. 配置变化：
+   - 所有环境变量集中在 config.py 读取，新增 .env.example 作为模板。
+   - 新增 DATABASE_URL / JWT_SECRET / JWT_EXPIRE_MINUTES / RAG_* 等变量。
+   - KNOWLEDGE_DIR 支持相对路径（按项目根解析）；目录不存在时降级到 knowledge_base/。
+5. 代码引用变化：
+   - `from tools.text_splitter import split_text` 仍可用（兼容层），
+     但新代码应 `from rag.splitter import split_text`。
+   - 删除 test/__init__.py（改成 pytest 默认的平铺导入方式）。
+6. 日志：logs/app.log 位置不变，但目录改为相对项目根，不受启动目录影响。
+
+--------------------------------------------------------------------------------
+三、修掉的原有 Bug
+--------------------------------------------------------------------------------
+
+1. api/api_response.py 里 `import typing as Any`（把模块当类型用）→ 改为 `from typing import Any`。
+2. sessions 表整段覆盖写入的并发丢消息问题 → 改为逐条 INSERT。
+3. 工具执行没有区分「参数是坏 JSON / 参数校验失败 / 工具运行时异常」
+   → 现在三类错误分别回给模型结构化的错误信息。
+4. 计算工具除零会抛 ZeroDivisionError 字符串给模型 → 现在返回 {"error": "除数不能为 0"}。
+5. 知识库目录不存在时直接 FileNotFoundError 崩溃 → 现在记 warning 并返回空结果（走拒答）。
+
+--------------------------------------------------------------------------------
+四、验证方式（复现用）
+--------------------------------------------------------------------------------
+
+1. 单元 / 集成测试
+     pytest test/ -q
+   期望：42 passed（含检索真实模型测试；没有 knowledge_base 时该组自动 skip）
+
+2. 端到端手测
+     uvicorn app:app --reload
+     # 打开 http://127.0.0.1:8000/ 注册 → 提问「公司在哪里？」
+     # 期望看到：工具提示 → 打字机输出「深圳市南山区科技园」
+
+3. 命令行（不启服务）
+     python main.py "公司在哪里？"
+   会用 demo 用户和 cli-demo 会话跑完整 Agent 流程，逐字打印。
+
+4. 检索扫参
+     python test/evaluate_retrieval.py
+
+--------------------------------------------------------------------------------
+五、新增 / 修改文件清单
+--------------------------------------------------------------------------------
+
+新增：
+  config.py
+  .env.example
+  database/__init__.py, database/base.py, database/models.py
+  auth/__init__.py, passwords.py, tokens.py, schemas.py, service.py, dependencies.py
+  api/__init__.py, deps.py, exceptions.py, middleware.py
+  api/routers/__init__.py, auth_router.py, session_router.py, chat_router.py
+  agent/events.py, prompts.py, store.py, tools_runner.py, factory.py
+  rag/__init__.py, loader.py, splitter.py, embedder.py, bm25.py, hybrid.py, retriever.py
+  web/index.html, web/style.css, web/app.js
+  test/conftest.py, test/test_agent_stream.py, test/test_api_auth.py
+  pytest.ini
+  TXT/WB对话总结.txt, TXT/WB代码修改.txt
+
+重写：
+  app.py, main.py, agent/agent.py, agent/__init__.py, logging_config.py
+  api/api_response.py, api/api_schemas.py
+  tools/knowledge.py, calculator.py, weather.py, order.py, schema.py, text_splitter.py
+  test/test_agent.py, test/test_knowledge.py, test/test_rag_agent.py,
+  test/test_text_splitter.py, test/evaluate_retrieval.py,
+  test/evaluate_rag_answers.py, test/retrieval_dataset.py
+  scripts/generate_knowladge_base.py（company_overview 补了办公地址，便于测试断言）
+  requirements.txt（改为按用途分组的直接依赖）
+  README.md, .gitignore
+
+删除：
+  test/__init__.py
+================================================================================
+
+
+================================================================================
+【2026-10-25 01:31】分块策略升级：段落 → 句子 → 词（三级递归）
+================================================================================
+
+--------------------------------------------------------------------------------
+一、改了什么
+--------------------------------------------------------------------------------
+
+原行为：按空行切段，段落超过 300 字就 split_text 定长硬切。
+新行为：三级递归降级 + 短块吸附 + 整句重叠。
+
+1. rag/splitter.py（重写）
+   - 新增 split_document(text, max_chars=300, overlap=50, min_chars=60)：
+     文档级入口，替代原来的 split_by_paragraph（后者已删除）。
+   - _split_paragraphs：按空行切段。
+   - _attach_short_blocks：< min_chars 的段并入相邻段，标题不再独立成块。
+   - _split_sentences：句子边界 = 中文标点后（排除连续标点）/ 英文句点+空白 / 换行。
+   - _split_long_sentence：单句仍超长时按逗号顿号冒号分句。
+   - _split_tokens：最后一级兜底，英文按整词、中文按单字，超长单词硬切。
+   - _merge_units：把短句攒到接近 max_chars，回退时按整句做重叠。
+   - 保留 split_text（定长窗口），它现在是最后一级的底层工具。
+   - 去掉"按内容全局去重"：重复出现的表格行/固定条款会被误删。
+
+2. rag/loader.py
+   - 改用 split_document；新增 MIN_CHUNK_SIZE = 60。
+
+3. rag/__init__.py
+   - 导出 split_document，移除 split_by_paragraph。
+
+4. test/test_text_splitter.py（重写，13 个用例）
+   - 核心断言是"切点不能落在句子中间"：每块必须以句末标点收尾、
+     不得在英文单词中间断开、拼接回去要与原文完全一致。
+
+5. test/retrieval_dataset.py + test/evaluate_retrieval.py
+   - expected 改成能落在同一个合理片段里的核心证据词（原写法要求
+     4 个关键词同时出现在 top3，任何 top_k 都无法满足）。
+   - 评估输出增加"缺哪个关键词 / 哪条误召回"的明细。
+
+--------------------------------------------------------------------------------
+二、能实现什么（用户可感知的变化）
+--------------------------------------------------------------------------------
+
+1. 检索片段更"完整"：一段话不会被劈成两半，模型拿到的证据是通顺的原文。
+2. 标题不再单独成块：chunk 开头就是有信息量的正文，向量质量提高。
+3. 重叠更自然：重叠以整句为单位，不会出现"半句话重复"的碎片。
+4. 英文文档不再被切坏单词（旧实现按字符切，会把 endpoint 切成 endpo/int）。
+5. 超长无标点文本（日志、ID 串）仍然可控：单块不超过 max_chars。
+
+实测数据（示例知识库 36 篇文档）：
+  片段数 103 → 70；平均 95 字；最长 197 字；超过 300 字的 0 条。
+  检索命中率 100%（5/5）；误召回 1/3（"公司股票代码"，已知案例）。
+  真实模型 "公司在哪里？" → 检索命中 demo_company_overview.txt，
+  SSE 86 个 delta + done，回答"深圳市南山区科技园"。
+
+--------------------------------------------------------------------------------
+三、兼容性 / 注意事项
+--------------------------------------------------------------------------------
+
+1. split_by_paragraph 已删除；如果别处引用它，改用 split_document。
+   `from rag.splitter import split_text` 仍然可用，行为未变。
+2. 分块结果变了 → 已建好的索引必须重建。程序内索引在 retrieve 首次调用时
+   按知识库目录 mtime 自动重建；如果是外部向量库，需要手动重跑入库。
+3. 参数含义：
+   - max_chars  单片段目标上限（默认 300）
+   - overlap    重叠预算，按整句回退（默认 50）
+   - min_chars  短块吸附阈值（默认 60，设 0 可关闭吸附）
+4. 测试数量：42 → 48（新增 6 个分块用例）。
+
+--------------------------------------------------------------------------------
+四、验证命令
+--------------------------------------------------------------------------------
+
+  pytest test/test_text_splitter.py -v     # 13 passed
+  pytest test/ -q                          # 48 passed
+  python test/evaluate_retrieval.py        # 命中 5/5，误召回 1/3
+  uvicorn app:app --reload                 # 页面里问"公司在哪里？"
+================================================================================
+
+
+================================================================================
+【2026-10-25 19:10】工程清理 · 残留目录删除 + requirements.txt 编码修复
+================================================================================
+
+--------------------------------------------------------------------------------
+一、删除三个残留目录（空壳，无源代码）
+--------------------------------------------------------------------------------
+
+  删除：app/      （6 个文件：5 个旧 .pyc + 1 份 app/logs/app.log）
+        modules/  （3 个文件：全是旧 .pyc，cpython-310）
+        frontend/ （1092 个文件：node_modules/ + dist/）
+
+  判断依据（先查再删，不是拍脑袋）：
+  1. git ls-files app modules frontend → 输出为空，说明这三个目录
+     里面的任何文件都从未被 git 跟踪，删掉不会产生 git 记录上的丢失。
+  2. find 列出的文件只有 __pycache__/*.pyc、logs/*.log、node_modules、dist，
+     没有一个 .py / .js / .ts 源码 —— 源码早在 v2.0 重构时就已迁走。
+  3. 全项目 grep "from app / import app / modules / frontend"，
+     只有 test/conftest.py:42 一处 `from app import app`。
+     这里 app 指的是根目录的 app.py（组合根，导出 FastAPI 实例），
+     不是 app/ 这个目录 —— 删掉目录后反而消除了命名歧义。
+
+  能做什么：
+  - 仓库体积从 1092+ 个文件降到干净状态，git status 不再被 node_modules 干扰。
+  - `from app import app` 现在只会命中 app.py 一个目标，不会再有"到底导的是
+    目录还是模块"的疑惑。
+
+--------------------------------------------------------------------------------
+二、requirements.txt 编码修复（这才是"看不了"的真正原因）
+--------------------------------------------------------------------------------
+
+  现象：编辑器打开 requirements.txt 是乱码 / 空白 / 提示二进制文件。
+
+  诊断过程（不猜，直接看字节）：
+    head -c 32 requirements.txt | od -c
+    →   #  \0      \0   8   h 303   _ 235   O ...
+  每个 ASCII 字符后面跟一个 \0，是典型的 UTF-16LE 特征；
+  "核" 字编码为 38 68（U+6838 的小端表示），"心" 为 C3 5F（U+5FC3）。
+  结论：文件是 UTF-16LE（且无 BOM），文件本身内容完好，只是编码不对。
+
+  修复：
+    raw  = Path('requirements.txt').read_bytes()
+    text = raw.decode('utf-16-le')
+    Path('requirements.txt').write_bytes(text.encode('utf-8'))
+  文件大小 1112 → 694 字节（UTF-16 每字符 2 字节，转 UTF-8 后中文 3 字节、
+  ASCII 1 字节，所以体积反而变小）。
+
+  为什么必须修：
+  - pip 读 requirements.txt 时按 locale 解码，UTF-16 在多数环境下会导致
+    "Invalid requirement" 或直接解析失败，装依赖会踩坑。
+  - git diff / 编辑器 / CI 全部按 UTF-8 处理，非 UTF-8 文本在协作里是定时炸弹。
+
+--------------------------------------------------------------------------------
+三、验证
+--------------------------------------------------------------------------------
+
+  .venv\Scripts\python.exe -m pytest -q
+  → 48 passed, 15 warnings in 20.16s
+
+  （注意：要用项目自己的 .venv，managed python 里没装 pytest；
+    15 个 warning 全是 PyJWT 提示 HMAC 密钥 30 字节 < 建议的 32 字节，
+    属于 .env 里的 SECRET_KEY 长度问题，不影响功能，换密钥即可消除。）
+
+--------------------------------------------------------------------------------
+四、注意事项
+--------------------------------------------------------------------------------
+
+1. app/logs/app.log 随 app/ 一起删除了。运行日志现在统一写到根目录 logs/
+   （logging_config.py 里配置），不受影响。
+2. frontend/node_modules 已删，如果以后还想跑那套 Vite 前端，需要
+   npm install 重装 —— 但 v2.0 之后前端已换成 web/ 下的零构建单页，
+   不再需要 Node 环境。
+3. .gitignore 已包含 node_modules/、dist/、.venv-demo/，
+   所以这次删除不会在 git 里留下任何 diff。
+================================================================================
+
+
+================================================================================
+【2026-10-25 19:10】工程清理 · 残留目录删除 + requirements.txt 编码修复
+================================================================================
+
+--------------------------------------------------------------------------------
+一、删除三个残留目录（空壳，无源代码）
+--------------------------------------------------------------------------------
+
+  删除：app/      （6 个文件：5 个旧 .pyc + 1 份 app/logs/app.log）
+        modules/  （3 个文件：全是旧 .pyc，cpython-310）
+        frontend/ （1092 个文件：node_modules/ + dist/）
+
+  判断依据（先查再删，不是拍脑袋）：
+  1. git ls-files app modules frontend → 输出为空，说明这三个目录
+     里面的任何文件都从未被 git 跟踪，删掉不会产生 git 记录上的丢失。
+  2. find 列出的文件只有 __pycache__/*.pyc、logs/*.log、node_modules、dist，
+     没有一个 .py / .js / .ts 源码 —— 源码早在 v2.0 重构时就已迁走。
+  3. 全项目 grep "from app / import app / modules / frontend"，
+     只有 test/conftest.py:42 一处 `from app import app`。
+     这里 app 指的是根目录的 app.py（组合根，导出 FastAPI 实例），
+     不是 app/ 这个目录 —— 删掉目录后反而消除了命名歧义。
+
+  能做什么：
+  - 仓库体积从 1092+ 个文件降到干净状态，git status 不再被 node_modules 干扰。
+  - `from app import app` 现在只会命中 app.py 一个目标，不会再有"到底导的是
+    目录还是模块"的疑惑。
+
+--------------------------------------------------------------------------------
+二、requirements.txt 编码修复（这才是"看不了"的真正原因）
+--------------------------------------------------------------------------------
+
+  现象：编辑器打开 requirements.txt 是乱码 / 空白 / 提示二进制文件。
+
+  诊断过程（不猜，直接看字节）：
+    head -c 32 requirements.txt | od -c
+    →   #  \0      \0   8   h 303   _ 235   O ...
+  每个 ASCII 字符后面跟一个 \0，是典型的 UTF-16LE 特征；
+  "核" 字编码为 38 68（U+6838 的小端表示），"心" 为 C3 5F（U+5FC3）。
+  结论：文件是 UTF-16LE（且无 BOM），文件本身内容完好，只是编码不对。
+
+  修复：
+    raw  = Path('requirements.txt').read_bytes()
+    text = raw.decode('utf-16-le')
+    Path('requirements.txt').write_bytes(text.encode('utf-8'))
+  文件大小 1112 → 694 字节（UTF-16 每字符 2 字节，转 UTF-8 后中文 3 字节、
+  ASCII 1 字节，所以体积反而变小）。
+
+  为什么必须修：
+  - pip 读 requirements.txt 时按 locale 解码，UTF-16 在多数环境下会导致
+    "Invalid requirement" 或直接解析失败，装依赖会踩坑。
+  - git diff / 编辑器 / CI 全部按 UTF-8 处理，非 UTF-8 文本在协作里是定时炸弹。
+
+--------------------------------------------------------------------------------
+三、验证
+--------------------------------------------------------------------------------
+
+  .venv\Scripts\python.exe -m pytest -q
+  → 48 passed, 15 warnings in 20.16s
+
+  （注意：要用项目自己的 .venv，managed python 里没装 pytest；
+    15 个 warning 全是 PyJWT 提示 HMAC 密钥 30 字节 < 建议的 32 字节，
+    属于 .env 里的 SECRET_KEY 长度问题，不影响功能，换密钥即可消除。）
+
+--------------------------------------------------------------------------------
+四、注意事项
+--------------------------------------------------------------------------------
+
+1. app/logs/app.log 随 app/ 一起删除了。运行日志现在统一写到根目录 logs/
+   （logging_config.py 里配置），不受影响。
+2. frontend/node_modules 已删，如果以后还想跑那套 Vite 前端，需要
+   npm install 重装 —— 但 v2.0 之后前端已换成 web/ 下的零构建单页，
+   不再需要 Node 环境。
+3. .gitignore 已包含 node_modules/、dist/、.venv-demo/，
+   所以这次删除不会在 git 里留下任何 diff。
+================================================================================
+
+
+--------------------------------------------------------------------------------
+【2026-10-25 19:27】第 6 轮 · 新增「重命名会话」
+--------------------------------------------------------------------------------
+
+一、现在能做到什么
+
+   会话列表每一行，鼠标移上去右侧出现两个图标：✎ 重命名、× 删除。
+   点 ✎ → 标题就地变成输入框（原文已选中）→ 改完 Enter 保存、Esc 取消、
+   点别处也算保存。保存成功后标题立刻反映在左侧列表和聊天区顶部。
+
+   空标题会被拒绝（标题必须有名字）；超过 60 字会被拒绝。
+
+二、新增接口
+
+   PATCH /sessions/{session_id}     body: {"title": "..."}     需登录
+     200 → {"session_id": "...", "title": "报销流程"}
+     422 → 标题为空白 / 超过 60 字
+     404 → 会话不存在，或不属于当前用户（两种情况给同一个状态码）
+     401 → 没带 token
+
+三、改了哪些文件
+
+   1. api/api_schemas.py            新增 RenameSessionRequest
+      - Field(min_length=1, max_length=60)
+      - field_validator 把 "  报销  流程  " 洗成 "报销 流程"（压掉换行和连续空格），
+        洗完还是空就抛 ValueError —— min_length 拦不住纯空白。
+   2. agent/store.py                新增 SessionStore.rename(session_id, user_id, title) -> bool
+      - UPDATE ... WHERE id=? AND user_id=?：越权和不存在都落到 rowcount=0，不区分
+      - values() 里特意写了 updated_at=ChatSession.updated_at（见下面第一条）
+   3. api/routers/session_router.py 新增 PATCH /sessions/{session_id}
+   4. api/exceptions.py             修 RequestValidationError 处理器（见下面第二条）
+   5. web/app.js                    renderSessions 加 ✎ 按钮；新增 beginRename()
+   6. web/style.css                 .rename / .rename-input / .editing 三个状态
+   7. test/test_api_auth.py         新增 3 个用例
+   8. README.md                     接口表补一行
+
+四、两个技术点，值得单独说
+
+  1) 改标题不能打乱会话顺序
+     models.py 里 ChatSession.updated_at 挂了 onupdate=_utcnow。这是 Core 层的钩子：
+     只要 UPDATE 语句没显式给这列赋值，它就自动刷新成当前时间。
+     而会话列表正是按 updated_at 倒序排的 —— 于是「改个名字」会让会话跳到最上面，
+     用户会以为列表乱了。
+
+     修法：在 values() 里写 updated_at=ChatSession.updated_at，
+     SQL 变成 SET updated_at = chat_sessions.updated_at，等于原地不动。
+
+     这件事是写测试时才发现的：我原本的注释声称"不会碰 updated_at"，但代码其实会。
+     test_rename_does_not_reorder_list 就是钉死它的 —— 改名前后的列表顺序必须完全一致。
+
+  2) 本该 422 的请求变成了 500
+     加上第一个自定义校验器之后，test_rename_session 直接崩：
+       TypeError: Object of type ValueError is not JSON serializable
+
+     原因：Pydantic v2 的 exc.errors() 会把校验器抛的**原始异常对象**塞进 ctx.error，
+     而 api/exceptions.py 又把 errors() 原样丢给 JSONResponse。内置约束
+     （min_length 之类）的 ctx 里是数字，所以这个坑在项目里躺了很久，从没被踩到。
+
+     修法：新增 _serializable_errors()，用 jsonable_encoder 配
+     custom_encoder={BaseException: str}。不修的话，以后任何自定义校验失败
+     都会变成 500，而且报错信息完全指不到真正原因。
+
+五、验证到什么程度
+
+   pytest -q                              → 51 passed（48 → 51）
+   node --check web/app.js                → 语法通过
+
+   真实服务（uvicorn --port 8125）端到端：
+     重命名 200，标题 "  报销 流程  咨询  " 存成 "报销 流程 咨询"
+     空白 422 / 超长 422 / 不存在 404 / 未登录 401
+     静态页 / 、/app.js、/style.css 均 200（说明新路由没影响根路径挂载）
+
+   未做：前端没有在真浏览器里点过（agent-browser 守护进程起不来，
+   内嵌 playwright-core 也没装）。逻辑上挡了三个坑：
+     - 点铅笔不会连带选中会话（stopPropagation）
+     - Enter 后浏览器补发的 blur 不会二次提交（settled 闩）
+     - 按 Esc 不会把打了一半的标题留在界面上（取消时不回填 editor.value）
+================================================================================

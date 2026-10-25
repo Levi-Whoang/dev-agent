@@ -1,119 +1,105 @@
-#评估检索命中率、无答案误召回等指标
+"""检索参数评估：命中率 vs 误召回率。
 
+用法：
+    python test/evaluate_retrieval.py
 
+会真的加载向量模型（只跑一次索引），然后对每组参数重新算分。
+注意：改 chunk 大小需要重建索引，所以这里只扫阈值和 top_k。
+"""
+
+from __future__ import annotations
+
+import asyncio
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from retrieval_dataset import EVALUATION_CASES
-import tools.knowledge as knowledge
+from config import get_settings  # noqa: E402
+from rag.retriever import KnowledgeRetriever  # noqa: E402
+from retrieval_dataset import EVALUATION_CASES  # noqa: E402
 
 
-def evaluate_config(
-    chunk_size: int,
-    overlap: int,
-    threshold: float,
-    top_k: int,
-) -> dict:
-    """评估一组 RAG 检索参数。"""
+async def evaluate_config(retriever: KnowledgeRetriever, **overrides) -> dict:
+    retriever.settings = replace(get_settings(), **overrides)
 
-    # 更新当前实验参数
-    knowledge.CHUNK_SIZE = chunk_size
-    knowledge.CHUNK_OVERLAP = overlap
-    knowledge.SIMILARITY_THRESHOLD = threshold
-    knowledge.TOP_K = top_k
-
-    # 清除旧文本片段和旧向量缓存
-    knowledge.load_knowledge.cache_clear()
-    knowledge.get_knowledge_vectors.cache_clear()
-
-    positive_total = 0
-    positive_hits = 0
-    negative_total = 0
-    false_positives = 0
+    positive_total = positive_hits = 0
+    negative_total = false_positives = 0
+    missing: list[str] = []
 
     for case in EVALUATION_CASES:
-        results = knowledge.knowledge_search(case["query"])
-
+        results = await retriever.search(case["query"])
         expected = case["expected"]
 
         if expected is None:
             negative_total += 1
-
             if results:
                 false_positives += 1
-
+                missing.append(f"误召回：{case['query']}")
             continue
 
         positive_total += 1
-
-        retrieved_text = "\n".join(
-            item["content"] for item in results
-        )
-
-        # 所有预期关键词都出现在召回内容中才算命中
-        if all(keyword in retrieved_text for keyword in expected):
+        text = "\n".join(item.content for item in results)
+        absent = [keyword for keyword in expected if keyword not in text]
+        if absent:
+            missing.append(f"{case['query']} 缺 {'/'.join(absent)}")
+        else:
             positive_hits += 1
 
-    hit_rate = (
-        positive_hits / positive_total
-        if positive_total else 0
-    )
-
-    false_positive_rate = (
-        false_positives / negative_total
-        if negative_total else 0
-    )
-
     return {
-        "chunk_size": chunk_size,
-        "overlap": overlap,
-        "threshold": threshold,
-        "top_k": top_k,
-        "hit_rate": hit_rate,
-        "false_positive_rate": false_positive_rate,
+        "hit_rate": positive_hits / positive_total if positive_total else 0.0,
+        "false_positive_rate": (
+            false_positives / negative_total if negative_total else 0.0
+        ),
         "positive_hits": positive_hits,
         "positive_total": positive_total,
         "false_positives": false_positives,
         "negative_total": negative_total,
+        "missing": missing,
     }
 
 
-def main():
-    configurations = [
-        (100, 20, 0.45, 3),
-        (100, 20, 0.55, 3),
-        (300, 50, 0.45, 3),
-        (300, 50, 0.55, 3),
-        (300, 50, 0.65, 3),
-        (500, 50, 0.55, 3),
+async def main() -> None:
+    settings = get_settings()
+    if not settings.knowledge_dir.exists():
+        raise SystemExit(
+            "知识库目录不存在，先运行 python scripts/generate_knowladge_base.py"
+        )
+
+    retriever = KnowledgeRetriever()
+    await retriever.search("预热")  # 先建索引，避免每组参数都重新编码
+
+    configs = [
+        {"dense_threshold": 0.50, "dense_floor": 0.40, "top_k": 3},
+        {"dense_threshold": 0.55, "dense_floor": 0.45, "top_k": 3},
+        {"dense_threshold": 0.60, "dense_floor": 0.50, "top_k": 3},
+        {"dense_threshold": 0.55, "dense_floor": 0.45, "top_k": 5},
+        {"dense_threshold": 0.65, "dense_floor": 0.55, "top_k": 3},
     ]
 
-    print("\nRAG 检索参数评估")
-    print("=" * 85)
+    print("\nRAG 检索参数评估（混合检索 + RRF）")
+    print("=" * 78)
 
-    results = []
-
-    for config in configurations:
-        result = evaluate_config(*config)
-        results.append(result)
-
+    for config in configs:
+        result = await evaluate_config(retriever, **config)
         print(
-            f"chunk={result['chunk_size']:>3}, "
-            f"overlap={result['overlap']:>2}, "
-            f"threshold={result['threshold']:.2f}, "
-            f"top_k={result['top_k']} | "
+            f"threshold={config['dense_threshold']:.2f} "
+            f"floor={config['dense_floor']:.2f} "
+            f"top_k={config['top_k']} | "
             f"命中率={result['hit_rate']:.0%} "
             f"({result['positive_hits']}/{result['positive_total']}) | "
             f"误召回率={result['false_positive_rate']:.0%} "
             f"({result['false_positives']}/{result['negative_total']})"
         )
+        for note in result["missing"]:
+            print(f"    - {note}")
 
-    print("=" * 85)
-    print("评估完成。请结合命中率和误召回率选择参数。")
+    print("=" * 78)
+    print("样例很少，只用来观察趋势；真正调参需要更大的标注集。")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

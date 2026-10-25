@@ -1,214 +1,235 @@
 # Dev Agent — 企业知识库问答助手
 
-一个基于 Python、FastAPI 和大语言模型的 Agent 应用项目，支持工具调用、企业知识库检索、对话历史持久化与 RESTful API。
+一个基于 **FastAPI + 异步 SQLAlchemy + 混合检索 RAG + 流式输出** 的 Agent 应用。
 
-项目重点是实践 Agent 应用开发中的核心流程：**LLM 决策 → Tool Calling → 工具执行 → 结果反馈 → 最终回答**，并结合 RAG 实现基于知识库证据的问答。
+核心链路：**LLM 决策 → Tool Calling → 工具执行 → 结果回灌 → 流式回答**，
+其中知识类问题由「向量召回 + BM25 召回 + RRF 融合」的混合检索提供证据。
 
 ## 功能特性
 
-- **Agent 工具调用**：根据用户问题决定是否调用工具，并处理工具参数、执行结果和异常。
-- **RAG 知识库检索**：使用 Sentence Transformers 将文本与查询转换为向量，通过余弦相似度检索相关内容。
-- **证据辅助问答**：支持返回知识片段、来源文件和相似度信息，帮助回答基于知识库内容。
-- **多轮对话**：维护会话消息历史，并将会话记录保存到 MySQL。
-- **RESTful API**：基于 FastAPI 提供聊天、会话创建、历史查询、清空和删除接口。
-- **统一异常响应**：处理 HTTP 异常、请求参数校验异常及未预期异常。
-- **请求日志**：记录 API 请求路径、状态码与处理耗时。
-
-## 技术栈
-
-| 类别 | 技术 |
+| 能力 | 说明 |
 |---|---|
-| 编程语言 | Python |
-| Web 框架 | FastAPI |
-| 大语言模型调用 | OpenAI 兼容 API |
-| Agent 核心 | Tool Calling、工具注册与参数校验 |
-| RAG | Sentence Transformers、向量相似度检索 |
-| 参数校验 | Pydantic |
-| 数据库 | MySQL、PyMySQL |
-| 测试 | pytest |
+| 用户体系 | 注册 / 登录 / JWT 鉴权，会话按用户隔离 |
+| Agent 工具调用 | 自动决定是否调工具，参数经 Pydantic 校验后执行 |
+| 混合检索 RAG | 稠密向量（bge-small-zh）+ 稀疏 BM25 + RRF 融合排序 |
+| 拒答机制 | 证据不足返回 `NO_RELEVANT_EVIDENCE`，禁止模型猜测 |
+| 流式输出 | SSE 逐字返回，工具调用过程也作为事件推送 |
+| 全异步 | 异步路由 + 异步数据库 + 异步 LLM 客户端 + 线程池跑向量编码 |
+| 前端页面 | 原生 HTML/CSS/JS，单页实现登录、会话列表、打字机效果 |
+| 统一响应 | `{code, message, data}`，异常处理器统一兜底 |
 
 ## 项目结构
 
 ```text
 dev-agent/
-├── agent/
-│   ├── agent.py             # Agent 决策循环与工具调用
-│   └── session.py           # MySQL 会话持久化
-├── api/
-│   ├── api_schemas.py       # 请求与响应模型
-│   └── api_response.py      # 统一响应格式
-├── tools/
-│   ├── registry.py          # 工具注册
-│   ├── schema.py            # 工具参数模型与 Schema 生成
-│   ├── knowledge.py         # 知识加载、向量检索与证据构建
-│   ├── text_splitter.py     # 文本分块
-│   ├── calculator.py        # 计算工具
-│   ├── weather.py           # 天气工具
-│   └── order.py             # 订单工具
-├── test/                    # 测试代码
-├── app.py                   # FastAPI 应用与路由
-├── main.py                  # Agent 初始化入口
-├── logging_config.py        # 日志配置
-├── requirements.txt         # Python 依赖
-└── README.md
+├── app.py                  # FastAPI 装配：路由 / 中间件 / 异常 / 静态页
+├── main.py                 # 命令行入口（不启服务，直接问一句）
+├── config.py               # 统一读取环境变量（唯一配置源）
+├── logging_config.py       # 日志配置
+│
+├── database/               # 数据层
+│   ├── base.py             # 异步 engine / 会话工厂 / get_db 依赖
+│   └── models.py           # User / ChatSession / ChatMessage
+│
+├── auth/                   # 鉴权
+│   ├── passwords.py        # PBKDF2 密码哈希
+│   ├── tokens.py           # JWT 签发与校验
+│   ├── schemas.py          # 注册 / 登录模型
+│   ├── service.py          # 用户业务逻辑
+│   └── dependencies.py     # get_current_user 依赖
+│
+├── api/                    # HTTP 层
+│   ├── api_schemas.py      # 请求 / 响应模型
+│   ├── api_response.py     # 统一响应格式
+│   ├── deps.py             # DbSession / CurrentUser 类型别名
+│   ├── exceptions.py       # 异常处理器
+│   ├── middleware.py       # 纯 ASGI 请求日志中间件
+│   └── routers/
+│       ├── auth_router.py      # /auth/*
+│       ├── session_router.py   # /sessions/*
+│       └── chat_router.py      # /chat, /chat/stream
+│
+├── agent/                  # Agent 核心
+│   ├── agent.py            # 异步决策循环 + stream()
+│   ├── events.py           # SSE 事件定义
+│   ├── prompts.py          # 系统提示词
+│   ├── store.py            # 会话 / 消息读写（SQLAlchemy）
+│   ├── tools_runner.py     # 工具参数校验与执行
+│   └── factory.py          # 按请求装配 Agent
+│
+├── rag/                    # 检索
+│   ├── loader.py           # 文档加载 + 缓存
+│   ├── splitter.py         # 三级切分：段落 → 句子 → 词/字
+│   ├── embedder.py         # 向量编码（异步封装）
+│   ├── bm25.py             # BM25 + 中英混合分词
+│   ├── hybrid.py           # RRF 融合
+│   └── retriever.py        # 检索入口（召回 → 融合 → 门槛）
+│
+├── tools/                  # 工具定义（全部 async）
+│   ├── registry.py         # 注册表
+│   ├── schema.py           # 函数签名 → Tool Schema
+│   ├── knowledge.py        # 知识检索工具（薄封装 rag/）
+│   ├── calculator.py / weather.py / order.py
+│   └── text_splitter.py    # 兼容层，指向 rag/splitter.py
+│
+├── web/                    # 前端页面（由 FastAPI 直接托管）
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+│
+├── test/                   # 测试（pytest + pytest-asyncio）
+├── TXT/                    # 变更记录（对话总结 / 代码修改）
+└── requirements.txt
 ```
 
-## 环境要求
-
-- Python 3.12
-- MySQL
-- 可用的大语言模型 API 及对应 API Key
-
-## 安装与配置
-
-### 1. 克隆项目
+## 快速开始
 
 ```bash
-git clone https://github.com/Levi-Whoang/dev-agent.git
-cd dev-agent
-```
-
-### 2. 创建虚拟环境
-
-Windows PowerShell：
-
-```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+.venv\Scripts\activate            # Windows
+pip install -r requirements.txt
 
-### 3. 安装依赖
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-### 4. 配置环境变量
-
-在项目根目录创建 `.env` 文件，根据 `main.py` 中实际读取的模型配置项，以及 `agent/session.py` 中的数据库配置项填写参数。
-
-数据库配置项：
-
-```dotenv
-MYSQL_HOST=127.0.0.1
-MYSQL_PORT=3306
-MYSQL_USER=root
-MYSQL_PASSWORD=你的数据库密码
-MYSQL_DATABASE=agent_db
-```
-
-请同时配置 `main.py` 实际使用的大模型 API Key、API Base URL 和模型名称等变量。变量名以项目代码为准，不要直接照抄其他模型平台的配置。
-
-确保 MySQL 服务已启动，并且数据库账号有创建表和读写数据的权限。会话管理器启动时会检查数据库连接并创建 `sessions` 表。
-
-### 5. 准备知识库
-
-知识检索模块会从 `knowledge_base/` 目录读取 `.txt` 文件。请创建该目录并放入自己的知识文档。
-
-注意：知识库目录可能不包含在 Git 提交中，需要自行准备测试数据；请勿将公司内部资料、个人隐私或其他敏感信息提交到公开仓库。
-
-首次运行向量模型时，可能需要下载模型文件，请确保模型能够正常获取。
-
-## 启动服务
-
-在项目根目录运行：
-
-```bash
+cp .env.example .env              # 填入 LLM_API_KEY 等
+python scripts/generate_knowladge_base.py   # 生成示例知识库
 uvicorn app:app --reload
 ```
 
-服务启动后访问：
+浏览器打开 <http://127.0.0.1:8000/>：
 
-- API 文档：`http://127.0.0.1:8000/docs`
-- OpenAPI Schema：`http://127.0.0.1:8000/openapi.json`
+- 首页：登录 / 注册 + 聊天界面
+- API 文档：<http://127.0.0.1:8000/docs>
+- 健康检查：<http://127.0.0.1:8000/api/health>
 
-## API 示例
+### 数据库
 
-### 1. 发送聊天请求
+默认使用项目根目录的 **SQLite**（`dev_agent.db`），不需要装任何数据库服务。
+首次启动会自动建表。
 
-`POST /chat`
+要换成 MySQL：
 
-请求体：
-
-```json
-{
-  "message": "请介绍一下知识库中的相关岗位要求",
-  "session_id": "demo-session"
-}
+```dotenv
+DATABASE_URL=mysql+aiomysql://root:password@127.0.0.1:3306/agent_db?charset=utf8mb4
 ```
 
-接口会调用 Agent 处理消息，并返回统一响应结构。实际回答取决于模型配置和知识库内容。
+并安装异步驱动 `pip install aiomysql`。
+（如果只配了 `MYSQL_HOST` 却没装 aiomysql，程序会打印警告并自动降级到 SQLite。）
 
-### 2. 创建会话
+### 环境变量
 
-`POST /sessions`
+| 变量 | 说明 |
+|---|---|
+| `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL` | OpenAI 兼容接口配置 |
+| `DATABASE_URL` | 数据库连接串，留空则用 SQLite |
+| `JWT_SECRET` | JWT 签名密钥，**部署前必须替换** |
+| `JWT_EXPIRE_MINUTES` | token 有效期（默认 720 分钟） |
+| `KNOWLEDGE_DIR` | 知识库目录，相对路径按项目根解析 |
+| `RAG_DENSE_THRESHOLD` | 稠密检索“算作有证据”的门槛（默认 0.55） |
+| `RAG_DENSE_FLOOR` | 只靠关键词命中时要求的最低语义分（默认 0.45） |
+| `RAG_RRF_K` | RRF 融合参数（默认 60） |
 
-```json
-{
-  "session_id": "demo-session"
-}
-```
+完整清单见 `.env.example`。
 
-也可以不提供 `session_id`，由服务生成会话 ID。
+## API
 
-### 3. 查询会话列表
+| 方法 | 路径 | 说明 | 需要登录 |
+|---|---|---|---|
+| POST | `/auth/register` | 注册并返回 token | 否 |
+| POST | `/auth/login` | 登录换取 token | 否 |
+| GET | `/auth/me` | 当前用户 | 是 |
+| GET | `/sessions` | 我的会话列表 | 是 |
+| POST | `/sessions` | 新建会话 | 是 |
+| PATCH | `/sessions/{id}` | 重命名会话（标题 1~60 字，自动洗空白） | 是 |
+| GET | `/sessions/{id}/messages` | 会话消息 | 是 |
+| POST | `/sessions/{id}/clear` | 清空消息 | 是 |
+| DELETE | `/sessions/{id}` | 删除会话 | 是 |
+| POST | `/chat` | 提问，等完整回答 | 是 |
+| POST | `/chat/stream` | 提问，SSE 流式回答 | 是 |
 
-`GET /sessions`
-
-### 4. 查询会话消息
-
-`GET /sessions/demo-session/messages`
-
-### 5. 清空会话消息
-
-`POST /sessions/demo-session/clear`
-
-### 6. 删除会话
-
-`DELETE /sessions/demo-session`
-
-## Agent 工作流程
-
-```text
-用户请求
-   ↓
-FastAPI 接收并校验参数
-   ↓
-加载对应会话历史
-   ↓
-LLM 分析问题并决定是否调用工具
-   ↓
-工具参数校验
-   ↓
-执行工具（例如知识库检索）
-   ↓
-将工具结果反馈给 LLM
-   ↓
-生成最终回答
-   ↓
-保存会话历史并返回响应
-```
-
-当涉及知识库的问题时，Agent 可以调用知识检索工具获取相关文本，再结合检索结果生成回答。检索质量和最终回答质量需要通过测试数据进行验证。
-
-## 运行测试
-
-安装依赖后，在项目根目录运行：
+调用示例：
 
 ```bash
-python -m pytest test/ -v
+TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"demo123456"}' \
+  | python -c "import sys,json;print(json.load(sys.stdin)['data']['token']['access_token'])")
+
+curl -N -X POST http://127.0.0.1:8000/chat/stream \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"message":"公司在哪里？"}'
 ```
 
-测试结果应以本地实际运行输出为准。单元测试通过不等于真实模型 API、MySQL 和知识库的端到端集成测试全部通过。
+### 流式事件协议
 
-## 项目改进方向
+```text
+event: meta        {"session_id": "...", "model": "..."}
+event: tool_start  {"name": "knowledge_search_context", "arguments": "{...}"}
+event: tool_result {"name": "...", "result": "..."}
+event: delta       {"text": "增量文本"}
+event: done        {"answer": "完整回答", "session_id": "...", "steps": 2}
+event: error       {"message": "出错原因"}
+```
 
-- 增加更完整的 Agent 单元测试与 API 集成测试。
-- 统一知识库检索的无证据返回协议。
-- 增加检索评估与问答评估数据集。
-- 完善部署说明、错误追踪与运行日志。
-- 优化知识库更新、检索效果和生产环境配置。
+前端用 `fetch + ReadableStream` 解析，不用 `EventSource`
+（后者只能发 GET，也带不了 `Authorization` 头）。
 
-## 项目目标
+## 文本怎么切（三级，不是硬切）
 
-通过实现一个可运行的 Agent 应用，系统实践大模型工具调用、RAG 检索、会话持久化、API 设计、异常处理和自动化测试等应用开发能力。
+```text
+段落（空行）
+  └─ 超过 300 字 → 句子（。！？；!?）
+        └─ 单句还超长 → 分句（，、：）
+              └─ 分句还超长 → 词/字（英文按单词、中文按单字）窗口兜底
+```
+
+三条规则：
+
+- **短块吸附**：小于 60 字的段落（标题、单句）并入相邻段，避免"公司介绍"
+  这种标题单独成片——它单独成块时向量里几乎没有信息。
+- **整句重叠**：`overlap=50` 是预算，回退时按整句取，不会把一句话切成两半。
+- **降级才到词**：只有句子切不开时才降到词/字；英文单词始终完整。
+
+为什么不给中文做真正的分词：那需要几十 MB 的词典依赖，
+而切点落在词中间时重叠窗口已经把上下文补回来了，收益远小于成本。
+
+## 混合检索是怎么做的
+
+```text
+提问
+ ├─ 稠密：bge-small-zh 编码 → 余弦相似度 → 取前 N
+ └─ 稀疏：BM25（中文按二元组切词）→ 取前 N
+        ↓
+    RRF 融合：score = Σ 1/(60 + rank)
+        ↓
+    门槛过滤：语义分 < 0.55 且不是“关键词强命中” → 丢弃
+        ↓
+    取 top_k 片段作为证据
+```
+
+- **为什么要 BM25**：向量检索擅长语义相近，但会把错误码、型号、人名这类
+  “必须原样命中”的东西糊掉；BM25 靠词频补上这块。
+- **为什么用 RRF 而不是加权求和**：余弦是 0~1，BM25 可以到 30+，
+  直接相加等于让 BM25 单方面决定排序；RRF 只看名次，天然免疫量纲差异。
+- **为什么还要门槛**：只靠关键词命中容易把“出现了‘公司’两个字”的无关段落
+  塞进证据里，把拒答能力搞坏。
+
+## 测试
+
+```bash
+pytest test/ -v
+```
+
+- `test_agent.py` / `test_agent_stream.py`：决策循环与流式事件（假客户端）
+- `test_rag_agent.py`：证据如何进入第二轮模型请求
+- `test_knowledge.py`：检索行为 + 拒答（需真实向量模型，缺知识库会自动跳过）
+- `test_api_auth.py`：注册登录、鉴权、越权隔离、SSE
+- `test/evaluate_retrieval.py`：检索参数扫参（命中率 / 误召回率）
+- `test/evaluate_rag_answers.py`：真实模型端到端评估
+
+## 已知限制
+
+- 建表用 `create_all`，生产环境应换成 Alembic 迁移。
+- 会话历史只取最近 40 条，长对话没有做摘要压缩。
+- JWT 签发后在过期前无法单独作废。
+- 知识库索引在进程内存里，重启需重建（多实例部署需要外部向量库）。
+- 检索参数（阈值 / top_k）是在很小的示例语料上调的，换语料要重新评估。

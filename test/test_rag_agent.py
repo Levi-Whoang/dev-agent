@@ -1,171 +1,79 @@
+"""RAG + Agent 的端到端链路（工具返回什么，模型就看到什么）。
+
+不连真实模型、不连真实知识库：只验证“检索工具的返回值如何进入
+第二轮的模型请求”，以及无证据时的拒答路径。
+"""
+
+from __future__ import annotations
 
 import json
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-import agent.agent as agent_module
-import tools.knowledge as knowledge_module
 from agent.agent import Agent
-from tools.knowledge import knowledge_search_context
+from test_agent_stream import FakeChatClient, FakeStore, chunk, tool_delta
+
+EVIDENCE = "来源：company.txt\n证据：公司位于深圳市南山区。\n语义相似度：0.91"
 
 
-class FakeSessionManager:
-    """用内存模拟会话管理，避免连接 MySQL。"""
+async def run_with_evidence(query: str, evidence: str, final_answer: str):
+    async def knowledge_search_context(query: str) -> str:
+        return evidence
 
-    def __init__(self):
-        self.sessions = {}
-
-    def get_messages(self, session_id):
-        return list(self.sessions.get(session_id, []))
-
-    def save(self, session_id, messages):
-        self.sessions[session_id] = list(messages)
-
-
-def make_llm_message(content=None, tool_calls=None):
-    """构造模拟 LLM 返回的消息。"""
-
-    message = MagicMock()
-    message.content = content
-    message.tool_calls = tool_calls
-
-    if tool_calls:
-        message.model_dump.return_value = {
-            "role": "assistant",
-            "tool_calls": [
-                {
-                    "id": call.id,
-                    "type": "function",
-                    "function": {
-                        "name": call.function.name,
-                        "arguments": call.function.arguments,
-                    },
-                }
-                for call in tool_calls
-            ],
-        }
-    else:
-        message.model_dump.return_value = {
-            "role": "assistant",
-            "content": content,
-        }
-
-    return message
-
-
-@pytest.mark.parametrize(
-    ("tool_result", "final_answer", "expected"),
-    [
-        (
-            "来源：company.txt\n证据：公司位于深圳市南山区。",
-            "公司位于深圳市南山区。",
-            "深圳市南山区",
-        ),
-        (
-            "NO_RELEVANT_EVIDENCE",
-            "抱歉，当前知识库无法确认公司老板的姓氏。",
-            "无法确认",
-        ),
-    ],
-)
-def test_rag_agent_end_to_end(
-    monkeypatch,
-    tool_result,
-    final_answer,
-    expected,
-):
-    # 1. 隔离数据库
-    monkeypatch.setattr(
-        agent_module,
-        "SessionManager",
-        FakeSessionManager,
+    client = FakeChatClient(
+        [
+            [chunk(tool_calls=[tool_delta(0, "call_1", "knowledge_search_context", json.dumps({"query": query}, ensure_ascii=False))])],
+            [chunk(final_answer)],
+        ]
     )
 
-    # 2. 模拟向量检索结果，但保留真实的知识检索上下文整理函数
-    if tool_result == "NO_RELEVANT_EVIDENCE":
-        monkeypatch.setattr(
-            knowledge_module,
-            "knowledge_search",
-            lambda query: [],
-        )
-    else:
-        monkeypatch.setattr(
-            knowledge_module,
-            "knowledge_search",
-            lambda query: [
-                {
-                    "content": "公司位于深圳市南山区。",
-                    "source": "company.txt",
-                    "score": 0.9,
-                }
-            ],
-        )
-
-    # 3. 模拟 LLM 第一次请求知识检索工具
-    tool_call = SimpleNamespace(
-        id="call_123",
-        function=SimpleNamespace(
-            name="knowledge_search_context",
-            arguments=json.dumps(
-                {"query": "公司在哪里？"},
-                ensure_ascii=False,
-            ),
-        ),
-    )
-
-    first_message = make_llm_message(
-        tool_calls=[tool_call],
-    )
-    final_message = make_llm_message(
-        content=final_answer,
-    )
-
-    client = MagicMock()
-    client.chat.completions.create.side_effect = [
-        SimpleNamespace(
-            choices=[SimpleNamespace(message=first_message)]
-        ),
-        SimpleNamespace(
-            choices=[SimpleNamespace(message=final_message)]
-        ),
-    ]
-
+    store = FakeStore()
     agent = Agent(
         client=client,
-        tools=[],
-        tool_registry={
-            "knowledge_search_context": knowledge_search_context,
-        },
+        store=store,
+        session_id="rag-1",
+        tools=[{"type": "function", "function": {"name": "knowledge_search_context"}}],
+        tool_registry={"knowledge_search_context": knowledge_search_context},
+        model="fake-model",
     )
 
-    # 4. 执行完整 Agent 工具调用循环
-    query = (
-        "公司老板姓什么？"
-        if tool_result == "NO_RELEVANT_EVIDENCE"
-        else "公司在哪里？"
-    )
-    result = agent.run(query, session_id="rag_test")
+    events = [event async for event in agent.stream(query)]
+    return agent, client, store, events
 
-    # 5. 验证最终回答和调用链
-    assert expected in result
-    assert client.chat.completions.create.call_count == 2
 
-    second_call_messages = (
-        client.chat.completions.create.call_args_list[1]
-        .kwargs["messages"]
+async def test_evidence_is_passed_to_model():
+    _, client, store, events = await run_with_evidence(
+        "公司在哪里？", EVIDENCE, "公司位于深圳市南山区（来源：company.txt）。"
     )
 
-    tool_messages = [
-        message
-        for message in second_call_messages
-        if message.get("role") == "tool"
+    assert events[-1].event == "done"
+    assert "深圳市南山区" in events[-1].data["answer"]
+
+    # 第二轮请求里必须带着 tool 消息，否则模型等于没查到东西
+    second_call = client.calls[1]
+    tool_messages = [m for m in second_call["messages"] if m["role"] == "tool"]
+    assert len(tool_messages) == 1
+    assert tool_messages[0]["tool_call_id"] == "call_1"
+    assert "company.txt" in tool_messages[0]["content"]
+
+    assert [m["role"] for m in store.messages] == [
+        "user",
+        "assistant",
+        "tool",
+        "assistant",
     ]
 
-    assert len(tool_messages) == 1
-    assert tool_messages[0]["tool_call_id"] == "call_123"
-    assert expected in tool_messages[0]["content"] or (
-        tool_result == "NO_RELEVANT_EVIDENCE"
-        and "NO_RELEVANT_EVIDENCE" in tool_messages[0]["content"]
+
+async def test_refusal_path_when_no_evidence():
+    _, _, store, events = await run_with_evidence(
+        "公司老板姓什么？",
+        "NO_RELEVANT_EVIDENCE",
+        "抱歉，当前知识库无法确认公司老板的姓氏。",
     )
+
+    assert "无法确认" in events[-1].data["answer"]
+
+    tool_message = next(m for m in store.messages if m["role"] == "tool")
+    assert tool_message["content"] == "NO_RELEVANT_EVIDENCE"

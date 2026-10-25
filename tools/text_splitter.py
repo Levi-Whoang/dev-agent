@@ -1,33 +1,9 @@
-def split_text(
-    text: str,
-    chunk_size: int = 300,
-    overlap: int = 50,
-) -> list[str]:
-    """将文本切分为多个片段，相邻片段保留一定重叠。"""
-    if chunk_size <= 0:
-        raise ValueError("chunk_size 必须大于 0")
+"""兼容层：分块逻辑已迁移到 `rag/splitter.py`。
 
-    if overlap < 0 or overlap >= chunk_size:
-        raise ValueError("overlap 必须大于等于 0 且小于 chunk_size")
+保留这个文件是为了不让旧代码 `from tools.text_splitter import split_text` 直接报错。
+新代码请从 `rag.splitter` 导入——分块属于检索层，不属于工具层。
+"""
 
-    text = text.strip()
+from rag.splitter import split_by_paragraph, split_text
 
-    if not text:
-        return []
-
-    chunks = []
-    start = 0
-
-    while start < len(text):
-        end = min(start + chunk_size, len(text))
-        chunk = text[start:end].strip()
-
-        if chunk:
-            chunks.append(chunk)
-
-        if end == len(text):
-            break
-
-        start = end - overlap
-
-    return chunks
+__all__ = ["split_text", "split_by_paragraph"]

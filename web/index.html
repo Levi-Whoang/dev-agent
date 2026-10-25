@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dev Agent · 企业知识库助手</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- 登录 / 注册 -->
+  <section id="auth-view" class="auth">
+    <div class="auth-card">
+      <h1>Dev Agent</h1>
+      <p class="sub">企业知识库问答 · 混合检索 · 流式输出</p>
+
+      <div class="tabs">
+        <button class="tab active" data-mode="login">登录</button>
+        <button class="tab" data-mode="register">注册</button>
+      </div>
+
+      <form id="auth-form" autocomplete="on">
+        <label>
+          用户名
+          <input id="username" name="username" minlength="3" maxlength="50"
+                 placeholder="至少 3 位，字母数字下划线" required />
+        </label>
+        <label id="email-row" hidden>
+          邮箱（可选）
+          <input id="email" name="email" type="email" placeholder="you@example.com" />
+        </label>
+        <label>
+          密码
+          <input id="password" name="password" type="password" minlength="6"
+                 placeholder="至少 6 位" required />
+        </label>
+
+        <button class="primary" type="submit" id="auth-submit">登录</button>
+        <p class="hint" id="auth-hint"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- 主界面 -->
+  <section id="app-view" class="layout" hidden>
+    <aside class="sidebar">
+      <div class="brand">🅆 Dev Agent</div>
+
+      <button id="new-chat" class="new-chat">＋ 新对话</button>
+
+      <div class="session-title">会话</div>
+      <ul id="session-list" class="session-list"></ul>
+
+      <div class="user-box">
+        <span id="current-user">-</span>
+        <button id="logout" class="ghost">退出</button>
+      </div>
+    </aside>
+
+    <main class="chat">
+      <header class="chat-header">
+        <div>
+          <strong id="chat-title">新对话</strong>
+          <span class="badge" id="conn-badge">就绪</span>
+        </div>
+        <button id="clear-chat" class="ghost">清空当前会话</button>
+      </header>
+
+      <div id="messages" class="messages">
+        <div class="empty" id="empty-state">
+          <h2>问问知识库</h2>
+          <p>比如：这个实习岗位需要掌握哪些技术？公司在哪里？</p>
+        </div>
+      </div>
+
+      <form id="composer" class="composer">
+        <textarea id="input" rows="1" placeholder="输入问题，Enter 发送，Shift+Enter 换行"></textarea>
+        <button class="primary" type="submit" id="send">发送</button>
+      </form>
+    </main>
+  </section>
+
+  <script src="/app.js"></script>
+</body>
+</html>

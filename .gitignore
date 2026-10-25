@@ -7,3 +7,10 @@ venv/
 sessions.db
 knowledge_base
 .mcp.json
+dev_agent.db
+*.db-wal
+*.db-shm
+node_modules/
+dist/
+.venv-demo/
+.workbuddy/

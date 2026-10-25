@@ -1,136 +1,23 @@
+"""知识库检索工具（Async 版本）。
 
-from pathlib import Path
-from functools import lru_cache
+工具函数本身保持很薄：真正的检索逻辑在 `rag/` 里。
+这样换检索策略（比如以后加 rerank）不用改 Agent 和工具注册表。
+"""
 
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-from tools.text_splitter import split_text
+from __future__ import annotations
 
+from rag.retriever import get_retriever
 
-CHUNK_SIZE = 300
-CHUNK_OVERLAP = 50
-SIMILARITY_THRESHOLD = 0.55
-TOP_K = 3
-
-KNOWLEDGE_DIR = (
-    Path(__file__).resolve().parent.parent / "knowledge_base"
-)
-
-model = SentenceTransformer("BAAI/bge-small-zh-v1.5")
+# 保留旧名字，外部脚本/测试还能 import 到常量
+__all__ = ["knowledge_search", "knowledge_search_context"]
 
 
-@lru_cache(maxsize=1)
-def load_knowledge() -> tuple[dict, ...]:
-    """读取所有 TXT 文件，并将长文本切分成知识片段。"""
-    if not KNOWLEDGE_DIR.exists():
-        raise FileNotFoundError(
-            f"知识库目录不存在：{KNOWLEDGE_DIR}"
-        )
-
-    chunks = []
-
-    for file_path in sorted(KNOWLEDGE_DIR.glob("*.txt")):
-        content = file_path.read_text(encoding="utf-8")
-
-        # 将标题和正文保留在同一段中，避免标题独立成为知识块
-        content = content.strip()
-
-        if not content:
-            continue
-
-        text_chunks = split_text(
-            content,
-            chunk_size=CHUNK_SIZE,
-            overlap=CHUNK_OVERLAP,
-        )
-
-        for text_chunk in text_chunks:
-            chunks.append({
-                "content": text_chunk,
-                "source": file_path.name,
-            })
-
-    return tuple(chunks)
-
-@lru_cache(maxsize=1)
-def get_knowledge_vectors():
-    """计算并缓存知识片段的向量。"""
-    knowledge = load_knowledge()
-
-    if not knowledge:
-        return None
-
-    texts = [item["content"] for item in knowledge]
-
-    return model.encode(
-        texts,
-        normalize_embeddings=True,
-    )
+async def knowledge_search(query: str) -> list[dict]:
+    """在企业知识库中做混合检索（语义 + 关键词），返回片段、来源和相似度。"""
+    results = await get_retriever().search(query)
+    return [item.to_dict() for item in results]
 
 
-def knowledge_search(query: str) -> list[dict]:
-    """检索知识库，返回文本、来源和相似度分数。"""
-    knowledge = load_knowledge()
-    knowledge_vectors = get_knowledge_vectors()
-
-    if not knowledge or knowledge_vectors is None:
-        return []
-
-    query_vector = model.encode(
-        [query],
-        normalize_embeddings=True,
-    )
-
-    scores = cosine_similarity(
-        query_vector,
-        knowledge_vectors,
-    )[0]
-
-    threshold = SIMILARITY_THRESHOLD
-    ranked_indices = scores.argsort()[::-1]
-
-    results = []
-    seen_contents = set()
-
-    for index in ranked_indices:
-        score = float(scores[index])
-
-        if score < threshold:
-            break
-
-        content = knowledge[index]["content"].strip()
-
-        if content in seen_contents:
-            continue
-
-        seen_contents.add(content)
-
-        results.append({
-            "content": content,
-            "source": knowledge[index]["source"],
-            "score": round(score, 4),
-        })
-
-        if len(results) >= TOP_K:
-            break
-
-    return results
-
-
-def knowledge_search_context(query: str) -> str:
-    """检索知识库并整理为供 LLM 使用的证据。"""
-    results = knowledge_search(query)
-
-    if not results:
-        return "NO_RELEVANT_EVIDENCE"
-
-    evidence = []
-
-    for item in results:
-        evidence.append(
-            f"来源：{item['source']}\n"
-            f"证据：{item['content']}\n"
-            f"相似度：{item['score']}"
-        )
-
-    return "\n\n".join(evidence)
+async def knowledge_search_context(query: str) -> str:
+    """检索企业知识库并整理成带来源的证据文本；没有相关证据时返回 NO_RELEVANT_EVIDENCE。"""
+    return await get_retriever().search_context(query)
