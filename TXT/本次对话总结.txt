@@ -138,3 +138,12 @@ TXT 时间戳规则与注释语言偏好（2026-10-21）
 
 [2026-10-29 21:22:20 +08:00] 处理流式推理内容暴露
 用户反馈流式推理暴露。更新 Agent system prompt，明确仅返回面向用户的最终答复；忽略 provider 单独提供的 reasoning_content；含工具调用的轮次暂存输出文本且不向客户端发送、不写入会话历史；最终轮过滤常见 <think>/<analysis>/<reasoning> 标签内容后再返回，并以过滤后的内容持久化。移除了非流式 Agent 路径中打印工具调用与工具结果的调试输出。py_compile 与本次文件 git diff --check 通过；未运行 pytest，也未连接真实 LLM 验证模型特有格式。未上传 GitHub。
+
+[2026-10-29 21:40:34 +08:00] 加固认证 token 与生产配置
+用户要求补充 token 撤销/刷新、登录失败限流、注册验证、敏感认证审计和生产 JWT secret 启动强校验。实现 30 分钟 access token、7 天单次轮换 refresh token；刷新时事务撤销旧 refresh 及绑定 access 并签发新 token 对，退出同时撤销当前 token 对。登录按账号+客户端来源哈希计数，15 分钟 5 次失败后返回 429；注册需要 AUTH_REGISTRATION_CODE 邀请码。新增 auth_login_failures/auth_audit_events ORM 表，审计记录不写密码、令牌或原始 IP，并清理过期记录。生产 APP_ENV=production 启动要求 48 字符非占位 JWT_SECRET_KEY 和 16 字符非占位注册码。前端增加注册码输入及遇 401 自动单次刷新。语法检查、git diff --check、React tsc/Vite 构建通过；未运行 pytest，未接 SMTP 邮箱验证或真实 MySQL 并发限流测试。未上传 GitHub。
+
+[2026-10-29 21:45:49 +08:00] 咨询邮箱验证码注册方案
+用户询问如何让注册必须使用邮箱和验证码。说明当前 AUTH_REGISTRATION_CODE 是共享邀请码，并非邮箱验证；邮箱验证码方案需增加邮箱输入、发送/验证 API、验证码哈希和过期/单次使用存储、邮件发送配置、注册与登录联动、前端倒计时与限流，以及对应测试和审计。本次仅提供方案说明，未修改源代码。
+
+[2026-10-29 21:51:32 +08:00] 固定聊天输入栏在页面底部
+用户反馈对话变长后输入栏会被挤出视口。将应用壳层/工作区限制为 100dvh，设置消息区 min-height:0 并独立滚动，输入栏固定在不收缩的底部区域。前端 npm run build（tsc 与 Vite）通过；git diff --check 通过。未运行 pytest、未上传 GitHub。

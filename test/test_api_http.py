@@ -61,6 +61,7 @@ class MemoryAuthRepository:
         self.users = {}
         self.tokens = {}
         self.next_user_id = 1
+        self.login_failures = {}
 
     def create_user(self, username, password_hash):
         from auth.repository import DuplicateUsernameError
@@ -86,6 +87,31 @@ class MemoryAuthRepository:
             "revoked": False,
         }
 
+    def create_tokens(self, rows):
+        for row in rows:
+            self.create_token(row["jti"], row["user_id"], row["expires_at"])
+
+    def rotate_tokens(self, old_refresh_jti, old_access_jti, username, rows):
+        if not self.is_token_active(old_refresh_jti, username):
+            return False
+        self.tokens[old_refresh_jti]["revoked"] = True
+        if old_access_jti in self.tokens:
+            self.tokens[old_access_jti]["revoked"] = True
+        self.create_tokens(rows)
+        return True
+
+    def login_failure_count(self, identity_hash, since):
+        return len(self.login_failures.get(identity_hash, []))
+
+    def record_login_failure(self, identity_hash, attempted_at):
+        self.login_failures.setdefault(identity_hash, []).append(attempted_at)
+
+    def clear_login_failures(self, identity_hash):
+        self.login_failures.pop(identity_hash, None)
+
+    def audit(self, event_type, username, source_hash, succeeded):
+        return None
+
     def is_token_active(self, jti, username):
         token = self.tokens.get(jti)
         user = self.users.get(username)
@@ -97,11 +123,13 @@ class MemoryAuthRepository:
             and token["expires_at"] > datetime.now(timezone.utc)
         )
 
-    def revoke_token(self, jti, username):
+    def revoke_token(self, jti, username, related_jti=None):
         token = self.tokens.get(jti)
         user = self.users.get(username)
         if token and user and token["user_id"] == user["id"]:
             token["revoked"] = True
+            if related_jti in self.tokens:
+                self.tokens[related_jti]["revoked"] = True
 
 
 class ASGIFakeAgent:
@@ -133,6 +161,7 @@ def asgi_app(monkeypatch):
     )
     monkeypatch.setattr(jwt_auth, "auth_repository", auth_repository)
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-more-than-32-characters")
+    monkeypatch.setenv("AUTH_REGISTRATION_CODE", "test-registration-code")
     fake_agent = ASGIFakeAgent()
     fake_main = ModuleType("main")
     fake_main.agent = fake_agent
@@ -381,11 +410,11 @@ def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
         ) as client:
             registered = await client.post(
                 "/auth/register",
-                json={"username": "new-user", "password": "new-password"},
+                json={"username": "new-user", "password": "new-password", "verification_code": "test-registration-code"},
             )
             duplicate = await client.post(
                 "/auth/register",
-                json={"username": "new-user", "password": "new-password"},
+                json={"username": "new-user", "password": "new-password", "verification_code": "test-registration-code"},
             )
             registered_login = await client.post(
                 "/auth/token",

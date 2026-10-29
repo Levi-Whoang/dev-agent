@@ -66,6 +66,31 @@ class AuthToken(Base):
     user: Mapped[AuthUser] = relationship(back_populates="tokens")
 
 
+class AuthLoginFailure(Base):
+    """用于按账号及客户端来源限制连续登录失败。"""
+
+    __tablename__ = "auth_login_failures"
+    __table_args__ = (Index("idx_auth_login_failures_attempted", "attempted_at"),)
+
+    id: Mapped[int] = mapped_column(USER_ID_TYPE, primary_key=True, autoincrement=True)
+    identity_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    attempted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class AuthAuditEvent(Base):
+    """记录认证结果，不保存密码、JWT 或原始 IP 地址。"""
+
+    __tablename__ = "auth_audit_events"
+    __table_args__ = (Index("idx_auth_audit_created", "created_at"),)
+
+    id: Mapped[int] = mapped_column(USER_ID_TYPE, primary_key=True, autoincrement=True)
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    succeeded: Mapped[bool] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
 class ChatSession(Base):
     """聊天历史、所有者及标题。"""
 

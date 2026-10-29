@@ -240,3 +240,15 @@
 修改后：system prompt 要求内部分析不输出；reasoning_content 不转发；工具调用轮文本缓冲并丢弃；最终文本清理常见推理标签后再发送和保存。非流式 Agent 删除工具名、工具结果的 print 调试输出。
 涉及文件：agent/agent.py。
 验证：py_compile 和 git diff --check 通过。未运行 pytest；未验证具体模型的原始 SSE 格式。
+
+[2026-10-29 21:40:34 +08:00] 代码修改说明：认证策略加固
+修改前：access JWT 固定 30 分钟并支持 logout 撤销，但无 refresh token；登录密码错误无限尝试；注册只验证输入格式；认证事件无持久审计；JWT 密钥仅在请求时检查长度，未在启动时阻止生产弱/占位密钥。
+修改后：加入 7 天 refresh token 轮换，旧 refresh 与关联 access 原子撤销；15 分钟窗口内 5 次失败后按账号及 IP 哈希限流；注册验证邀请码；新增失败计数和认证审计 ORM 表；生产 lifespan 强制校验 JWT 密钥及注册邀请码，前端自动刷新并存储刷新 token。审计只保存用户名、结果、事件及来源哈希。
+涉及文件：auth/jwt_auth.py、auth/repository.py、auth/schemas.py、modules/models.py、app/main.py、app/users.py、frontend/src/api.ts、frontend/src/App.tsx、frontend/README.md、.env.example、README.md、test/test_api_http.py。
+验证：Python py_compile、相关文件 git diff --check、frontend npm run build（tsc 与 Vite）通过。未运行 pytest；生产数据库、SMTP 邮件验证和多 worker 并发限流未实测。
+
+[2026-10-29 21:51:32 +08:00] 代码修改说明：固定对话输入栏
+修改前：应用布局仅设 min-height，消息增多可撑高工作区，输入区域随页面内容下移，导致用户需要滚到页面底部才能继续输入。
+修改后：应用与工作区约束为视口高度；对话区使用独立滚动，输入栏保留固定高度并贴在底部。
+涉及文件：frontend/src/styles.css。
+验证：frontend npm run build（tsc -b 与 Vite）通过；git diff --check 通过。未运行 pytest。

@@ -10,6 +10,7 @@ class RegisterRequest(BaseModel):
         pattern=r"^[A-Za-z0-9_.-]+$",
     )
     password: str = Field(min_length=8, max_length=128)
+    verification_code: str = Field(min_length=8, max_length=128)
 
 
 class TokenRequest(BaseModel):
@@ -24,5 +25,11 @@ class RegisteredUserData(BaseModel):
 
 class TokenData(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     expires_in: int
+    refresh_expires_in: int
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=1, max_length=4096)

@@ -6,8 +6,10 @@ export interface ApiEnvelope<T> {
 
 export interface TokenData {
   access_token: string;
+  refresh_token: string;
   token_type: string;
   expires_in: number;
+  refresh_expires_in: number;
 }
 
 export interface RegisteredUser {
@@ -77,11 +79,12 @@ export async function login(username: string, password: string): Promise<TokenDa
 export async function registerUser(
   username: string,
   password: string,
+  verificationCode: string,
 ): Promise<RegisteredUser> {
   const response = await fetch(apiUrl("/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, verification_code: verificationCode }),
   });
   if (!response.ok) {
     throw new Error(await readError(response));
@@ -95,7 +98,7 @@ export async function registerUser(
 }
 
 export async function logout(token: string): Promise<void> {
-  const response = await fetch(apiUrl("/auth/logout"), {
+  const response = await authorizedFetch("/auth/logout", token, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -105,9 +108,7 @@ export async function logout(token: string): Promise<void> {
 }
 
 export async function listSessions(token: string): Promise<SessionSummary[]> {
-  const response = await fetch(apiUrl("/sessions"), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await authorizedFetch("/sessions", token);
   if (!response.ok) throw new Error(await readError(response));
   const body = (await response.json()) as ApiEnvelope<SessionSummary[]>;
   if (body.code !== 0 || !Array.isArray(body.data)) {
@@ -120,9 +121,8 @@ export async function getSessionMessages(
   token: string,
   sessionId: string,
 ): Promise<StoredMessage[]> {
-  const response = await fetch(
-    apiUrl(`/sessions/${encodeURIComponent(sessionId)}/messages`),
-    { headers: { Authorization: `Bearer ${token}` } },
+  const response = await authorizedFetch(
+    `/sessions/${encodeURIComponent(sessionId)}/messages`, token,
   );
   if (!response.ok) throw new Error(await readError(response));
   const body = (await response.json()) as ApiEnvelope<{
@@ -139,9 +139,8 @@ export async function renameSession(
   sessionId: string,
   title: string,
 ): Promise<void> {
-  const response = await fetch(
-    apiUrl(`/sessions/${encodeURIComponent(sessionId)}/title`),
-    {
+  const response = await authorizedFetch(
+    `/sessions/${encodeURIComponent(sessionId)}/title`, token, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -154,9 +153,8 @@ export async function renameSession(
 }
 
 export async function deleteSession(token: string, sessionId: string): Promise<void> {
-  const response = await fetch(
-    apiUrl(`/sessions/${encodeURIComponent(sessionId)}`),
-    {
+  const response = await authorizedFetch(
+    `/sessions/${encodeURIComponent(sessionId)}`, token, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     },
@@ -170,7 +168,7 @@ export async function streamChat(
   sessionId: string | null,
   onEvent: (event: ChatEvent) => void,
 ): Promise<void> {
-  const response = await fetch(apiUrl("/chat"), {
+  const response = await authorizedFetch("/chat", token, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -213,4 +211,46 @@ export async function streamChat(
       break;
     }
   }
+}
+
+const ACCESS_TOKEN_KEY = "dev-agent.access-token";
+const REFRESH_TOKEN_KEY = "dev-agent.refresh-token";
+
+async function authorizedFetch(
+  path: string,
+  token: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const currentToken = sessionStorage.getItem(ACCESS_TOKEN_KEY) || token;
+  const send = (accessToken: string) => {
+    const headers = new Headers(init.headers);
+    headers.set("Authorization", `Bearer ${accessToken}`);
+    return fetch(apiUrl(path), { ...init, headers });
+  };
+
+  const response = await send(currentToken);
+  if (response.status !== 401) return response;
+
+  const refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return response;
+  const refreshResponse = await fetch(apiUrl("/auth/refresh"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  if (!refreshResponse.ok) {
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    return response;
+  }
+
+  const body = (await refreshResponse.json()) as ApiEnvelope<TokenData>;
+  if (body.code !== 0 || !body.data?.access_token || !body.data?.refresh_token) {
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    return response;
+  }
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, body.data.access_token);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, body.data.refresh_token);
+  return send(body.data.access_token);
 }

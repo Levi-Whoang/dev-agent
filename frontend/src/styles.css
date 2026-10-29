@@ -164,3 +164,12 @@ button:disabled { cursor: not-allowed; opacity: .55; }
   .message-body { max-width: calc(100% - 40px); }
   .login-card { padding: 30px 25px 25px; }
 }
+
+/* 固定应用视口高度，让消息区滚动而输入栏始终留在底部。 */
+html, body, #root { height: 100%; }
+body { min-height: 100%; }
+.app-shell { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+.sidebar { height: 100%; min-height: 0; }
+.workspace { height: 100%; min-height: 0; overflow: hidden; }
+.conversation { min-height: 0; flex: 1 1 0; overscroll-behavior: contain; }
+.composer-wrap { position: sticky; bottom: 0; z-index: 2; flex: 0 0 auto; background: #f8faf9; }

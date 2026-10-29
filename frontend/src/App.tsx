@@ -20,6 +20,7 @@ interface Message {
 }
 
 const TOKEN_KEY = "dev-agent.access-token";
+const REFRESH_TOKEN_KEY = "dev-agent.refresh-token";
 const USERNAME_KEY = "dev-agent.username";
 const starters = ["知识库里包含哪些内容？", "请总结一下主要信息。", "这个项目能做什么？"];
 
@@ -33,6 +34,7 @@ export default function App() {
   const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [registrationCode, setRegistrationCode] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [loginError, setLoginError] = useState("");
   const [loginNotice, setLoginNotice] = useState("");
@@ -193,15 +195,17 @@ export default function App() {
         if (password !== confirmPassword) {
           throw new Error("两次输入的密码不一致");
         }
-        const user = await registerUser(normalizedUsername, password);
+        const user = await registerUser(normalizedUsername, password, registrationCode);
         setLoginName(user.username);
         setPassword("");
         setConfirmPassword("");
+        setRegistrationCode("");
         setAuthMode("login");
         setLoginNotice("注册成功，请使用新账号登录");
       } else {
         const result = await login(normalizedUsername, password);
         sessionStorage.setItem(TOKEN_KEY, result.access_token);
+        sessionStorage.setItem(REFRESH_TOKEN_KEY, result.refresh_token);
         sessionStorage.setItem(USERNAME_KEY, normalizedUsername);
         setToken(result.access_token);
         setUsername(normalizedUsername);
@@ -250,6 +254,7 @@ export default function App() {
       setChatError(messageText);
       if (/401|未认证|认证失败|JWT/i.test(messageText)) {
         sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(REFRESH_TOKEN_KEY);
         sessionStorage.removeItem(USERNAME_KEY);
         setToken("");
         setUsername("");
@@ -283,6 +288,7 @@ export default function App() {
       // 令牌已过期或服务不可达时仍清除浏览器中的登录状态。
     } finally {
       sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(REFRESH_TOKEN_KEY);
       sessionStorage.removeItem(USERNAME_KEY);
       setToken("");
       setUsername("");
@@ -327,6 +333,18 @@ export default function App() {
             />
             {authMode === "register" && (
               <>
+                <label htmlFor="registration-code">注册验证码</label>
+                <input
+                  id="registration-code"
+                  type="password"
+                  autoComplete="one-time-code"
+                  value={registrationCode}
+                  onChange={(event) => setRegistrationCode(event.target.value)}
+                  placeholder="输入管理员提供的验证码"
+                  minLength={8}
+                  maxLength={128}
+                  required
+                />
                 <label htmlFor="confirm-password">确认密码</label>
                 <input
                   id="confirm-password"
@@ -357,6 +375,7 @@ export default function App() {
                 setLoginNotice("");
                 setPassword("");
                 setConfirmPassword("");
+                setRegistrationCode("");
               }}
             >
               {authMode === "login" ? "立即注册" : "返回登录"}

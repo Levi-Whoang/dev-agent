@@ -122,6 +122,8 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 将命令输出填入 `JWT_SECRET_KEY`。用户名和密码由用户注册接口提交，后端只把密码哈希写入 MySQL。`.env.example` 中密钥是占位值，必须替换。不要把 `.env` 或真实签名密钥提交到仓库。
 
+生产环境设置 `APP_ENV=production`；应用启动时会拒绝缺失、短于 48 字符或已知占位的 `JWT_SECRET_KEY`，并要求设置 `AUTH_REGISTRATION_CODE`。注册页要求输入该邀请码。登录失败会按账号与来源组合在数据库中限流；认证成功/失败、注册、刷新和退出事件写入 `auth_audit_events`，日志不记录密码、JWT 原文或原始 IP。Access token 有效 30 分钟，Refresh token 有效 7 天且每次刷新后旧 token 对及关联 access token 会被撤销。前端将 token 存在当前标签页的 `sessionStorage`，受保护请求遇到过期 access token 时自动尝试轮换。
+
 确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`auth_users` 和 `auth_tokens` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
 
 ### 5. 演示语料与模型
