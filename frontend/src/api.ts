@@ -153,6 +153,17 @@ export async function renameSession(
   if (!response.ok) throw new Error(await readError(response));
 }
 
+export async function deleteSession(token: string, sessionId: string): Promise<void> {
+  const response = await fetch(
+    apiUrl(`/sessions/${encodeURIComponent(sessionId)}`),
+    {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+  if (!response.ok) throw new Error(await readError(response));
+}
+
 export async function streamChat(
   token: string,
   message: string,

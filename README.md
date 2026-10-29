@@ -187,14 +187,11 @@ npm run dev
 ```json
 {
   "message": "请介绍一下知识库中的相关岗位要求",
-  "session_id": "demo-session",
-  "stream": true
+  "session_id": "demo-session"
 }
 ```
 
-`stream` 默认为 `true`。流式模式返回 `Content-Type: text/event-stream`，采用 SSE 格式：`delta` 事件逐段包含 `content`，结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。
-
-需要兼容原有 JSON 响应时传入 `"stream": false`，返回统一响应结构 `data.answer`、`data.session_id` 和 `data.citations`。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
+`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件逐段包含 `content`，结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
 
 注册新用户时调用 `POST /auth/register`：
 
@@ -288,3 +285,5 @@ python -m pytest test/ -v
 ## 项目目标
 
 通过实现一个可运行的 Agent 应用，系统实践大模型工具调用、RAG 检索、会话持久化、API 设计、异常处理和自动化测试等应用开发能力。
+
+在历史会话列表中可修改会话名称或删除会话。删除操作会请求后端 DELETE /sessions/{session_id}；删除当前会话后，聊天面板会清空。

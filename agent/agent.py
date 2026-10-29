@@ -1,11 +1,38 @@
 import json
 import os
+import re
 
 from tools.schema import create_args_model
 from pydantic import ValidationError
 from agent.session import SessionManager
 
 class Agent:
+
+    _system_prompt = {
+        "role": "system",
+        "content": (
+            "你是一个基于企业知识库回答问题的助手。"
+            "涉及公司信息、招聘岗位和岗位要求时，必须调用 "
+            "knowledge_search_context 工具检索。"
+            "只能依据检索到的证据回答。"
+            "如果工具返回 NO_RELEVANT_EVIDENCE，"
+            "必须明确告知用户当前知识库无法确认答案，禁止猜测。"
+            "请在内部完成分析，不要输出或复述思维链、推理草稿、工具规划或隐藏分析；"
+            "只输出面向用户的最终答复。"
+        ),
+    }
+
+    @staticmethod
+    def _public_answer(content: str) -> str:
+        """移除常见模型思维标签及其包裹的内部分析。"""
+        for tag in ("think", "analysis", "reasoning"):
+            content = re.sub(
+                rf"<{tag}\b[^>]*>.*?(?:</{tag}\s*>|$)",
+                "",
+                content,
+                flags=re.IGNORECASE | re.DOTALL,
+            )
+        return content.strip()
 
     def __init__(self, client, tools, tool_registry):
         self.client = client
@@ -26,20 +53,10 @@ class Agent:
         #最多10轮决策
         max_iterations = 10
 
-        system_prompt = {
-            "role": "system",
-            "content": (
-                "你是一个基于企业知识库回答问题的助手。"
-                "涉及公司信息、招聘岗位和岗位要求时，必须调用 "
-                "knowledge_search_context 工具检索。"
-                "只能依据检索到的证据回答。"
-                "如果工具返回 NO_RELEVANT_EVIDENCE，"
-                "必须明确告知用户当前知识库无法确认答案，禁止猜测。"
-            ),
-        }
-
         if not messages or messages[0].get("role") != "system":
-            messages.insert(0, system_prompt)
+            messages.insert(0, self._system_prompt)
+        else:
+            messages[0] = self._system_prompt
 
         for _ in range(max_iterations):
             response = self.client.chat.completions.create(
@@ -50,15 +67,10 @@ class Agent:
             )
 
             message = response.choices[0].message
-            print("本轮 tool_calls：", message.tool_calls)
+            saved_message = message.model_dump(exclude_none=True)
             if message.tool_calls:
-                print("LLM 请求调用的工具：")
-                for tool_call in message.tool_calls:
-                    print(tool_call.function.name)
-            else:
-                print("LLM 本轮没有请求调用工具")
-
-            messages.append(message.model_dump(exclude_none=True))
+                saved_message.pop("content", None)
+            messages.append(saved_message)
 
             # LLM 不需要工具
             if not message.tool_calls:
@@ -121,8 +133,6 @@ class Agent:
                     else:
                         try:
                             result = tool(**validated_args.model_dump())
-                            print("工具执行结果：", result)
-
                         except Exception as e:
                             result = {
                                 "error": f"工具执行失败: {str(e)}"
@@ -149,19 +159,10 @@ class Agent:
         messages.append({"role": "user", "content": user_input})
         self.session_manager.save(session_id, messages)
 
-        system_prompt = {
-            "role": "system",
-            "content": (
-                "你是一个基于企业知识库回答问题的助手。"
-                "涉及公司信息、招聘岗位和岗位要求时，必须调用 "
-                "knowledge_search_context 工具检索。"
-                "只能依据检索到的证据回答。"
-                "如果工具返回 NO_RELEVANT_EVIDENCE，"
-                "必须明确告知用户当前知识库无法确认答案，禁止猜测。"
-            ),
-        }
         if not messages or messages[0].get("role") != "system":
-            messages.insert(0, system_prompt)
+            messages.insert(0, self._system_prompt)
+        else:
+            messages[0] = self._system_prompt
 
         for _ in range(10):
             response_stream = self.client.chat.completions.create(
@@ -183,7 +184,7 @@ class Agent:
                     content = getattr(delta, "content", None)
                     if content:
                         content_parts.append(content)
-                        yield content
+                    # 独立 reasoning_content 字段只用于模型内部推理，不发送给客户端。
 
                     for tool_delta in getattr(delta, "tool_calls", None) or []:
                         index = tool_delta.index
@@ -209,20 +210,30 @@ class Agent:
                 if close:
                     close()
 
-            message = {
-                "role": "assistant",
-                "content": "".join(content_parts) or None,
-            }
             tool_calls = [
                 streamed_tool_calls[index]
                 for index in sorted(streamed_tool_calls)
             ]
+            message = {
+                "role": "assistant",
+                "content": "".join(content_parts) or None,
+            }
             if tool_calls:
                 message["tool_calls"] = tool_calls
+                # 工具决策轮的文本可能包含推理草稿，不保存在会话历史。
+                message.pop("content", None)
             messages.append({key: value for key, value in message.items() if value is not None})
 
             if not tool_calls:
+                # 仅发送最终答复，过滤工具轮草稿和常见隐藏推理标签。
+                public_answer = self._public_answer("".join(content_parts))
+                if public_answer:
+                    messages[-1]["content"] = public_answer
+                else:
+                    messages[-1].pop("content", None)
                 self.session_manager.save(session_id, messages)
+                if public_answer:
+                    yield public_answer
                 return
 
             for tool_call in tool_calls:

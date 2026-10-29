@@ -12,7 +12,7 @@ from api.api_schemas import (
     CreateSessionRequest,
     SessionTitleRequest,
 )
-from api.chat_helpers import chat_event_stream, latest_turn_citations
+from api.chat_helpers import chat_event_stream
 from api.session_helpers import (
     database_user_id,
     resolve_chat_session,
@@ -35,18 +35,6 @@ def chat(request: ChatRequest, current_user: str = Depends(get_current_user)):
         database_user_id(current_user),
         request.message,
     )
-    if not request.stream:
-        answer = agent.run(request.message, session_id=internal_session_id)
-        return success_response(
-            data={
-                "answer": answer,
-                "session_id": session_id,
-                "citations": latest_turn_citations(
-                    agent.session_manager, internal_session_id
-                ),
-            }
-        )
-
     return StreamingResponse(
         chat_event_stream(
             agent, logger, request.message, session_id, internal_session_id

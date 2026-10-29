@@ -123,3 +123,18 @@ TXT 时间戳规则与注释语言偏好（2026-10-21）
 用户补充说明可以忽略旧数据库。已从 modules/database.py 移除旧 sessions 表补列、补索引、回填 owner_user_id、补外键等迁移逻辑，初始化现在只按 SQLAlchemy ORM 模型创建缺失表；未删除现存数据库文件或数据。更新 README 说明 create_all 不会修改已有表，旧表不兼容时应使用空数据库或自行迁移。未运行 pytest；py_compile 与 git diff --check 通过。未提交或上传 GitHub。
 
 [2026-10-24 20:15:30 +08:00] 检查记录更正：全局 git diff --check 因工作区 notes.md 中已有的尾随空格提示失败；本次改动文件 README.md、modules/database.py、modules/models.py 单独检查通过。未修改 notes.md。
+
+[2026-10-29 20:27:50 +08:00] /chat 统一为流式输出
+用户要求改为流式输出并删除原输出模式。已删除 ChatRequest.stream 字段和 /chat 非流式 JSON 分支；/chat 现在始终返回 SSE，并保留 delta/done/error 事件及 citations。更新 README 与 API/ASGI 测试预期。未运行 pytest。Python py_compile 检查执行；全局文本搜索命令因 PowerShell 对正则引号解析失败，未获得搜索结论。未提交或上传 GitHub。
+
+[2026-10-29 21:12:30 +08:00] 检查删除会话与后端 ReAct 循环需求
+用户要求新增会话删除前后端联动，并在后端增加 React/ReAct 循环。检查确认 FastAPI 已有 DELETE /sessions/{session_id}，会话所有权通过当前用户命名空间校验；Agent.run 和 run_stream 已有最多 10 次模型决策、执行工具并将工具结果回传模型的循环。当前工作区前端目录已不存在，git 状态显示原 frontend 文件处于删除状态；同时不存在可识别的长期记忆或新的 ReAct trace 实现。由于缺少前端源文件，未实施前端删除按钮；本轮未修改代码、未运行测试、未提交或上传。
+
+[2026-10-29 21:13:57 +08:00] 确认 frontend 目录状态
+用户要求恢复 frontend。检查发现 frontend 目录及 Git 跟踪的 13 个文件均已存在，且 git status --short -- frontend 和 git diff --name-status HEAD -- frontend 均无输出，说明当前内容与 HEAD 一致；无需执行恢复或覆盖。未修改代码、未运行测试、未提交或上传。
+
+[2026-10-29 21:16:53 +08:00] 增加历史会话删除功能
+用户要求新增删除功能。FastAPI 已有按用户会话命名空间校验的 DELETE /sessions/{session_id} 接口，本次前端新增 deleteSession API 方法、历史列表删除按钮和确认提示；成功后移除列表项，若删除的是当前会话则清空聊天区，并展示删除错误。README 已更新。npm run build（tsc -b 与 Vite 构建）通过。未运行 pytest、未提交或上传 GitHub。
+
+[2026-10-29 21:22:20 +08:00] 处理流式推理内容暴露
+用户反馈流式推理暴露。更新 Agent system prompt，明确仅返回面向用户的最终答复；忽略 provider 单独提供的 reasoning_content；含工具调用的轮次暂存输出文本且不向客户端发送、不写入会话历史；最终轮过滤常见 <think>/<analysis>/<reasoning> 标签内容后再返回，并以过滤后的内容持久化。移除了非流式 Agent 路径中打印工具调用与工具结果的调试输出。py_compile 与本次文件 git diff --check 通过；未运行 pytest，也未连接真实 LLM 验证模型特有格式。未上传 GitHub。

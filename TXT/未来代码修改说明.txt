@@ -222,3 +222,21 @@
 验证：modules/database.py py_compile 通过；git diff --check 通过。未运行 pytest；未验证真实数据库。
 
 [2026-10-24 20:15:30 +08:00] 验证补充：全局 git diff --check 被未修改的 notes.md 尾随空格提示影响；本次涉及的 README.md、modules/database.py、modules/models.py 单独检查通过。notes.md 属于工作区现有修改，未触碰。
+
+[2026-10-29 20:27:50 +08:00] 代码修改说明：移除非流式聊天 API 模式
+修改前：POST /chat 通过 ChatRequest.stream 在 SSE 流与 JSON 一次性响应间切换；测试和 README 仍描述 stream=false 兼容方式。
+修改后：ChatRequest 不再定义 stream 开关，POST /chat 始终返回 SSE；流式事件继续包含增量文本、完成时会话 ID/引用和生成错误事件。更新 API 与 ASGI 测试预期以及 README 请求示例。Agent.run 保留给内部评估/脚本调用，不再作为 HTTP 输出模式。
+涉及文件：api/api_schemas.py、app/sessions.py、README.md、test/test_api.py、test/test_api_http.py。
+验证：Python py_compile 检查已执行；未运行 pytest。全局搜索命令因正则转义错误未完成。
+
+[2026-10-29 21:16:53 +08:00] 代码修改说明：历史会话删除
+修改前：后端已有 DELETE /sessions/{session_id}，但 React 历史列表没有删除 API 调用或操作入口，用户无法从页面删除会话。
+修改后：frontend/src/api.ts 增加带 JWT 的删除请求；frontend/src/App.tsx 增加带确认的删除流程，成功后同步移除历史项并在删除当前项时重置聊天状态；frontend/src/styles.css 增加删除按钮样式；README 说明删除行为。
+涉及文件：frontend/src/api.ts、frontend/src/App.tsx、frontend/src/styles.css、README.md。
+验证：在 frontend 执行 npm run build，tsc 与 Vite production build 通过。未运行 pytest；未提交或上传 GitHub。
+
+[2026-10-29 21:22:20 +08:00] 代码修改说明：过滤流式回答中的内部推理
+修改前：流式 Agent 收到任何 delta.content 都立即 yield，包括后续会产生工具调用的轮次草稿；部分兼容模型可能把 <think>/<analysis> 标签文本放进 content。工具调用历史也可能保存该草稿。
+修改后：system prompt 要求内部分析不输出；reasoning_content 不转发；工具调用轮文本缓冲并丢弃；最终文本清理常见推理标签后再发送和保存。非流式 Agent 删除工具名、工具结果的 print 调试输出。
+涉及文件：agent/agent.py。
+验证：py_compile 和 git diff --check 通过。未运行 pytest；未验证具体模型的原始 SSE 格式。

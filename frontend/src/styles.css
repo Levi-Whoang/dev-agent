@@ -45,6 +45,9 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .rename-button { width: 30px; flex: 0 0 30px; border: 0; border-radius: 7px; color: #82918b; background: transparent; opacity: 0; }
 .history-row:hover .rename-button, .rename-button:focus-visible { opacity: 1; }
 .rename-button:hover { color: #216c5b; background: #d9e9e2; }
+.delete-button { width: 30px; flex: 0 0 30px; border: 0; border-radius: 7px; color: #a47772; background: transparent; opacity: 0; }
+.history-row:hover .delete-button, .delete-button:focus-visible { opacity: 1; }
+.delete-button:hover { color: #a43f38; background: #f5e4e1; }
 .rename-form { display: flex; min-width: 0; width: 100%; gap: 3px; padding: 4px; }
 .rename-form input { min-width: 0; flex: 1; padding: 5px 6px; border: 1px solid #cbdcd4; border-radius: 5px; outline-color: #55a18e; font-size: 10px; }
 .rename-form button { width: 23px; flex: 0 0 23px; border: 0; border-radius: 5px; color: #426258; background: #edf4f0; }

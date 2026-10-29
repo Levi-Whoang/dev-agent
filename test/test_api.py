@@ -100,28 +100,6 @@ def api_module(monkeypatch):
             sys.modules.pop(module_name, None)
 
 
-def test_chat_route_calls_agent_and_returns_standard_response(api_module):
-    routes, agent, _ = api_module
-    user_id = "test-user"
-    internal_session_id = stored_session_id(user_id, "chat-1")
-
-    response = routes.chat(
-        ChatRequest(message="你好", session_id="chat-1", stream=False),
-        current_user=user_id,
-    )
-
-    assert response == {
-        "code": 0,
-        "message": "success",
-        "data": {
-            "answer": "回答：你好",
-            "session_id": "chat-1",
-            "citations": [],
-        },
-    }
-    assert agent.calls == [("你好", internal_session_id)]
-
-
 def test_chat_route_streams_sse_deltas_and_completion_event(api_module):
     routes, agent, logger = api_module
     user_id = "test-user"

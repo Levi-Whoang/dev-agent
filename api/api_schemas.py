@@ -9,7 +9,6 @@ class ChatRequest(BaseModel):
         min_length=1,
         max_length=75
     )
-    stream: bool = True
 
 
 class ChatResponse(BaseModel):

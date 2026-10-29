@@ -266,16 +266,22 @@ def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
                 json={
                     "message": "公司在哪里？",
                     "session_id": "asgi-citation",
-                    "stream": False,
                 },
             )
 
     response = anyio.run(make_request)
     assert response.status_code == 200
-    assert response.json()["data"]["citations"] == [citation]
+    assert response.headers["content-type"].startswith("text/event-stream")
+    events = [
+        json.loads(line[6:])
+        for line in response.text.splitlines()
+        if line.startswith("data: ")
+    ]
+    assert events[-1]["type"] == "done"
+    assert events[-1]["citations"] == [citation]
 
 
-def test_asgi_preserves_json_chat_mode_and_validates_requests(asgi_app):
+def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
     app, fake_agent = asgi_app
 
     async def make_requests():
@@ -290,7 +296,6 @@ def test_asgi_preserves_json_chat_mode_and_validates_requests(asgi_app):
                 json={
                     "message": "兼容请求",
                     "session_id": "asgi-2",
-                    "stream": False,
                 },
             )
             invalid = await client.post("/chat", json={"message": ""})
@@ -299,7 +304,17 @@ def test_asgi_preserves_json_chat_mode_and_validates_requests(asgi_app):
     chat, invalid = anyio.run(make_requests)
 
     assert chat.status_code == 200
-    assert chat.json()["data"]["answer"] == "完整回答：兼容请求"
+    assert chat.headers["content-type"].startswith("text/event-stream")
+    events = [
+        json.loads(line[6:])
+        for line in chat.text.splitlines()
+        if line.startswith("data: ")
+    ]
+    assert events == [
+        {"type": "delta", "content": "第一段"},
+        {"type": "delta", "content": "第二段"},
+        {"type": "done", "session_id": "asgi-2", "citations": []},
+    ]
     assert invalid.status_code == 422
     assert invalid.json()["code"] == 422
     assert fake_agent.calls == [
@@ -487,19 +502,27 @@ def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
         ) as client:
             alice = await client.post(
                 "/chat",
-                json={"message": "Alice 的新对话", "stream": False},
+                json={"message": "Alice 的新对话"},
                 headers=ALICE_HEADERS,
             )
             bob = await client.post(
                 "/chat",
-                json={"message": "Bob 的新对话", "stream": False},
+                json={"message": "Bob 的新对话"},
                 headers=BOB_HEADERS,
             )
             return alice, bob
 
     alice, bob = anyio.run(make_requests)
-    alice_session_id = alice.json()["data"]["session_id"]
-    bob_session_id = bob.json()["data"]["session_id"]
+    def completed_session_id(response):
+        return next(
+            json.loads(line[6:])["session_id"]
+            for line in response.text.splitlines()
+            if line.startswith("data: ")
+            and json.loads(line[6:]).get("type") == "done"
+        )
+
+    alice_session_id = completed_session_id(alice)
+    bob_session_id = completed_session_id(bob)
     assert alice.status_code == 200
     assert bob.status_code == 200
     assert alice_session_id != bob_session_id

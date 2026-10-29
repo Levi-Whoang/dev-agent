@@ -3,6 +3,7 @@ import type { FormEvent, KeyboardEvent } from "react";
 import {
   getSessionMessages,
   listSessions,
+  deleteSession as deleteSessionRequest,
   login,
   logout as revokeToken,
   renameSession,
@@ -46,6 +47,7 @@ export default function App() {
   const [historyBusy, setHistoryBusy] = useState(false);
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -144,6 +146,35 @@ export default function App() {
     } catch (error) {
       setHistoryError(error instanceof Error ? error.message : "修改会话名称失败");
     } finally {
+      setHistoryBusy(false);
+    }
+  }
+
+  async function removeSession(item: SessionSummary) {
+    if (streaming || historyBusy) return;
+    const title = item.title || "新对话";
+    if (!window.confirm(`确定删除会话“${title}”吗？此操作无法撤销。`)) return;
+
+    setDeletingSessionId(item.session_id);
+    setHistoryBusy(true);
+    setHistoryError("");
+    try {
+      await deleteSessionRequest(token, item.session_id);
+      setHistory((items) => items.filter((entry) => entry.session_id !== item.session_id));
+      if (sessionId === item.session_id) {
+        setSessionId(null);
+        setMessages([]);
+        setInput("");
+        setChatError("");
+      }
+      if (renamingSessionId === item.session_id) {
+        setRenamingSessionId(null);
+        setRenameValue("");
+      }
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "删除会话失败");
+    } finally {
+      setDeletingSessionId(null);
       setHistoryBusy(false);
     }
   }
@@ -415,6 +446,15 @@ export default function App() {
                     }}
                   >
                     ✎
+                  </button>
+                  <button
+                    className="delete-button"
+                    disabled={streaming || historyBusy}
+                    title="删除会话"
+                    aria-label={`删除会话：${item.title || item.session_id}`}
+                    onClick={() => void removeSession(item)}
+                  >
+                    {deletingSessionId === item.session_id ? "…" : "×"}
                   </button>
                 </>
               )}
