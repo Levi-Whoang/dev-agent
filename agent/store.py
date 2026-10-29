@@ -17,7 +17,7 @@ from typing import Any
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import ChatMessage, ChatSession
+from database.models import ChatMessage, ChatSession, UserMemory
 
 logger = logging.getLogger("dev-agent.store")
 
@@ -128,11 +128,18 @@ class SessionStore:
             await self.db.commit()
 
     # ---------- 消息 ----------
-    async def history(self, session_id: str, limit: int = 40) -> list[dict[str, Any]]:
-        """取最近 N 条消息。
+    async def message_rows(
+        self, session_id: str, limit: int = 500
+    ) -> list[ChatMessage]:
+        """取最近 N 行原始消息，**交给记忆层去裁剪**。
 
-        限制条数是为了控制上下文长度：全量塞给模型既慢又贵，
-        而且早期内容对当前问题基本没用。
+        这里故意不做 limit 语义上的"只取这么多给模型"——
+        按行数裁剪会切断 assistant(tool_calls) 和 tool 的配对，
+        之前就是这么炸的（详见 agent/memory/window.py 开头）。
+        所以这里只做一个防爆的上限，真正的取舍在内存里按「轮」做。
+
+        返回 ORM 行而不是 dict，是因为记忆层需要 id 来记录
+        "摘要已经覆盖到哪条"。
         """
         stmt = (
             select(ChatMessage)
@@ -140,8 +147,39 @@ class SessionStore:
             .order_by(ChatMessage.id.desc())
             .limit(limit)
         )
-        rows = (await self.db.execute(stmt)).scalars().all()
-        return [row.to_llm_message() for row in reversed(rows)]
+        rows = list((await self.db.execute(stmt)).scalars().all())
+        rows.reverse()
+        return rows
+
+    async def get_session(self, session_id: str) -> ChatSession | None:
+        return await self.db.get(ChatSession, session_id)
+
+    async def save_summary(
+        self, session_id: str, summary: str, upto_id: int
+    ) -> None:
+        """写入滚动摘要，并记下它覆盖到哪条消息。
+
+        这里用 UPDATE 而不是"读出来改属性再 commit"：
+        摘要是在聊天请求里生成的，和用户的其他操作可能并发，
+        直接一条 UPDATE 不会覆盖掉别人同时改的 title。
+        """
+        await self.db.execute(
+            update(ChatSession)
+            .where(ChatSession.id == session_id)
+            .values(summary=summary, summary_upto_id=upto_id)
+        )
+        await self.db.commit()
+
+    async def touch_memories(self, memory_ids: list[int]) -> None:
+        """记一下这些长期记忆这次被用到了，方便以后按活跃度淘汰。"""
+        if not memory_ids:
+            return
+        await self.db.execute(
+            update(UserMemory)
+            .where(UserMemory.id.in_(memory_ids))
+            .values(last_used_at=datetime.now(timezone.utc))
+        )
+        await self.db.commit()
 
     async def append(
         self,
@@ -175,9 +213,15 @@ class SessionStore:
             # 只调工具、没说话的那一轮也跳过，否则界面会出现空气泡
             if row.role == "assistant" and not row.content:
                 continue
+            # 带 tool_calls 的 assistant 正文是 ReAct 的「思考」，
+            # 不是最终答复。回放历史时标成 thought，前端才不会把它
+            # 和真正的答案混成两个并排的气泡。
+            role = row.role
+            if row.role == "assistant" and (row.payload or {}).get("tool_calls"):
+                role = "thought"
             messages.append(
                 {
-                    "role": row.role,
+                    "role": role,
                     "content": row.content,
                     "created_at": (
                         row.created_at.isoformat() if row.created_at else None

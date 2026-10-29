@@ -9,8 +9,6 @@ aiosqlite==0.22.1
 # 想用 MySQL 时额外安装 aiomysql，并把 DATABASE_URL 改成
 # mysql+aiomysql://user:password@127.0.0.1:3306/agent_db?charset=utf8mb4
 # aiomysql==0.2.0
-# 旧版（pymysql）已不再使用，保留在下面仅供对照
-# PyMySQL==1.2.3
 
 # 大模型 / 配置
 openai==3.24.0

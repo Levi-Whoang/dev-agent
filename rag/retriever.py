@@ -74,11 +74,31 @@ class KnowledgeRetriever:
             logger.info("检索索引已构建：%d 个片段", len(chunks))
 
     async def search(
-        self, query: str, top_k: int | None = None
+        self,
+        query: str,
+        top_k: int | None = None,
+        *,
+        mode: str = "hybrid",
+        apply_gate: bool = True,
     ) -> list[RetrievedChunk]:
+        """检索。
+
+        mode / apply_gate 是给评估用的消融开关：
+        - mode="dense"  只用向量召回
+        - mode="sparse" 只用 BM25
+        - mode="hybrid" 两路 RRF 融合（生产默认）
+        - apply_gate=False 关掉相似度门槛
+
+        为什么把消融开关放进生产代码而不是评估脚本里自己实现一遍：
+        评估必须测的是**线上真正跑的那条路径**。脚本里另写一份检索，
+        测出来的数字和线上没关系。
+        """
         query = query.strip()
         if not query:
             return []
+
+        if mode not in ("dense", "sparse", "hybrid"):
+            raise ValueError(f"未知检索模式：{mode}")
 
         await self._ensure_index()
 
@@ -97,9 +117,14 @@ class KnowledgeRetriever:
         sparse_order = [idx for idx, _ in sparse_pairs]
         sparse_scores = dict(sparse_pairs)
 
-        fused = reciprocal_rank_fusion(
-            [dense_order, sparse_order], k=settings.rrf_k
-        )
+        if mode == "dense":
+            rankings = [dense_order]
+        elif mode == "sparse":
+            rankings = [sparse_order]
+        else:
+            rankings = [dense_order, sparse_order]
+
+        fused = reciprocal_rank_fusion(rankings, k=settings.rrf_k)
 
         dense_rank_of = {idx: r for r, idx in enumerate(dense_order, start=1)}
         sparse_rank_of = {idx: r for r, idx in enumerate(sparse_order, start=1)}
@@ -111,19 +136,23 @@ class KnowledgeRetriever:
             dense_score = float(dense_scores[chunk_index])
             sparse_score = sparse_scores.get(chunk_index, 0.0)
 
-            keyword_only_ok = (
-                sparse_score > 0 and dense_score >= settings.dense_floor
-            )
-            if dense_score < settings.dense_threshold and not keyword_only_ok:
-                continue
+            if apply_gate:
+                keyword_only_ok = (
+                    sparse_score > 0 and dense_score >= settings.dense_floor
+                )
+                if dense_score < settings.dense_threshold and not keyword_only_ok:
+                    continue
 
             chunk = self._chunks[chunk_index]
             if chunk.content in seen:
                 continue
             seen.add(chunk.content)
 
-            in_dense = chunk_index in dense_rank_of
-            in_sparse = chunk_index in sparse_rank_of
+            # 只有这一路真的参与了排序，才算它命中。
+            # 否则 dense 模式下也会出现 "both"（因为 BM25 的排名表照样算了），
+            # 消融评测就分不清"这条是向量找出来的还是关键词找出来的"。
+            in_dense = mode in ("dense", "hybrid") and chunk_index in dense_rank_of
+            in_sparse = mode in ("sparse", "hybrid") and chunk_index in sparse_rank_of
             matched_by = (
                 "both" if in_dense and in_sparse
                 else "dense" if in_dense
@@ -136,8 +165,12 @@ class KnowledgeRetriever:
                     source=chunk.source,
                     score=round(dense_score, 4),
                     rank_score=round(fused_score, 4),
-                    dense_rank=dense_rank_of.get(chunk_index),
-                    sparse_rank=sparse_rank_of.get(chunk_index),
+                    dense_rank=(
+                        dense_rank_of.get(chunk_index) if in_dense else None
+                    ),
+                    sparse_rank=(
+                        sparse_rank_of.get(chunk_index) if in_sparse else None
+                    ),
                     matched_by=matched_by,
                 )
             )

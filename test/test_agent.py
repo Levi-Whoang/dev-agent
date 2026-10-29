@@ -12,13 +12,30 @@ from agent.agent import Agent
 
 
 class FakeStore:
-    """内存版会话存储，替掉数据库。"""
+    """内存版会话存储，替掉数据库。
+
+    `message_rows` 返回带 id 的对象而不是 dict —— 记忆层要靠 id 判断
+    摘要覆盖到哪一条。这里用自增序号当 id，够用。
+    """
 
     def __init__(self) -> None:
         self.messages: list[dict] = []
 
-    async def history(self, session_id: str, limit: int = 40) -> list[dict]:
-        return list(self.messages[-limit:])
+    async def message_rows(self, session_id: str, limit: int = 500):
+        rows = []
+        for index, message in enumerate(self.messages[-limit:], start=1):
+            extra = {
+                k: v for k, v in message.items() if k not in ("role", "content")
+            }
+            rows.append(
+                SimpleNamespace(
+                    id=index,
+                    role=message["role"],
+                    content=message.get("content") or "",
+                    payload=extra or None,
+                )
+            )
+        return rows
 
     async def append(
         self, session_id: str, role: str, content: str, payload: dict | None = None

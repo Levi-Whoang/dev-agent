@@ -55,7 +55,7 @@ async def _ensure_session(db, user, session_id: str | None) -> str:
 @router.post("/chat", response_model=APIResponse, summary="发送消息（等待完整回答）")
 async def chat(payload: ChatRequest, db: DbSession, user: CurrentUser):
     session_id = await _ensure_session(db, user, payload.session_id)
-    agent = build_agent(db, session_id)
+    agent = build_agent(db, session_id, user.id)
 
     try:
         answer = await agent.run(payload.message)
@@ -74,20 +74,30 @@ async def chat_stream(payload: ChatRequest, db: DbSession, user: CurrentUser):
     session_id = await _ensure_session(db, user, payload.session_id)
     await SessionStore(db).maybe_autotitle(session_id, payload.message)
     message = payload.message
+    # 先取出来：生成器执行时请求级的 db 可能已经关了，再去碰 user 对象会报
+    # DetachedInstanceError
+    user_id = user.id
 
     async def event_source() -> AsyncIterator[str]:
         # 响应头已经发出去了，此后的任何异常都只能变成一个 error 事件，
         # 否则客户端会看到一条“正常结束但什么都没收到”的空流
         try:
             async with get_session_factory()() as stream_db:
-                agent = build_agent(stream_db, session_id)
+                agent = build_agent(stream_db, session_id, user_id)
                 async for event in agent.stream(message):
                     yield event.to_sse()
         except Exception as exc:
             logger.exception("流式响应中断")
-            yield AgentEvent(ERROR, {"message": str(exc)}).to_sse()
+            yield AgentEvent(ERROR, {"message": str(exc), "termination": "error"}).to_sse()
+            # 终止原因统一放在 done 里：前端只需要认这一个终态事件
             yield AgentEvent(
-                DONE, {"answer": "", "session_id": session_id, "error": True}
+                DONE,
+                {
+                    "answer": "",
+                    "session_id": session_id,
+                    "termination": "error",
+                    "error": True,
+                },
             ).to_sse()
 
     return StreamingResponse(

@@ -114,3 +114,44 @@ async def test_search_context_contains_source(retriever):
 
     assert "来源：" in context
     assert "命中方式：" in context
+
+
+# ---------- 消融开关（mode / apply_gate） ----------
+# 这两个参数是评测用的，但它们直接改生产检索路径，所以必须有测试兜住：
+# 一旦 mode 拼错却没报错，评测脚本会静默测出假的"混合检索"成绩。
+async def test_dense_mode_only_uses_vectors(retriever):
+    results = await retriever.search("公司在哪里？", mode="dense")
+
+    assert results
+    # 只跑向量这一路，结果不可能被标成稀疏命中
+    assert all(item.matched_by == "dense" for item in results)
+    assert all(item.sparse_rank is None for item in results)
+
+
+async def test_sparse_mode_only_uses_keywords(retriever):
+    results = await retriever.search("Python 类型标注", mode="sparse")
+
+    assert results
+    assert all(item.matched_by == "sparse" for item in results)
+    assert all(item.dense_rank is None for item in results)
+
+
+async def test_hybrid_mode_marks_matches(retriever):
+    results = await retriever.search("公司在哪里？", mode="hybrid")
+
+    assert results
+    assert {item.matched_by for item in results} <= {"dense", "sparse", "both"}
+
+
+async def test_unknown_mode_is_rejected(retriever):
+    """拼错模式名必须炸，不能悄悄退化成某一种检索。"""
+    with pytest.raises(ValueError):
+        await retriever.search("公司在哪里？", mode="hybird")
+
+
+async def test_gate_off_returns_more_for_unanswerable(retriever):
+    """关掉门槛后，本应拒答的问题不该再返回空 —— 这是消融实验的前提。"""
+    gated = await retriever.search("报销流程是什么？", top_k=10)
+    ungated = await retriever.search("报销流程是什么？", top_k=10, apply_gate=False)
+
+    assert len(ungated) >= len(gated)

@@ -49,6 +49,13 @@ class ChatSession(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column(String(200), default="新对话")
+
+    # ---------- 会话记忆 ----------
+    # 滚动摘要：把已经挤出上下文窗口的早期对话压成一段话。
+    # summary_upto_id 是"摘要已经覆盖到哪条消息"，用它避免重复摘要同一段内容。
+    summary: Mapped[str | None] = mapped_column(Text, default=None)
+    summary_upto_id: Mapped[int | None] = mapped_column(default=None)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, server_default=func.now()
     )
@@ -96,3 +103,38 @@ class ChatMessage(Base):
         if message["role"] == "assistant" and message.get("tool_calls"):
             message["content"] = message["content"] or None
         return message
+
+
+class UserMemory(Base):
+    """跨会话的长期记忆：关于"这个人"的事实，而不是某次对话的内容。
+
+    为什么要和 chat_messages 分开：
+    - 消息是流水，会越积越多，也随时可能被清空；
+    - 而这些事实（"用户是后端开发"、"公司在南山科技园"）要活很久，
+      而且要能跨会话注入到每次对话里。
+    两者生命周期完全不同，混在一张表里迟早要么被误删，要么检索时互相干扰。
+
+    user_id 上不建 (user_id, content) 唯一索引：同一句话在不同语境下
+    可能表述不同（"我在深圳"vs"我常驻深圳"），靠 SQL 判重会漏；
+    判重放在应用层做归一化比较，见 agent/memory/longterm.py。
+    """
+
+    __tablename__ = "user_memories"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    content: Mapped[str] = mapped_column(Text)
+    # fact=客观事实  preference=偏好  profile=身份信息，目前只影响注入时的分组
+    kind: Mapped[str] = mapped_column(String(20), default="fact")
+    # 从哪个会话里学到的，方便追溯，也方便删会话时判断要不要留
+    source_session_id: Mapped[str | None] = mapped_column(String(100), default=None)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, server_default=func.now()
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
+
+    __table_args__ = (Index("ix_user_memories_user", "user_id", "id"),)

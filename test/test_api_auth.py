@@ -233,7 +233,7 @@ async def test_sessions_are_isolated_between_users(auth_client):
 # ---------- 聊天 ----------
 async def test_chat_returns_agent_answer(auth_client, monkeypatch):
     monkeypatch.setattr(
-        chat_module, "build_agent", lambda db, session_id: FakeAgent(db, session_id)
+        chat_module, "build_agent", lambda db, session_id, user_id=None: FakeAgent(db, session_id)
     )
 
     res = await auth_client.post("/chat", json={"message": "你好"})
@@ -251,7 +251,7 @@ async def test_chat_requires_login(client):
 
 async def test_chat_stream_returns_sse(auth_client, monkeypatch):
     monkeypatch.setattr(
-        chat_module, "build_agent", lambda db, session_id: FakeAgent(db, session_id)
+        chat_module, "build_agent", lambda db, session_id, user_id=None: FakeAgent(db, session_id)
     )
 
     res = await auth_client.post("/chat/stream", json={"message": "你好"})
@@ -273,7 +273,7 @@ async def test_chat_stream_returns_sse(auth_client, monkeypatch):
 async def test_stream_stores_messages(auth_client, monkeypatch):
     """流式完成后消息要落库，刷新页面还能看到历史。"""
     monkeypatch.setattr(
-        chat_module, "build_agent", lambda db, session_id: FakeAgent(db, session_id)
+        chat_module, "build_agent", lambda db, session_id, user_id=None: FakeAgent(db, session_id)
     )
 
     res = await auth_client.post("/chat/stream", json={"message": "第一句"})

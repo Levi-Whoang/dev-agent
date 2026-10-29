@@ -15,6 +15,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -38,8 +39,21 @@ class MemoryStore:
     def __init__(self) -> None:
         self.sessions: dict[str, list[dict]] = {}
 
-    async def history(self, session_id: str, limit: int = 40) -> list[dict]:
-        return list(self.sessions.get(session_id, []))
+    async def message_rows(self, session_id: str, limit: int = 500):
+        rows = []
+        for index, message in enumerate(self.sessions.get(session_id, [])[-limit:], start=1):
+            extra = {
+                k: v for k, v in message.items() if k not in ("role", "content")
+            }
+            rows.append(
+                SimpleNamespace(
+                    id=index,
+                    role=message["role"],
+                    content=message.get("content") or "",
+                    payload=extra or None,
+                )
+            )
+        return rows
 
     async def append(self, session_id, role, content, payload=None) -> None:
         message = {"role": role, "content": content}

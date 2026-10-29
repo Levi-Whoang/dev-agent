@@ -269,7 +269,9 @@ async function selectSession(sessionId) {
   try {
     const data = await api(`/sessions/${sessionId}/messages`);
     data.messages.forEach((message) => {
-      addBubble(message.role === 'user' ? 'user' : 'assistant', message.content);
+      // 历史里的 thought 是 ReAct 的思考步骤，渲染成弱化的旁注
+      if (message.role === 'thought') addThought(message.content);
+      else addBubble(message.role === 'user' ? 'user' : 'assistant', message.content);
     });
   } catch (error) {
     setBadge(error.message, 'err');
@@ -296,16 +298,36 @@ function addBubble(role, text = '') {
 
   const avatar = document.createElement('div');
   avatar.className = 'avatar';
-  avatar.textContent = role === 'user' ? '你' : 'W';
+  avatar.textContent = role === 'user' ? '你' : role === 'thought' ? '✻' : 'W';
 
   const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  bubble.className = role === 'thought' ? 'bubble thought' : 'bubble';
   bubble.textContent = text;
 
   wrap.append(avatar, bubble);
   messages.append(wrap);
   messages.scrollTop = messages.scrollHeight;
   return bubble;
+}
+
+/* 历史回放里的思考步骤：不占一个完整的问答位，缩成旁注 */
+function addThought(text) {
+  return addBubble('thought', text);
+}
+
+/* 把正在流式的气泡"降级"成思考。
+ *
+ * ReAct 里模型会先输出一段自然语言再调工具，那段文字是推理过程，不是答案。
+ * 如果直接留在气泡里继续追加，最后得到的会是"我要查一下 + 正式答案"
+ * 黏在一起的一段话，读起来像模型在自说自话。
+ * 所以收到 thought 事件时把当前气泡就地冻结，另起一个接答案。
+ */
+function demoteToThought(bubble, text) {
+  const wrap = bubble.parentElement;
+  wrap.classList.add('thought-mode');
+  wrap.querySelector('.avatar').textContent = '✻';
+  bubble.classList.add('thought');
+  bubble.textContent = text;
 }
 
 function setBadge(text, kind = '') {
@@ -344,16 +366,24 @@ $('composer').addEventListener('submit', async (event) => {
   cursor.className = 'cursor';
   bubble.append(cursor);
 
-  const note = document.createElement('span');
+  const note = document.createElement('div');
   note.className = 'tool-note';
   note.hidden = true;
-  bubble.parentElement.insertBefore(note, bubble);
+  messages.append(note);
 
   state.streaming = true;
   sendBtn.disabled = true;
   setBadge('思考中…', 'busy');
 
-  let answer = '';
+  let answer = ''; // 当前这一轮正在流式累积的正文
+  let currentBubble = bubble; // thought 出现后会换成一个新气泡
+  let aborted = ''; // error 事件留下的说明，done 时不能把它冲掉
+
+  const putCursor = () => {
+    currentBubble.textContent = answer;
+    currentBubble.append(cursor);
+    messages.scrollTop = messages.scrollHeight;
+  };
 
   try {
     await streamChat(
@@ -367,15 +397,23 @@ $('composer').addEventListener('submit', async (event) => {
         }
         if (eventName === 'delta') {
           answer += data.text;
-          bubble.textContent = answer;
-          bubble.append(cursor);
-          messages.scrollTop = messages.scrollHeight;
+          putCursor();
+          return;
+        }
+        if (eventName === 'thought') {
+          // 这一轮的正文其实是推理：冻结它，另起一个气泡接答案
+          demoteToThought(currentBubble, data.text);
+          note.hidden = true;
+          answer = '';
+          currentBubble = addBubble('assistant', '');
+          putCursor();
+          setBadge(`第 ${data.step} 步推理`, 'busy');
           return;
         }
         if (eventName === 'tool_start') {
           note.hidden = false;
           note.textContent = `🔍 正在调用 ${data.name} …`;
-          setBadge('检索中…', 'busy');
+          setBadge('调用工具中…', 'busy');
           return;
         }
         if (eventName === 'tool_result') {
@@ -385,20 +423,27 @@ $('composer').addEventListener('submit', async (event) => {
             : `✅ ${data.name} 已返回结果`;
           return;
         }
-        if (eventName === 'done') {
-          answer = data.answer || answer;
-          bubble.textContent = answer;
-          setBadge('就绪', 'ok');
+        if (eventName === 'error') {
+          aborted = data.message || '出错了';
+          setBadge(terminationLabel(data.termination), 'err');
           return;
         }
-        if (eventName === 'error') {
-          bubble.textContent = answer || `出错了：${data.message}`;
-          setBadge('出错', 'err');
+        if (eventName === 'done') {
+          if (aborted) {
+            currentBubble.textContent =
+              answer || `出错了：${aborted}`;
+          } else if (data.answer) {
+            answer = data.answer;
+            currentBubble.textContent = answer;
+          }
+          note.hidden = true;
+          setBadge(traceLabel(data), data.termination === 'answer' ? 'ok' : 'err');
+          return;
         }
       }
     );
   } catch (error) {
-    bubble.textContent = answer || `请求失败：${error.message}`;
+    currentBubble.textContent = answer || `请求失败：${error.message}`;
     setBadge('连接失败', 'err');
   } finally {
     cursor.remove();
@@ -407,6 +452,27 @@ $('composer').addEventListener('submit', async (event) => {
     await refreshSessions();
   }
 });
+
+/* 终止原因说人话，别把 max_steps 这种内部枚举直接甩给用户 */
+function terminationLabel(reason) {
+  return (
+    {
+      max_steps: '推理步数用尽',
+      loop: '检测到重复操作',
+      error: '出错',
+    }[reason] || '出错'
+  );
+}
+
+/* 收尾角标带上 ReAct 的用量，方便判断这次回答花了多少步 */
+function traceLabel(data) {
+  if (data.termination && data.termination !== 'answer') {
+    return terminationLabel(data.termination);
+  }
+  const steps = data.steps || 0;
+  const calls = data.tool_calls || 0;
+  return calls ? `就绪 · ${steps} 步 / ${calls} 次工具` : '就绪';
+}
 
 async function streamChat(message, sessionId, onEvent) {
   const res = await fetch(`${API_BASE}/chat/stream`, {

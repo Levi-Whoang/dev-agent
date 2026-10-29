@@ -56,6 +56,25 @@ class Settings:
     rrf_k: int
     candidate_pool: int
 
+    # ---------- 记忆 ----------
+    # 最近几轮原文的 token 预算（估算值，不是精确值）
+    memory_window_tokens: int
+    memory_max_turns: int
+    # 会话摘要：超出窗口的早期对话压成一段话
+    memory_summary_enabled: bool
+    # 挤出去的内容攒到多少 token 才压一次，太小会每轮都多打一次模型
+    memory_summary_trigger_tokens: int
+    # 跨会话的长期记忆（user_memories 表）
+    memory_longterm_enabled: bool
+
+    # ---------- ReAct 循环 ----------
+    # 一次提问最多走几轮「思考→动作→观测」
+    react_max_iterations: int
+    # 同一工具 + 同一参数重复到第几次开始提醒/中断
+    react_loop_threshold: int
+    # 单条观测结果回灌前的截断长度（字符）
+    react_observation_limit: int
+
     @property
     def is_default_jwt_secret(self) -> bool:
         return self.jwt_secret.startswith("dev-only-")
@@ -146,4 +165,21 @@ def get_settings() -> Settings:
         dense_floor=float(os.getenv("RAG_DENSE_FLOOR", "0.45")),
         rrf_k=int(os.getenv("RAG_RRF_K", "60")),
         candidate_pool=int(os.getenv("RAG_CANDIDATE_POOL", "10")),
+        # 记忆：窗口 3000 token 大约能装 8~12 轮正常对话
+        memory_window_tokens=int(os.getenv("MEMORY_WINDOW_TOKENS", "3000")),
+        memory_max_turns=int(os.getenv("MEMORY_MAX_TURNS", "12")),
+        memory_summary_enabled=_as_bool(
+            os.getenv("MEMORY_SUMMARY_ENABLED"), default=True
+        ),
+        memory_summary_trigger_tokens=int(
+            os.getenv("MEMORY_SUMMARY_TRIGGER_TOKENS", "800")
+        ),
+        memory_longterm_enabled=_as_bool(
+            os.getenv("MEMORY_LONGTERM_ENABLED"), default=True
+        ),
+        # ReAct：10 步足够覆盖"检索→追问角度→组织答案"，
+        # 再往上多是模型在原地打转，只会拖长等待时间
+        react_max_iterations=int(os.getenv("REACT_MAX_ITERATIONS", "10")),
+        react_loop_threshold=int(os.getenv("REACT_LOOP_THRESHOLD", "2")),
+        react_observation_limit=int(os.getenv("REACT_OBSERVATION_LIMIT", "1200")),
     )

@@ -8,8 +8,10 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 
+from sqlalchemy import inspect
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -19,6 +21,17 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 from config import get_settings
+
+logger = logging.getLogger("dev-agent.database")
+
+# 老库需要补的列：(表名, 列名, 列定义)
+# create_all() 只会建**新表**，对已存在的表不会加列 —— 所以升级过模型之后，
+# 已有的 dev_agent.db 会缺字段，查询时会直接报 no such column。
+# 项目没上 Alembic（对单人开发是过度设计），这里用一个幂等的补列逻辑兜住。
+_ADDED_COLUMNS = (
+    ("chat_sessions", "summary", "TEXT"),
+    ("chat_sessions", "summary_upto_id", "INTEGER"),
+)
 
 
 class Base(DeclarativeBase):
@@ -73,7 +86,7 @@ async def get_db() -> AsyncIterator[AsyncSession]:
 
 
 async def init_db() -> None:
-    """建表（开发用）。
+    """建表 + 补列（开发用）。
 
     生产环境应该换成 Alembic 迁移，这里只是为了 `uvicorn app:app` 能直接跑起来。
     """
@@ -82,6 +95,27 @@ async def init_db() -> None:
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_add_missing_columns)
+
+
+def _add_missing_columns(conn) -> None:
+    """给已存在的表补上模型里新增的列。幂等，重复跑不报错。"""
+    inspector = inspect(conn)
+    tables = {name for name, _, _ in _ADDED_COLUMNS}
+
+    for table in tables:
+        if not inspector.has_table(table):
+            continue
+        existing = {col["name"] for col in inspector.get_columns(table)}
+
+        for target_table, column, ddl in _ADDED_COLUMNS:
+            if target_table != table or column in existing:
+                continue
+            # 表名列名都来自上面的常量，不接受外部输入，不存在注入面
+            conn.exec_driver_sql(
+                f"ALTER TABLE {target_table} ADD COLUMN {column} {ddl}"
+            )
+            logger.info("数据库升级：%s 表补上 %s 列", target_table, column)
 
 
 async def dispose_db() -> None:

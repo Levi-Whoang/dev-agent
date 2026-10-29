@@ -10,6 +10,7 @@ knowledge_base
 dev_agent.db
 *.db-wal
 *.db-shm
+logs/
 node_modules/
 dist/
 .venv-demo/
