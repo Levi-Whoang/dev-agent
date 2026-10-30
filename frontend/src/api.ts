@@ -23,6 +23,15 @@ export interface SessionSummary {
   updated_at?: string | null;
 }
 
+export interface KnowledgeDocument {
+  document_id: string;
+  name: string;
+  format: string;
+  uploaded_by: number;
+  uploaded_at: string | null;
+  modified_at: string | null;
+}
+
 export interface StoredMessage {
   role: string;
   content?: string | null;
@@ -159,6 +168,56 @@ export async function deleteSession(token: string, sessionId: string): Promise<v
       headers: { Authorization: `Bearer ${token}` },
     },
   );
+  if (!response.ok) throw new Error(await readError(response));
+}
+
+export async function listKnowledgeDocuments(token: string): Promise<KnowledgeDocument[]> {
+  const response = await authorizedFetch("/knowledge/documents", token);
+  if (!response.ok) throw new Error(await readError(response));
+  const body = (await response.json()) as ApiEnvelope<KnowledgeDocument[]>;
+  if (body.code !== 0 || !Array.isArray(body.data)) {
+    throw new Error(body.message || "知识库文档响应格式不正确");
+  }
+  return body.data;
+}
+
+export async function uploadKnowledgeDocument(token: string, file: File): Promise<KnowledgeDocument> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await authorizedFetch("/knowledge/documents", token, { method: "POST", body: form });
+  if (!response.ok) throw new Error(await readError(response));
+  const body = (await response.json()) as ApiEnvelope<KnowledgeDocument>;
+  if (body.code !== 0 || !body.data?.document_id) {
+    throw new Error(body.message || "文档上传响应格式不正确");
+  }
+  return body.data;
+}
+
+export async function replaceKnowledgeDocument(token: string, documentId: string, file: File): Promise<KnowledgeDocument> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await authorizedFetch(`/knowledge/documents/${encodeURIComponent(documentId)}`, token, {
+    method: "PUT", body: form,
+  });
+  if (!response.ok) throw new Error(await readError(response));
+  const body = (await response.json()) as ApiEnvelope<KnowledgeDocument>;
+  if (body.code !== 0 || !body.data?.document_id) throw new Error(body.message || "文档更新响应格式不正确");
+  return body.data;
+}
+
+export async function renameKnowledgeDocument(token: string, documentId: string, name: string): Promise<void> {
+  const response = await authorizedFetch(`/knowledge/documents/${encodeURIComponent(documentId)}`, token, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) throw new Error(await readError(response));
+}
+
+export async function deleteKnowledgeDocument(token: string, documentId: string): Promise<void> {
+  const response = await authorizedFetch(`/knowledge/documents/${encodeURIComponent(documentId)}`, token, {
+    method: "DELETE",
+  });
   if (!response.ok) throw new Error(await readError(response));
 }
 

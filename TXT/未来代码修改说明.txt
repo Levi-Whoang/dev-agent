@@ -252,3 +252,26 @@
 修改后：应用与工作区约束为视口高度；对话区使用独立滚动，输入栏保留固定高度并贴在底部。
 涉及文件：frontend/src/styles.css。
 验证：frontend npm run build（tsc -b 与 Vite）通过；git diff --check 通过。未运行 pytest。
+
+[2026-10-30 10:47 +08:00] 代码修改说明：增加多格式知识库文档上传与管理
+修改前：RAG 仅从 KNOWLEDGE_DIR 顶层读取 TXT；没有文档元数据 ORM 表、上传解析流程、文档管理 API 或前端入口。
+修改后：增加统一解析器支持 PDF/DOCX/XLSX/PPTX/TXT/MD/CSV/JSON/HTML；新增知识库文档 ORM 元数据（文档 ID、名称、格式、上传用户 ID、创建/修改时间、文件路径）和 JWT 保护的上传、列表、详情、替换、改名、删除接口。原文件保存在 KNOWLEDGE_DIR/.originals，提取文本保存在 KNOWLEDGE_DIR/documents/{user_id} 并纳入 RAG，文档变化后清空文本/向量/BM25 缓存。React 增加文档列表与上传、替换、改名、删除操作。补充解析依赖和 API 文档。
+涉及文件：app/documents.py、app/main.py、modules/document_parser.py、modules/models.py、tools/knowledge.py、requirements.txt、frontend/src/api.ts、frontend/src/App.tsx、frontend/src/styles.css、README.md。
+验证：git diff --check 对已跟踪变更通过；未运行 pytest、前端构建、依赖安装或 MySQL/实际文件联调。限制：文档 CRUD 按用户隔离，但项目现有检索池是共享的，因此不同用户上传的文本仍能被其他用户检索；扫描 PDF 无 OCR。
+
+[2026-10-30 10:50 +08:00] 代码修改补充：上传文档检索范围按用户隔离
+复核发现仅对文档管理 API 做所有权过滤仍可能导致其他登录用户通过聊天检索到上传内容。新增检索 owner 上下文，并由聊天 SSE 路由传入当前用户数据库 ID；知识文本、向量和 BM25 缓存以用户 ID 分开，查询只读取公共语料和该用户目录下文档。修正前一条记录中的“上传文本共享”限制描述：公共语料共享，个人上传文本已按用户隔离。
+涉及文件：tools/knowledge.py、app/sessions.py、api/chat_helpers.py、README.md。
+验证：未运行自动化测试或端到端联调；git diff --check 待最终审阅后记录。
+
+[2026-10-30 10:57 +08:00] 代码修改说明：补充文档功能相关函数注释
+修改前：本次文档上传/解析/检索及聊天上下文相关 Python 文件中的函数大多没有定义上方的中文作用说明，部分只有函数体内文档字符串。
+修改后：在 42 个函数和方法定义上方增加一行中文注释，概括其输入处理、检索、API 或状态管理职责；没有改变实现逻辑。
+涉及文件：app/documents.py、modules/document_parser.py、tools/knowledge.py、app/sessions.py、api/chat_helpers.py、app/main.py。
+验证：git diff --check 通过；未运行自动化测试。
+
+[2026-10-30 11:36 +08:00] 代码修改说明：按应用、路由、服务和 Agent 运行时职责重组
+修改前：users/sessions/documents HTTP 路由放在 app/；文档路由同时处理上传校验、磁盘文件、解析和数据库操作；LLM 客户端及 Agent 全局实例在根目录 main.py 初始化。
+修改后：HTTP 路由集中到 api/routes/{users,sessions,documents}.py；app/main.py 负责组装应用、注册路由和启动校验，app/errors.py 保留全局请求日志/异常处理；文档业务操作抽到 services/documents.py，路由层负责请求解析、认证上下文、状态码与响应转换；Agent 客户端和实例由 agent/runtime.py 创建，根 main.py 兼容导出。RenameDocumentRequest 移入 api/api_schemas.py。更新测试夹具的路由导入路径和模块清理路径（未运行测试），同步更新 README 项目结构与本文件清单。
+涉及文件：新增 agent/runtime.py、api/routes/__init__.py、api/routes/users.py、api/routes/sessions.py、api/routes/documents.py、services/__init__.py、services/documents.py；删除旧的 app/users.py、app/sessions.py 路由文件；修改 app/main.py、api/api_schemas.py、main.py、test/test_api.py、test/test_api_http.py、README.md、TXT/功能一览.txt。
+验证：git diff --check 通过；没有运行 pytest、前端构建、类型检查、数据库或 API 联调。

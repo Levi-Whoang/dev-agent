@@ -3,6 +3,11 @@ import type { FormEvent, KeyboardEvent } from "react";
 import {
   getSessionMessages,
   listSessions,
+  listKnowledgeDocuments,
+  uploadKnowledgeDocument,
+  replaceKnowledgeDocument,
+  renameKnowledgeDocument,
+  deleteKnowledgeDocument,
   deleteSession as deleteSessionRequest,
   login,
   logout as revokeToken,
@@ -10,7 +15,7 @@ import {
   registerUser,
   streamChat,
 } from "./api";
-import type { ChatEvent, Citation, SessionSummary, StoredMessage } from "./api";
+import type { ChatEvent, Citation, KnowledgeDocument, SessionSummary, StoredMessage } from "./api";
 
 interface Message {
   id: string;
@@ -50,6 +55,12 @@ export default function App() {
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
+  const [documentError, setDocumentError] = useState("");
+  const [documentBusy, setDocumentBusy] = useState(false);
+  const [replacingDocumentId, setReplacingDocumentId] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +93,73 @@ export default function App() {
       cancelled = true;
     };
   }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setDocuments([]);
+      return;
+    }
+    let cancelled = false;
+    listKnowledgeDocuments(token)
+      .then((items) => { if (!cancelled) setDocuments(items); })
+      .catch((error) => {
+        if (!cancelled) setDocumentError(error instanceof Error ? error.message : "文档列表加载失败");
+      });
+    return () => { cancelled = true; };
+  }, [token]);
+
+  async function refreshDocuments() {
+    const items = await listKnowledgeDocuments(token);
+    setDocuments(items);
+  }
+
+  async function handleDocumentFile(file: File | undefined) {
+    if (!file) return;
+    setDocumentBusy(true);
+    setDocumentError("");
+    try {
+      if (replacingDocumentId) {
+        await replaceKnowledgeDocument(token, replacingDocumentId, file);
+      } else {
+        await uploadKnowledgeDocument(token, file);
+      }
+      await refreshDocuments();
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "文档处理失败");
+    } finally {
+      setDocumentBusy(false);
+      setReplacingDocumentId(null);
+    }
+  }
+
+  async function handleRenameDocument(document: KnowledgeDocument) {
+    const name = window.prompt("输入新的文档名称", document.name)?.trim();
+    if (!name || name === document.name) return;
+    setDocumentBusy(true);
+    setDocumentError("");
+    try {
+      await renameKnowledgeDocument(token, document.document_id, name);
+      await refreshDocuments();
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "文档改名失败");
+    } finally {
+      setDocumentBusy(false);
+    }
+  }
+
+  async function handleDeleteDocument(document: KnowledgeDocument) {
+    if (!window.confirm(`确定从知识库删除“${document.name}”吗？`)) return;
+    setDocumentBusy(true);
+    setDocumentError("");
+    try {
+      await deleteKnowledgeDocument(token, document.document_id);
+      setDocuments((items) => items.filter((item) => item.document_id !== document.document_id));
+    } catch (error) {
+      setDocumentError(error instanceof Error ? error.message : "文档删除失败");
+    } finally {
+      setDocumentBusy(false);
+    }
+  }
 
   function displayMessages(stored: StoredMessage[]): Message[] {
     const visible: Message[] = stored
@@ -484,6 +562,62 @@ export default function App() {
           )}
           {historyError && <div className="history-error">{historyError}</div>}
         </div>
+        <section className="documents-panel" aria-label="知识库文档管理">
+          <div className="documents-heading">
+            <span className="sidebar-label">知识库文档</span>
+            <button
+              className="document-upload-button"
+              disabled={documentBusy}
+              onClick={() => uploadInputRef.current?.click()}
+            >
+              {documentBusy ? "处理中…" : "＋ 上传"}
+            </button>
+            <input
+              ref={uploadInputRef}
+              className="visually-hidden"
+              type="file"
+              accept=".txt,.md,.csv,.json,.html,.htm,.pdf,.docx,.xlsx,.pptx"
+              onChange={(event) => {
+                void handleDocumentFile(event.target.files?.[0]);
+                event.currentTarget.value = "";
+              }}
+            />
+            <input
+              ref={replaceInputRef}
+              className="visually-hidden"
+              type="file"
+              accept=".txt,.md,.csv,.json,.html,.htm,.pdf,.docx,.xlsx,.pptx"
+              onChange={(event) => {
+                void handleDocumentFile(event.target.files?.[0]);
+                event.currentTarget.value = "";
+              }}
+            />
+          </div>
+          <div className="documents-list">
+            {documents.map((document) => (
+              <div className="document-row" key={document.document_id} title={`${document.name} · ${document.format.toUpperCase()}`}>
+                <span className="document-label">
+                  <span className="document-name">{document.name}</span>
+                  <span className="document-meta">{document.format.toUpperCase()} · {document.uploaded_at ? new Date(document.uploaded_at).toLocaleDateString("zh-CN") : ""}</span>
+                </span>
+                <button
+                  title="替换文档内容"
+                  aria-label={`替换文档：${document.name}`}
+                  disabled={documentBusy}
+                  onClick={() => {
+                    setReplacingDocumentId(document.document_id);
+                    replaceInputRef.current?.click();
+                  }}
+                >⇧</button>
+                <button title="修改文档名称" aria-label={`修改文档名称：${document.name}`} disabled={documentBusy} onClick={() => void handleRenameDocument(document)}>✎</button>
+                <button title="删除文档" aria-label={`删除文档：${document.name}`} disabled={documentBusy} onClick={() => void handleDeleteDocument(document)}>×</button>
+              </div>
+            ))}
+            {documents.length === 0 && <div className="documents-empty">还没有上传文档</div>}
+            {documentError && <div className="documents-error">{documentError}</div>}
+          </div>
+          <div className="documents-hint">支持 PDF、Word、Excel、PPT、TXT、Markdown、CSV、JSON、HTML，单个文件最大 20 MB。</div>
+        </section>
         <div className="sidebar-bottom">
           <div className="connection-state"><span /> API 已连接</div>
           <div className="user-row">

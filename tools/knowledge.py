@@ -3,7 +3,9 @@ import math
 import json
 import os
 import re
+from contextlib import contextmanager
 from collections import Counter
+from contextvars import ContextVar
 from pathlib import Path
 from functools import lru_cache
 
@@ -35,7 +37,22 @@ _knowledge_dir = Path(os.getenv("KNOWLEDGE_DIR", PROJECT_ROOT / "knowledge_base"
 KNOWLEDGE_DIR = (
     _knowledge_dir if _knowledge_dir.is_absolute() else PROJECT_ROOT / _knowledge_dir
 )
+_CURRENT_KNOWLEDGE_OWNER: ContextVar[int | None] = ContextVar(
+    "current_knowledge_owner", default=None
+)
 
+
+# 设置当前聊天的知识库文档所有者范围。
+@contextmanager
+def knowledge_owner_scope(owner_user_id: int | None):
+    """在一次聊天调用期间限制文档检索的用户范围。"""
+    token = _CURRENT_KNOWLEDGE_OWNER.set(owner_user_id)
+    try:
+        yield
+    finally:
+        _CURRENT_KNOWLEDGE_OWNER.reset(token)
+
+# 延迟加载并复用文本向量模型。
 @lru_cache(maxsize=1)
 def get_embedding_model():
     """首次执行向量编码时再加载模型，并在进程内复用。"""
@@ -44,9 +61,10 @@ def get_embedding_model():
     return SentenceTransformer("BAAI/bge-small-zh-v1.5")
 
 
-@lru_cache(maxsize=1)
-def load_knowledge() -> tuple[dict, ...]:
-    """读取所有 TXT 文件，并将长文本切分成知识片段。"""
+# 加载公共语料和指定用户文档并切分文本。
+@lru_cache(maxsize=128)
+def load_knowledge(owner_user_id: int | None = None) -> tuple[dict, ...]:
+    """读取公共语料和当前用户的上传文档，并切分成知识片段。"""
     if not KNOWLEDGE_DIR.exists():
         raise FileNotFoundError(
             f"知识库目录不存在：{KNOWLEDGE_DIR}"
@@ -54,7 +72,12 @@ def load_knowledge() -> tuple[dict, ...]:
 
     chunks = []
 
-    for file_path in sorted(KNOWLEDGE_DIR.glob("*.txt")):
+    file_paths = list(KNOWLEDGE_DIR.glob("*.txt"))
+    if owner_user_id is not None:
+        file_paths.extend(
+            (KNOWLEDGE_DIR / "documents" / str(owner_user_id)).glob("*.txt")
+        )
+    for file_path in sorted(file_paths):
         content = file_path.read_text(encoding="utf-8")
 
         # 将标题和正文保留在同一段中，避免标题独立成为知识块
@@ -72,15 +95,24 @@ def load_knowledge() -> tuple[dict, ...]:
         for text_chunk in text_chunks:
             chunks.append({
                 "content": text_chunk,
-                "source": file_path.name,
+                "source": (
+                    file_path.stem.split("--", 1)[1]
+                    if file_path.parent.parent.name == "documents" and "--" in file_path.stem
+                    else file_path.name
+                ),
             })
 
     return tuple(chunks)
 
-@lru_cache(maxsize=1)
-def get_knowledge_vectors():
+# 获取知识片段的缓存向量。
+@lru_cache(maxsize=128)
+def get_knowledge_vectors(owner_user_id: int | None = None):
     """计算并缓存知识片段的向量。"""
-    knowledge = load_knowledge()
+    knowledge = (
+        load_knowledge()
+        if owner_user_id is None
+        else load_knowledge(owner_user_id)
+    )
 
     if not knowledge:
         return None
@@ -93,6 +125,7 @@ def get_knowledge_vectors():
     )
 
 
+# 将英文和中文文本转换为关键词片段。
 def _tokenize_for_keyword(text: str) -> list[str]:
     """保留英文词，并将连续中文拆成重叠的二元/三元字片段。"""
     tokens = []
@@ -117,10 +150,15 @@ def _tokenize_for_keyword(text: str) -> list[str]:
     return tokens
 
 
-@lru_cache(maxsize=1)
-def _get_keyword_index():
+# 构建并缓存关键词 BM25 索引。
+@lru_cache(maxsize=128)
+def _get_keyword_index(owner_user_id: int | None = None):
     """缓存 BM25 所需的分词结果、文档频率和平均文档长度。"""
-    knowledge = load_knowledge()
+    knowledge = (
+        load_knowledge()
+        if owner_user_id is None
+        else load_knowledge(owner_user_id)
+    )
     document_terms = tuple(
         Counter(_tokenize_for_keyword(item["content"]))
         for item in knowledge
@@ -139,6 +177,7 @@ def _get_keyword_index():
     return document_terms, document_frequency, average_length
 
 
+# 提取查询中的有效关键词并移除通用词。
 def _keyword_query_terms(query: str) -> set[str]:
     """移除通用词和疑问词，避免它们单独触发关键词召回。"""
     return {
@@ -148,9 +187,14 @@ def _keyword_query_terms(query: str) -> set[str]:
     }
 
 
-def _keyword_coverages(query: str) -> list[float]:
+# 计算每个知识片段对查询关键词的覆盖率。
+def _keyword_coverages(query: str, owner_user_id: int | None = None) -> list[float]:
     """计算每个片段覆盖了多少个有效查询词。"""
-    document_terms, _, _ = _get_keyword_index()
+    document_terms, _, _ = (
+        _get_keyword_index()
+        if owner_user_id is None
+        else _get_keyword_index(owner_user_id)
+    )
     query_terms = _keyword_query_terms(query)
 
     if not query_terms:
@@ -162,9 +206,14 @@ def _keyword_coverages(query: str) -> list[float]:
     ]
 
 
-def _bm25_scores(query: str) -> list[float]:
+# 计算查询词对知识片段的 BM25 分数。
+def _bm25_scores(query: str, owner_user_id: int | None = None) -> list[float]:
     """为每个知识片段计算 BM25 关键词相关度。"""
-    document_terms, document_frequency, average_length = _get_keyword_index()
+    document_terms, document_frequency, average_length = (
+        _get_keyword_index()
+        if owner_user_id is None
+        else _get_keyword_index(owner_user_id)
+    )
 
     if not document_terms or average_length == 0:
         return []
@@ -202,10 +251,16 @@ def _bm25_scores(query: str) -> list[float]:
     return scores
 
 
+# 融合向量分和关键词分检索相关知识证据。
 def knowledge_search(query: str) -> list[dict]:
     """融合向量相似度和 BM25 关键词分，返回排序后的证据片段。"""
-    knowledge = load_knowledge()
-    knowledge_vectors = get_knowledge_vectors()
+    owner_user_id = _CURRENT_KNOWLEDGE_OWNER.get()
+    if owner_user_id is None:
+        knowledge = load_knowledge()
+        knowledge_vectors = get_knowledge_vectors()
+    else:
+        knowledge = load_knowledge(owner_user_id)
+        knowledge_vectors = get_knowledge_vectors(owner_user_id)
 
     if not knowledge or knowledge_vectors is None:
         return []
@@ -222,8 +277,8 @@ def knowledge_search(query: str) -> list[dict]:
         knowledge_vectors,
     )[0]
 
-    keyword_scores = _bm25_scores(query)
-    keyword_coverages = _keyword_coverages(query)
+    keyword_scores = _bm25_scores(query, owner_user_id)
+    keyword_coverages = _keyword_coverages(query, owner_user_id)
     qualified_keyword_indices = {
         index
         for index, coverage in enumerate(keyword_coverages)
@@ -284,6 +339,7 @@ def knowledge_search(query: str) -> list[dict]:
     return results
 
 
+# 将检索证据和引用来源整理为 JSON 文本。
 def knowledge_search_context(query: str) -> str:
     """以结构化 JSON 返回模型证据和 API 可展示的引用。"""
     results = knowledge_search(query)
@@ -329,3 +385,11 @@ def knowledge_search_context(query: str) -> str:
         },
         ensure_ascii=False,
     )
+
+
+# 清除文档变更后需重建的检索缓存。
+def refresh_knowledge_cache() -> None:
+    """清理文档变更后需要重建的知识文本、向量和关键词缓存。"""
+    load_knowledge.cache_clear()
+    get_knowledge_vectors.cache_clear()
+    _get_keyword_index.cache_clear()

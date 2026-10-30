@@ -3,6 +3,7 @@
 import json
 
 
+# 从最近一轮会话工具结果中提取引用来源。
 def latest_turn_citations(session_manager, session_id: str) -> list[dict]:
     """从最近一轮知识检索工具结果提取可展示引用。"""
     messages = session_manager.get_messages(session_id)
@@ -39,20 +40,25 @@ def latest_turn_citations(session_manager, session_id: str) -> list[dict]:
     return citations
 
 
+# 将 Agent 生成过程转换为 SSE 流式事件。
 def chat_event_stream(
     agent,
     logger,
     message: str,
     session_id: str,
     internal_session_id: str,
+    owner_user_id: int | None = None,
 ):
     """将 Agent 输出转换为 SSE 增量、完成或错误事件。"""
     try:
-        for content in agent.run_stream(message, session_id=internal_session_id):
-            yield "data: " + json.dumps(
-                {"type": "delta", "content": content},
-                ensure_ascii=False,
-            ) + "\n\n"
+        from tools.knowledge import knowledge_owner_scope
+
+        with knowledge_owner_scope(owner_user_id):
+            for content in agent.run_stream(message, session_id=internal_session_id):
+                yield "data: " + json.dumps(
+                    {"type": "delta", "content": content},
+                    ensure_ascii=False,
+                ) + "\n\n"
 
         yield "data: " + json.dumps(
             {

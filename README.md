@@ -10,6 +10,7 @@
 - **RAG 混合检索**：使用 Sentence Transformers 做向量语义召回，并使用 BM25 做关键词召回；英文按词匹配，中文按重叠字片段匹配，再融合排序。
 - **可解释检索分数**：返回知识片段、来源文件、向量分、关键词分和综合分，便于检查召回原因。
 - **多轮对话**：维护会话消息历史，并将会话记录保存到 MySQL。
+- **知识库文档管理**：支持 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 上传，记录上传用户及上传/修改时间，并支持查询、替换、改名和删除。
 - **RESTful API**：基于 FastAPI 提供聊天、会话创建、历史查询、清空和删除接口。
 - **统一异常响应**：处理 HTTP 异常、请求参数校验异常及未预期异常。
 - **请求日志**：记录 API 请求路径、状态码与处理耗时。
@@ -24,25 +25,32 @@
 | Agent 核心     | Tool Calling、工具注册与参数校验                   |
 | RAG            | Sentence Transformers、余弦相似度、BM25 关键词检索 |
 | 参数校验       | Pydantic                                           |
+| 文档解析       | pypdf、python-docx、openpyxl、python-pptx          |
 | 数据库         | MySQL、SQLAlchemy ORM、PyMySQL 驱动                |
 | 测试           | pytest                                             |
 
 ## 项目结构
 
+HTTP 路由集中在 `api/routes/`；`app/` 负责 FastAPI 应用组装、启动配置和全局异常处理；复杂业务流程放入 `services/`；认证、Agent、数据库模型和检索等领域模块继续由各自目录管理。
+
 ```text
 dev-agent/
 ├── agent/
 │   ├── agent.py             # Agent 决策循环与工具调用
+│   ├── runtime.py           # 大模型客户端与共享 Agent 实例
 │   └── session.py           # MySQL 会话持久化
 ├── api/
 │   ├── api_schemas.py       # 请求与响应模型
 │   ├── api_response.py      # 统一响应格式
 │   ├── chat_helpers.py      # 聊天接口辅助逻辑
-│   └── session_helpers.py   # 会话接口辅助逻辑
+│   ├── session_helpers.py   # 会话接口辅助逻辑
+│   └── routes/              # HTTP 路由定义
+│       ├── __init__.py      # 路由包
+│       ├── users.py         # 注册、登录、刷新和登出路由
+│       ├── sessions.py      # 聊天和会话管理路由
+│       └── documents.py     # 知识库文档管理路由
 ├── app/
-│   ├── main.py              # FastAPI 应用入口与路由注册
-│   ├── users.py             # 注册、登录与认证相关路由
-│   ├── sessions.py          # 聊天和会话管理路由
+│   ├── main.py              # FastAPI 应用组装与路由注册
 │   └── errors.py            # 全局异常处理
 ├── auth/
 │   ├── jwt_auth.py          # JWT 认证与令牌验证
@@ -51,7 +59,11 @@ dev-agent/
 │   └── schemas.py           # 认证请求模型
 ├── modules/
 │   ├── database.py          # SQLAlchemy engine、Session 与数据库初始化
-│   └── models.py            # 用户、JWT 登记和聊天会话 ORM 模型
+│   ├── document_parser.py   # 多格式文档统一解析为纯文本
+│   └── models.py            # 用户、JWT、聊天会话和知识库文档 ORM 模型
+├── services/
+│   ├── __init__.py          # 业务服务包
+│   └── documents.py         # 文档解析、存储及数据库业务逻辑
 ├── tools/
 │   ├── registry.py          # 工具注册
 │   ├── schema.py            # 工具参数模型与 Schema 生成
@@ -67,7 +79,7 @@ dev-agent/
 ├── test/                    # API、Agent、会话、检索和切分测试
 ├── demo_data/knowledge_base/ # 随仓库提供的虚构演示语料
 ├── app.py                   # 兼容入口；推荐使用 app.main:app
-├── main.py                  # Agent 初始化入口
+├── main.py                  # 兼容入口，重新导出 Agent 客户端和实例
 ├── .mcp.json                # 本地 MCP 客户端配置示例
 ├── requirements.txt         # Python 依赖
 └── README.md
@@ -105,7 +117,7 @@ python -m pip install -r requirements.txt
 
 ### 4. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和随机 `JWT_SECRET_KEY`。账号通过前端注册或 `POST /auth/register` 创建，用户名和 PBKDF2 密码哈希保存在 MySQL 的 `auth_users` 表；JWT 会话登记保存在 `auth_tokens` 表，有效期固定为 30 分钟。首次注册/登录时应用会自动创建认证表。首次访问会话功能时，`sessions.owner_user_id` 会关联到 `auth_users.id`，并按旧会话的用户哈希前缀回填归属；未匹配到用户的旧会话保留为未归属记录。前端侧栏可查看并打开当前账号的历史会话。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
+复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和随机 `JWT_SECRET_KEY`。账号通过前端注册或 `POST /auth/register` 创建，用户名和 PBKDF2 密码哈希保存在 MySQL 的 `auth_users` 表；JWT 会话登记保存在 `auth_tokens` 表，有效期固定为 30 分钟。首次使用认证或文档功能时，应用会自动创建认证表和 knowledge_documents 文档元数据表。首次访问会话功能时，`sessions.owner_user_id` 会关联到 `auth_users.id`，并按旧会话的用户哈希前缀回填归属；未匹配到用户的旧会话保留为未归属记录。前端侧栏可查看并打开当前账号的历史会话。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
 
 PowerShell：
 
@@ -124,7 +136,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 生产环境设置 `APP_ENV=production`；应用启动时会拒绝缺失、短于 48 字符或已知占位的 `JWT_SECRET_KEY`，并要求设置 `AUTH_REGISTRATION_CODE`。注册页要求输入该邀请码。登录失败会按账号与来源组合在数据库中限流；认证成功/失败、注册、刷新和退出事件写入 `auth_audit_events`，日志不记录密码、JWT 原文或原始 IP。Access token 有效 30 分钟，Refresh token 有效 7 天且每次刷新后旧 token 对及关联 access token 会被撤销。前端将 token 存在当前标签页的 `sessionStorage`，受保护请求遇到过期 access token 时自动尝试轮换。
 
-确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`auth_users` 和 `auth_tokens` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`auth_users`、`auth_tokens` 和 `knowledge_documents` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
 
 ### 5. 演示语料与模型
 
@@ -240,6 +252,19 @@ npm run dev
 ### 7. 删除会话
 
 `DELETE /sessions/demo-session`
+
+### 8. 知识库文档管理
+
+文档接口需要登录 JWT，并且每个用户只能查看、替换、改名或删除自己上传的文档。单文件上限为 20 MB。可上传 PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、JSON、HTML/HTM；服务会把文档统一解析成文本供现有文本切分和混合检索使用。原文件和解析文本保存在 `KNOWLEDGE_DIR` 下，元数据保存在 MySQL `knowledge_documents` 表。
+
+- `POST /knowledge/documents`：`multipart/form-data` 字段 `file`，上传并加入检索知识库。
+- `GET /knowledge/documents`：查询当前用户文档列表。
+- `GET /knowledge/documents/{document_id}`：查询文档元数据。
+- `PUT /knowledge/documents/{document_id}`：用新的上传文件替换文档内容。
+- `PATCH /knowledge/documents/{document_id}`：JSON 请求体 `{"name":"新名称.pdf"}`，修改文档名称。
+- `DELETE /knowledge/documents/{document_id}`：删除文档及其原文件、解析文本。
+
+`knowledge_documents` 记录文档 ID、名称、格式、用户 ID、上传时间和修改时间。上传或变更文档后会清理进程内检索缓存，后续检索重新加载知识内容。公共演示语料对所有用户可检索；上传文档仅加入上传者的检索范围，管理接口也按上传用户隔离。
 
 ## Agent 工作流程
 

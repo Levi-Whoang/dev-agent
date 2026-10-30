@@ -21,29 +21,33 @@ from api.session_helpers import (
 )
 from auth.jwt_auth import get_current_user
 from logs.logging_config import logger
-from main import agent
+from agent.runtime import agent
 
 router = APIRouter(tags=["会话"])
 
 
+# 创建或读取当前用户会话并返回流式聊天响应。
 @router.post("/chat")
 def chat(request: ChatRequest, current_user: str = Depends(get_current_user)):
+    owner_user_id = database_user_id(current_user)
     session_id, internal_session_id = resolve_chat_session(
         agent.session_manager,
         current_user,
         request.session_id,
-        database_user_id(current_user),
+        owner_user_id,
         request.message,
     )
     return StreamingResponse(
         chat_event_stream(
-            agent, logger, request.message, session_id, internal_session_id
+            agent, logger, request.message, session_id, internal_session_id,
+            owner_user_id,
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
+# 清空当前用户指定会话中的消息。
 @router.post("/sessions/{session_id}/clear", response_model=APIResponse)
 def clear_session(
     session_id: str,
@@ -61,6 +65,7 @@ def clear_session(
     )
 
 
+# 为当前登录用户创建新会话。
 @router.post("/sessions", response_model=APIResponse)
 def create_session(
     request: CreateSessionRequest,
@@ -81,6 +86,7 @@ def create_session(
     )
 
 
+# 列出当前登录用户拥有的会话。
 @router.get("/sessions", response_model=APIResponse)
 def list_sessions(current_user: str = Depends(get_current_user)):
     prefix = session_prefix(current_user)
@@ -97,6 +103,7 @@ def list_sessions(current_user: str = Depends(get_current_user)):
     return success_response(data=sessions)
 
 
+# 读取当前用户指定会话的消息历史。
 @router.get("/sessions/{session_id}/messages", response_model=APIResponse)
 def get_session_messages(
     session_id: str,
@@ -111,6 +118,7 @@ def get_session_messages(
     )
 
 
+# 修改当前用户指定会话的标题。
 @router.patch("/sessions/{session_id}/title", response_model=APIResponse)
 def rename_session(
     session_id: str,
@@ -131,6 +139,7 @@ def rename_session(
     )
 
 
+# 删除当前用户指定的会话及其历史。
 @router.delete("/sessions/{session_id}", response_model=APIResponse)
 def delete_session(
     session_id: str,

@@ -1,0 +1,181 @@
+项目文件与文件夹功能一览
+更新时间：2026-10-30 11:36 +08:00
+说明：按当前工作区整理。自动生成的虚拟环境、缓存和 Git 内部文件仅说明目录用途；本地密钥、数据库及工具个人配置不读取具体内容。
+
+一、根目录文件
+- .env：本机运行配置，通常包含数据库、模型 API 和认证密钥；仅供本地使用，不应提交。
+- .env.example：环境变量模板，展示启动所需配置项和示例值。
+- .gitignore：指定 Git 忽略的密钥文件、数据库、缓存、虚拟环境及前端构建产物。
+- .mcp.json：MCP 客户端配置示例；未接入 MCP 时不参与现有聊天流程。
+- app.py：兼容启动入口，保留旧的应用导入方式。
+- dev_agent.db：本地 SQLite 数据库文件；运行数据文件，不是源码，内容不在本清单中读取。
+- main.py：兼容旧导入方式，重新导出 agent.runtime 中的 Agent 和客户端。
+- notes.md：项目开发笔记和零散记录。
+- README.md：项目介绍、技术栈、安装、配置、启动、API 和演示说明。
+- requirements.txt：Python 项目依赖及版本列表。
+
+二、agent/：Agent 与会话持久化
+- __init__.py：将目录标记为 Python 包。
+- agent.py：Agent 主循环；调用大模型、处理工具调用，并提供普通和流式运行逻辑。
+- runtime.py：加载模型 API 配置，创建共享 OpenAI 客户端和 Agent 实例。
+- session.py：会话消息及会话元数据的数据库读写、创建、查询、改名、清空和删除。
+
+三、api/：API 模型、辅助逻辑和 HTTP 路由
+- api_response.py：统一成功和错误响应的数据格式。
+- api_schemas.py：聊天、会话和文档请求/响应模型及字段校验。
+- chat_helpers.py：聊天流式 SSE 事件封装及最近一轮引用提取。
+- session_helpers.py：用户会话命名空间、用户数据库 ID 查询和聊天会话初始化辅助逻辑。
+- routes/：按业务域集中定义 FastAPI 路由。
+  - __init__.py：将 routes 目录标记为 Python 包。
+  - users.py：注册、登录、JWT 刷新和退出登录 HTTP 路由。
+  - sessions.py：流式聊天以及会话增删改查 HTTP 路由。
+  - documents.py：知识库文档管理 HTTP 路由和请求校验。
+
+四、app/：FastAPI 应用装配和全局处理
+- __init__.py：将目录标记为 Python 包并导出 FastAPI 应用。
+- main.py：创建 FastAPI 应用、检查启动配置并注册路由。
+- errors.py：请求日志中间件及 HTTP、参数校验和未预期异常的统一处理。
+
+五、services/：业务服务逻辑
+- __init__.py：将目录标记为 Python 包。
+- documents.py：文档解析、原文件/纯文本存储、文档元数据 ORM CRUD 和检索缓存刷新。
+
+六、auth/：认证与用户凭据
+- __init__.py：将目录标记为 Python 包。
+- jwt_auth.py：注册校验、登录限流、JWT 签发/验证/刷新/撤销和认证审计编排。
+- passwords.py：PBKDF2 密码哈希生成及验证。
+- repository.py：用户、JWT、登录失败计数和认证审计记录的数据库访问。
+- schemas.py：注册、登录、令牌刷新及认证响应的数据模型。
+
+七、modules/：数据库与共享数据结构
+- __init__.py：将目录标记为 Python 包。
+- database.py：SQLAlchemy 引擎、Session 工厂、表初始化及事务上下文管理。
+- document_parser.py：统一解析 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 为纯文本。
+- models.py：SQLAlchemy ORM 模型，包含用户、令牌、会话、认证审计和知识库文档等表结构。
+
+八、tools/：Agent 可调用工具和检索
+- __init__.py：将目录标记为 Python 包。
+- calculator.py：执行加减乘除计算。
+- knowledge.py：加载语料、按用户限制上传文档范围，执行向量与 BM25 混合检索并构造引用证据。
+- order.py：订单查询工具示例。
+- registry.py：汇总并注册 Agent 可用工具。
+- schema.py：从工具函数生成大模型工具调用参数 Schema。
+- text_splitter.py：按自然边界切分文本并控制片段长度与重叠。
+- weather.py：天气查询工具示例。
+
+九、frontend/：React + TypeScript 前端
+- .env.example：前端 API 地址等配置示例。
+- index.html：Vite 页面入口 HTML。
+- package.json：前端依赖及开发、构建、预览命令。
+- package-lock.json：锁定前端依赖版本。
+- README.md：前端安装、启动、代理和构建说明。
+- tsconfig.json：TypeScript 项目引用配置。
+- tsconfig.app.json：浏览器端 TypeScript 编译设置。
+- tsconfig.node.json：Vite 等 Node 配置文件的 TypeScript 编译设置。
+- vite.config.ts：Vite 插件和开发服务器 API 代理配置。
+- src/：React 应用源代码目录。
+  - api.ts：封装登录、注册、会话、知识库文档、JWT 自动刷新和 SSE 聊天请求。
+  - App.tsx：登录/注册界面、聊天页面、历史会话和知识库文档管理交互。
+  - main.tsx：创建 React 根节点并加载应用和样式。
+  - styles.css：页面布局、聊天、侧栏、文档面板和响应式样式。
+  - vite-env.d.ts：Vite 环境变量和客户端类型声明。
+
+十、demo_data/knowledge_base/：随项目提供的虚构演示语料
+- demo_agent_failures.txt：Agent 工具执行失败与处理方式。
+- demo_agent_history.txt：多轮对话历史管理。
+- demo_agent_loop.txt：Agent 决策和工具调用循环。
+- demo_agent_schema.txt：工具参数 Schema。
+- demo_agent_tools.txt：工具注册与调用机制。
+- demo_api_rest.txt：REST API 基础概念。
+- demo_company_departments.txt：虚构公司部门信息。
+- demo_company_faq.txt：虚构公司常见问题。
+- demo_company_overview.txt：虚构公司概况。
+- demo_company_security.txt：虚构公司安全规则。
+- demo_company_workflow.txt：虚构公司工作流程。
+- demo_database_mysql.txt：MySQL 数据库基础。
+- demo_database_transactions.txt：数据库事务。
+- demo_deployment_config.txt：应用部署与配置。
+- demo_fastapi_errors.txt：FastAPI 异常处理。
+- demo_fastapi_middleware.txt：FastAPI 中间件。
+- demo_fastapi_routes.txt：FastAPI 路由。
+- demo_fastapi_validation.txt：FastAPI 请求校验。
+- demo_observability_logs.txt：日志与可观测性。
+- demo_python_async.txt：Python 异步编程。
+- demo_python_exceptions.txt：Python 异常处理。
+- demo_python_modules.txt：Python 模块与包。
+- demo_python_testing.txt：Python 测试实践。
+- demo_python_types.txt：Python 类型标注。
+- demo_rag_chunking.txt：RAG 文本切分。
+- demo_rag_embeddings.txt：文本向量与嵌入。
+- demo_rag_evaluation.txt：RAG 检索评估。
+- demo_rag_pipeline.txt：RAG 处理链路。
+- demo_rag_refusal.txt：无答案拒答策略。
+- demo_rag_similarity.txt：相似度检索概念。
+- demo_recruitment_agent.txt：虚构招聘 Agent 场景。
+- demo_recruitment_backend.txt：虚构招聘后端说明。
+- demo_recruitment_evaluation.txt：招聘问答评估样例。
+- demo_recruitment_interview.txt：虚构面试流程资料。
+- demo_recruitment_resume.txt：虚构简历筛选资料。
+- demo_testing_metrics.txt：测试指标说明。
+- faq.txt：演示常见问题语料。
+
+十一、knowledge_base/：当前配置的本地知识库目录
+- demo_agent_failures.txt、demo_agent_history.txt、demo_agent_loop.txt、demo_agent_schema.txt、demo_agent_tools.txt：Agent 失败处理、会话历史、循环、参数 Schema 与工具说明语料。
+- demo_api_rest.txt：REST API 语料。
+- demo_company_departments.txt、demo_company_faq.txt、demo_company_overview.txt、demo_company_security.txt、demo_company_workflow.txt：虚构公司组织、问答、概况、安全和工作流程语料。
+- demo_database_mysql.txt、demo_database_transactions.txt：MySQL 和事务语料。
+- demo_deployment_config.txt：部署配置语料。
+- demo_fastapi_errors.txt、demo_fastapi_middleware.txt、demo_fastapi_routes.txt、demo_fastapi_validation.txt：FastAPI 异常、中间件、路由和校验语料。
+- demo_observability_logs.txt：日志观测语料。
+- demo_python_async.txt、demo_python_exceptions.txt、demo_python_modules.txt、demo_python_testing.txt、demo_python_types.txt：Python 异步、异常、模块、测试和类型语料。
+- demo_rag_chunking.txt、demo_rag_embeddings.txt、demo_rag_evaluation.txt、demo_rag_pipeline.txt、demo_rag_refusal.txt、demo_rag_similarity.txt：RAG 切分、向量、评估、流程、拒答和相似度语料。
+- demo_recruitment_agent.txt、demo_recruitment_backend.txt、demo_recruitment_evaluation.txt、demo_recruitment_interview.txt、demo_recruitment_resume.txt：虚构招聘场景语料。
+- demo_testing_metrics.txt：测试指标语料。
+
+十二、test/：自动化测试和 RAG 评估
+- __init__.py：将目录标记为 Python 包。
+- test_agent.py：Agent 工具调用、错误处理、迭代边界和流式输出测试。
+- test_api.py：路由行为及 SSE 响应测试。
+- test_api_http.py：使用 ASGI 客户端和替身依赖检查 HTTP/API、认证及会话隔离。
+- test_knowledge.py：知识加载、向量/关键词检索、引用构造和无答案行为测试。
+- test_rag_agent.py：RAG 工具接入 Agent 的集成行为测试。
+- test_retrieval_report.py：评估集版本、指纹、指标与失败报告结构测试。
+- test_session.py：会话数据库持久化、所有权和生命周期测试。
+- test_text_splitter.py：文本切分边界、重叠及异常参数测试。
+- retrieval_dataset.py：带版本信息的检索评估问题集。
+- evaluate_retrieval.py：运行检索评估并生成指标和失败案例报告。
+- evaluate_rag_answers.py：评估 RAG 回答流程的脚本。
+- evaluation_results/：保存历史检索评估结果。
+  - rag_retrieval_20261021_201534_546464_+0800.json：一次带时间戳的检索评估结果。
+  - rag_retrieval_20261021_201635_731902_+0800.json：另一次带时间戳的检索评估结果。
+
+十三、scripts/：演示与语料辅助脚本
+- smoke_demo.py：通过实际 HTTP 服务检查登录、聊天、模型、检索和数据库演示链路。
+- generate_knowladge_base.py：生成或整理知识库语料的辅助脚本（文件名沿用现状）。
+
+十四、logs/：日志配置及本地运行产物
+- __init__.py：将目录标记为 Python 包。
+- logging_config.py：配置项目日志记录器和日志格式。
+- e2e_react.py：本地端到端 ReAct 流程演示/检查脚本。
+- eval_retrieval.json：本地检索评估运行结果。
+- eval_run.txt：检索评估运行记录。
+- react_run.txt：ReAct 演示运行记录。
+
+十五、TXT/：项目分析与协作记录
+- 本次对话总结.txt：按时间记录用户需求、讨论结论和每轮完成情况。
+- 未来代码修改说明.txt：记录代码改动前后行为、涉及文件和验证结果。
+- 代码分析NO1.txt、代码分析NO2.txt：项目代码结构与功能分析材料。
+- 项目代码分析与简历评估.txt：项目能力、技术栈和简历呈现分析。
+- 功能一览.txt：本文件，索引项目目录和文件职责；后续新增文件时补充对应条目。
+
+十六、工具、IDE 与运行环境目录
+- .claude/settings.local.json：本地 Claude/开发工具设置；个人配置，不纳入项目运行逻辑。
+- .workbuddy/memory/：本地协作记忆目录；其中 MEMORY.md 和按日期命名的 Markdown 文件记录工具侧记忆，不是应用运行模块。
+- .git/：Git 版本控制元数据，不是项目源代码。
+- .idea/：JetBrains IDE 项目配置目录。
+- .venv/、.venv-demo/：Python 虚拟环境目录，包含安装的解释器和依赖，不逐项列举。
+- __pycache__/：Python 自动生成的字节码缓存目录。
+- .pytest_cache/：pytest 自动生成的测试缓存目录。
+- frontend/node_modules/、frontend/dist/：前端依赖和构建产物目录（当前清单不逐项列举；通常由 npm install/build 生成）。
+
+后续维护规则：新增项目文件时，在本文件相应目录下补一条“文件名：用途”；新增目录时先写目录职责，再列出其中新增文件。删除或迁移文件时同步更新对应条目。不要在本清单中写入密钥、口令或数据库内容。

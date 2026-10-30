@@ -24,6 +24,7 @@ from auth.schemas import (
 router = APIRouter(prefix="/auth", tags=["用户"])
 
 
+# 校验登录凭据并向客户端签发 JWT。
 @router.post("/token", response_model=APIResponse)
 def issue_token(request: TokenRequest, http_request: Request):
     """校验数据库账号并签发 30 分钟 JWT。"""
@@ -40,6 +41,7 @@ def issue_token(request: TokenRequest, http_request: Request):
     )
 
 
+# 创建用户账号并返回注册结果。
 @router.post("/register", response_model=APIResponse, status_code=201)
 def register(request: RegisterRequest, http_request: Request):
     """在 MySQL 用户表中创建新账号并保存密码哈希。"""
@@ -53,6 +55,7 @@ def register(request: RegisterRequest, http_request: Request):
     )
 
 
+# 校验刷新令牌并轮换签发新的令牌对。
 @router.post("/refresh", response_model=APIResponse)
 def refresh(request: RefreshRequest, http_request: Request):
     source = http_request.client.host if http_request.client else "unknown"
@@ -60,6 +63,7 @@ def refresh(request: RefreshRequest, http_request: Request):
     return success_response(data=TokenData(**token_data).model_dump())
 
 
+# 撤销当前认证用户的访问令牌。
 @router.post("/logout", response_model=APIResponse)
 def logout(
     request: Request,

@@ -163,16 +163,19 @@ def asgi_app(monkeypatch):
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret-key-with-more-than-32-characters")
     monkeypatch.setenv("AUTH_REGISTRATION_CODE", "test-registration-code")
     fake_agent = ASGIFakeAgent()
-    fake_main = ModuleType("main")
-    fake_main.agent = fake_agent
+    fake_runtime = ModuleType("agent.runtime")
+    fake_runtime.agent = fake_agent
     fake_logs = ModuleType("logs")
     fake_logs.__path__ = []
     fake_logging = ModuleType("logs.logging_config")
     fake_logging.logger = MagicMock()
     monkeypatch.setitem(sys.modules, "logs", fake_logs)
     monkeypatch.setitem(sys.modules, "logs.logging_config", fake_logging)
-    monkeypatch.setitem(sys.modules, "main", fake_main)
-    for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+    monkeypatch.setitem(sys.modules, "agent.runtime", fake_runtime)
+    for module_name in (
+        "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+        "api.routes.users", "api.routes.documents", "app.errors",
+    ):
         sys.modules.pop(module_name, None)
     app_module = importlib.import_module("app")
     global ALICE_HEADERS, BOB_HEADERS
@@ -188,7 +191,10 @@ def asgi_app(monkeypatch):
     try:
         yield app_module.app, fake_agent
     finally:
-        for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+        for module_name in (
+            "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+            "api.routes.users", "api.routes.documents", "app.errors",
+        ):
             sys.modules.pop(module_name, None)
 
 

@@ -43,6 +43,7 @@ class AuthUser(Base):
         back_populates="user", cascade="all, delete-orphan"
     )
     sessions: Mapped[list["ChatSession"]] = relationship(back_populates="owner")
+    documents: Mapped[list["KnowledgeDocument"]] = relationship(back_populates="owner")
 
 
 class AuthToken(Base):
@@ -117,3 +118,34 @@ class ChatSession(Base):
     )
 
     owner: Mapped[AuthUser | None] = relationship(back_populates="sessions")
+
+
+class KnowledgeDocument(Base):
+    """知识库上传文件及其提取文本的元数据。"""
+
+    __tablename__ = "knowledge_documents"
+    __table_args__ = (
+        Index("idx_knowledge_documents_owner_created", "owner_user_id", "created_at"),
+    )
+
+    document_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_user_id: Mapped[int] = mapped_column(
+        USER_ID_TYPE,
+        ForeignKey("auth_users.id", name="fk_knowledge_documents_owner", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_format: Mapped[str] = mapped_column(String(20), nullable=False)
+    original_path: Mapped[str] = mapped_column(String(1000), nullable=False)
+    extracted_path: Mapped[str] = mapped_column(String(1000), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.current_timestamp()
+    )
+    modified_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+    owner: Mapped[AuthUser] = relationship(back_populates="documents")

@@ -31,3 +31,9 @@ class CreateSessionRequest(BaseModel):
 
 class SessionTitleRequest(BaseModel):
     title: str = Field(min_length=1, max_length=120)
+
+
+class RenameDocumentRequest(BaseModel):
+    """知识库文档改名请求。"""
+
+    name: str = Field(min_length=1, max_length=255)

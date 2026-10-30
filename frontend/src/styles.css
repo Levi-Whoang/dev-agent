@@ -53,6 +53,21 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .rename-form button { width: 23px; flex: 0 0 23px; border: 0; border-radius: 5px; color: #426258; background: #edf4f0; }
 .history-empty, .history-error { padding: 8px 10px; color: #9aa6a2; font-size: 10px; }
 .history-error { color: #a54d48; }
+.documents-panel { flex: 0 0 auto; max-height: 240px; padding-top: 8px; border-top: 1px solid #e1e8e4; }
+.documents-heading { display: flex; align-items: center; justify-content: space-between; }
+.documents-heading .sidebar-label { margin: 9px 10px; }
+.document-upload-button { margin-right: 5px; padding: 5px 8px; border: 1px solid #d5e4dd; border-radius: 7px; color: #24715e; background: #fff; font-size: 10px; }
+.documents-list { max-height: 132px; overflow-y: auto; }
+.document-row { display: flex; align-items: center; gap: 2px; padding: 3px 5px; border-radius: 6px; }
+.document-row:hover { background: #e4efea; }
+.document-label { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; overflow: hidden; }
+.document-name { overflow: hidden; color: #53645e; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.document-meta { overflow: hidden; color: #9aa6a2; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.document-row button { width: 22px; height: 23px; flex: 0 0 22px; border: 0; border-radius: 5px; color: #82918b; background: transparent; font-size: 12px; }
+.document-row button:hover { color: #216c5b; background: #d9e9e2; }
+.documents-empty, .documents-hint { padding: 5px 10px; color: #9aa6a2; font-size: 9px; line-height: 1.5; }
+.documents-error { padding: 4px 8px; color: #a54d48; font-size: 10px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); border: 0; }
 .session-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #39a88d; }
 .sidebar-bottom { margin-top: auto; }
 .connection-state { display: flex; align-items: center; gap: 8px; padding: 11px 10px 17px; color: #7c8e87; font-size: 11px; }

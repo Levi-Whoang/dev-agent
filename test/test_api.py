@@ -79,24 +79,30 @@ def api_module(monkeypatch):
 
     monkeypatch.setattr(jwt_auth, "auth_repository", MemoryAuthRepository())
     fake_agent = FakeAgent()
-    fake_main = ModuleType("main")
-    fake_main.agent = fake_agent
+    fake_runtime = ModuleType("agent.runtime")
+    fake_runtime.agent = fake_agent
     fake_logs = ModuleType("logs")
     fake_logs.__path__ = []
     fake_logging = ModuleType("logs.logging_config")
     fake_logging.logger = MagicMock()
     monkeypatch.setitem(sys.modules, "logs", fake_logs)
     monkeypatch.setitem(sys.modules, "logs.logging_config", fake_logging)
-    monkeypatch.setitem(sys.modules, "main", fake_main)
+    monkeypatch.setitem(sys.modules, "agent.runtime", fake_runtime)
 
     # 防止导入应用时创建真实 OpenAI 客户端或写入日志。
-    for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+    for module_name in (
+        "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+        "api.routes.users", "api.routes.documents", "app.errors",
+    ):
         sys.modules.pop(module_name, None)
-    module = importlib.import_module("app.sessions")
+    module = importlib.import_module("api.routes.sessions")
     try:
         yield module, fake_agent, fake_logging.logger
     finally:
-        for module_name in ("app", "app.main", "app.sessions", "app.users", "app.errors"):
+        for module_name in (
+            "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+            "api.routes.users", "api.routes.documents", "app.errors",
+        ):
             sys.modules.pop(module_name, None)
 
 
