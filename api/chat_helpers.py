@@ -26,6 +26,9 @@ def latest_turn_citations(session_manager, session_id: str) -> list[dict]:
             continue
         try:
             result = json.loads(content)
+            # 兼容修复前已经保存的双重编码工具消息。
+            if isinstance(result, str):
+                result = json.loads(result)
         except (TypeError, json.JSONDecodeError):
             continue
         if not isinstance(result, dict):
@@ -53,12 +56,22 @@ def chat_event_stream(
     try:
         from tools.knowledge import knowledge_owner_scope
 
-        with knowledge_owner_scope(owner_user_id):
-            for content in agent.run_stream(message, session_id=internal_session_id):
+        iterator = agent.run_stream(message, session_id=internal_session_id)
+        exhausted = object()
+        try:
+            while True:
+                # 每次 next 都在同一次线程池调用中设置和重置上下文。
+                with knowledge_owner_scope(owner_user_id):
+                    content = next(iterator, exhausted)
+                if content is exhausted:
+                    break
                 yield "data: " + json.dumps(
                     {"type": "delta", "content": content},
                     ensure_ascii=False,
                 ) + "\n\n"
+        finally:
+            with knowledge_owner_scope(owner_user_id):
+                iterator.close()
 
         yield "data: " + json.dumps(
             {

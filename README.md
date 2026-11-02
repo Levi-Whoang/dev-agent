@@ -117,7 +117,7 @@ python -m pip install -r requirements.txt
 
 ### 4. 配置环境变量
 
-复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和随机 `JWT_SECRET_KEY`。账号通过前端注册或 `POST /auth/register` 创建，用户名和 PBKDF2 密码哈希保存在 MySQL 的 `auth_users` 表；JWT 会话登记保存在 `auth_tokens` 表，有效期固定为 30 分钟。首次使用认证或文档功能时，应用会自动创建认证表和 knowledge_documents 文档元数据表。首次访问会话功能时，`sessions.owner_user_id` 会关联到 `auth_users.id`，并按旧会话的用户哈希前缀回填归属；未匹配到用户的旧会话保留为未归属记录。前端侧栏可查看并打开当前账号的历史会话。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
+复制 `.env.example` 为 `.env`，填写 OpenAI 兼容模型 API、MySQL 配置和随机 `JWT_SECRET_KEY`。账号通过前端注册或 `POST /auth/register` 创建，用户名和 PBKDF2 密码哈希保存在 MySQL 的 `auth_users` 表；JWT 会话登记保存在 `auth_tokens` 表，有效期固定为 30 分钟。首次使用认证或文档功能时，应用会自动创建认证表和 knowledge_documents 文档元数据表。首次访问会话功能时，`sessions.owner_user_id` 会关联到 `auth_users.id`，不自动迁移旧数据或回填归属。前端侧栏可查看并打开当前账号的历史会话。示例配置将知识库指向随仓库提供的 `demo_data/knowledge_base/` 虚构演示语料；换成自己的语料时，修改 `KNOWLEDGE_DIR`。
 
 PowerShell：
 
@@ -205,12 +205,12 @@ npm run dev
 }
 ```
 
-`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件逐段包含 `content`，结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
+`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件包含 `content`（当前实现先缓冲完整的最终回答、过滤内部推理标签，再一次发送，并非逐字增量），结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
 
 注册新用户时调用 `POST /auth/register`：
 
 ```json
-{"username": "demo-user", "password": "至少 8 位的密码"}
+{"username": "demo-user", "password": "至少 8 位的密码", "verification_code": "与配置一致的邀请码"}
 ```
 
 注册成功后调用 `POST /auth/token` 提交同一用户名和密码登录，响应中的 `data.access_token` 是 JWT。令牌有效期为 30 分钟，并在 MySQL 的 `auth_tokens` 表登记令牌 ID 和过期时间；退出登录 `POST /auth/logout` 会撤销当前令牌。除 `GET /health`、注册和登录接口外，所有 API 路由都需要 `Authorization: Bearer <access_token>`。密码以 PBKDF2 哈希保存在 `auth_users` 表。会话仍按认证用户名隔离。省略 `session_id` 会为该次请求生成新会话，后续请求应带回响应中的 ID 以继续对话。会话列表只返回当前认证用户的会话。

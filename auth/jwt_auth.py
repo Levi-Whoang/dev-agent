@@ -205,7 +205,10 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
     if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=401, detail="需要 Bearer JWT 认证")
+        raise HTTPException(
+            status_code=401, detail="需要 Bearer JWT 认证",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     payload = _decode_token(credentials.credentials)
     username, jti = payload.get("sub"), payload.get("jti")
     if (

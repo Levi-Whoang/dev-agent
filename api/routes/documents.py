@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from starlette.concurrency import run_in_threadpool
 
 from api.api_response import success_response
 from api.api_schemas import RenameDocumentRequest
@@ -67,7 +68,8 @@ async def upload_document(
     """上传文档并委托服务层完成解析、存储和元数据创建。"""
     filename, content = await _read_upload(file)
     try:
-        result = create_document(_owner_id(current_user), filename, content)
+        owner_id = await run_in_threadpool(_owner_id, current_user)
+        result = await run_in_threadpool(create_document, owner_id, filename, content)
     except DocumentParseError as error:
         raise _parse_error(error) from error
     return success_response(result, "文档上传并加入知识库")
@@ -101,8 +103,9 @@ async def replace_document(
     """替换当前用户文档内容并返回更新后的元数据。"""
     filename, content = await _read_upload(file)
     try:
-        result = replace_document_service(
-            _owner_id(current_user), document_id, filename, content
+        owner_id = await run_in_threadpool(_owner_id, current_user)
+        result = await run_in_threadpool(
+            replace_document_service, owner_id, document_id, filename, content
         )
     except DocumentNotFoundError as error:
         raise _not_found(error) from error

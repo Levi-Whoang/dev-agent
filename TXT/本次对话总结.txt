@@ -180,3 +180,9 @@ TXT 时间戳规则与注释语言偏好（2026-10-21）
 
 [2026-10-30 11:40 +08:00] 澄清重构后 app/ 目录的职责
 用户确认 app/ 是否只封装统一异常接口。检查当前 app/ 包含 __init__.py、main.py、errors.py：main.py 组装 FastAPI 应用、启动时校验认证配置、注册 api/routes 路由并提供 /health；errors.py 安装统一异常响应和请求日志中间件；__init__.py 导出 app 对象。说明 app/ 现在不放具体业务路由，职责较轻但仍是应用组合入口。本轮未修改代码。
+
+
+[2026-10-31 00:41:00 +08:00] 根据代码分析 NO3 初步修复
+根据代码分析 NO3 完成首轮修复：SSE 用户作用域 set/reset 放在每次 next 内，避免上下文跨 yield；knowledge_search_context 返回字典，由 Agent 单次 JSON 编码，并兼容旧消息引用；前端共用 refresh Promise、保护后登录账号、正确处理延迟 401；历史引用按 user 边界恢复，相关分展示为相关度；文档上传/替换中的用户 ID 查询和同步服务转线程池；修正测试夹具移除模拟 Agent 的问题和过时断言，并补充真实工具到 ASGI/SSE 引用、成功/失败终态、用户作用域及线程池回归用例。补充未认证响应 Bearer challenge；修正 README 旧数据回填和逐字输出描述。前端新增 auth-refresh.test.mjs，功能一览同步更新。
+验证：前端 npm test 3 项通过，npm run build 通过；后端 30 项通过、3 项因临时环境缺少 sklearn 被排除；Python 编译和 git diff --check 通过。原 .venv 引用的 Python 3.12 不存在，使用系统 Python 3.10 + 临时安装的依赖运行离线后端测试（FastAPI 0.162.0、SQLAlchemy 2.0.55、Pydantic 2.14.2 等），并非 requirements.txt 原锁定环境。沙箱的 asyncio socketpair 阻塞后，离线测试在获准的沙箱外运行。未调用真实模型或 MySQL，未改动旧上传文件或 NO3 报告，未上传 GitHub。
+后续仍需处理：文档磁盘与数据库事务一致性、解析资源预算、同会话并发和上下文预算、索引快照与多 worker 失效、最终答案安全增量输出。

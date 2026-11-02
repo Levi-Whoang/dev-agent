@@ -275,3 +275,10 @@
 修改后：HTTP 路由集中到 api/routes/{users,sessions,documents}.py；app/main.py 负责组装应用、注册路由和启动校验，app/errors.py 保留全局请求日志/异常处理；文档业务操作抽到 services/documents.py，路由层负责请求解析、认证上下文、状态码与响应转换；Agent 客户端和实例由 agent/runtime.py 创建，根 main.py 兼容导出。RenameDocumentRequest 移入 api/api_schemas.py。更新测试夹具的路由导入路径和模块清理路径（未运行测试），同步更新 README 项目结构与本文件清单。
 涉及文件：新增 agent/runtime.py、api/routes/__init__.py、api/routes/users.py、api/routes/sessions.py、api/routes/documents.py、services/__init__.py、services/documents.py；删除旧的 app/users.py、app/sessions.py 路由文件；修改 app/main.py、api/api_schemas.py、main.py、test/test_api.py、test/test_api_http.py、README.md、TXT/功能一览.txt。
 验证：git diff --check 通过；没有运行 pytest、前端构建、类型检查、数据库或 API 联调。
+
+
+[2026-10-31 00:41:00 +08:00] NO3 首轮正确性修复
+修改前：SSE 上下文跨 yield，检索上下文工具返回 JSON 字符串后又被 Agent 编码；前端并发 401 各自刷新并可能清除新令牌；历史所有引用附给最后回答；async 文档写入接口直接执行同步服务；测试夹具移除刚注入的 Agent 替身。
+修改后：每次恢复生成器独立设置/重置用户上下文，输出终态前关闭生成器；工具返回字典并在协议边界编码一次，历史引用兼容旧双重编码；前端合并刷新任务并检查令牌状态变化，历史按轮次展示引用；文档写入同步调用转线程池；修复测试注入及添加组合链路测试。未认证响应补充 WWW-Authenticate，说明文档与实际输出模式保持一致。
+涉及文件：api/chat_helpers.py、tools/knowledge.py、api/routes/documents.py、frontend/src/api.ts、frontend/src/App.tsx、frontend/package.json、frontend/test/auth-refresh.test.mjs、frontend/README.md、test/test_api.py、test/test_api_http.py、test/test_knowledge.py、auth/jwt_auth.py、agent/agent.py、README.md、TXT/功能一览.txt。
+验证：前端 3 项回归通过、生产构建通过；后端选定 30 项通过、3 项 sklearn 相关评分测试未执行；编译和差异空白检查通过。后端使用 Python 3.10 临时依赖而非项目损坏的 Python 3.12 环境，因此原锁定环境仍待复测。没有真实模型/数据库联调；NO3 第二、三阶段的一致性和性能问题尚未全部修复。

@@ -162,28 +162,31 @@ export default function App() {
   }
 
   function displayMessages(stored: StoredMessage[]): Message[] {
-    const visible: Message[] = stored
-      .filter((item) => item.role === "user" || item.role === "assistant")
-      .filter((item) => typeof item.content === "string" && item.content.length > 0)
-      .map((item) => ({
-        id: crypto.randomUUID(),
-        role: item.role as Message["role"],
-        content: item.content as string,
-        citations: [],
-      }));
-    const citations = stored.flatMap((item) => {
-      if (item.role !== "tool" || !item.content) return [];
-      try {
-        const parsed = JSON.parse(item.content) as { citations?: Citation[] };
-        return Array.isArray(parsed.citations) ? parsed.citations : [];
-      } catch {
-        return [];
+    const visible: Message[] = [];
+    let turnCitations: Citation[] = [];
+    for (const item of stored) {
+      if (item.role === "user") turnCitations = [];
+      if (item.role === "tool" && item.content) {
+        try {
+          let parsed = JSON.parse(item.content);
+          // 兼容修复前保存的双重编码消息。
+          if (typeof parsed === "string") parsed = JSON.parse(parsed);
+          if (parsed && Array.isArray(parsed.citations)) {
+            turnCitations.push(...parsed.citations.filter(
+              (citation: Citation) => citation && typeof citation.source === "string",
+            ));
+          }
+        } catch {
+          // 无引用或无效工具结果不影响历史消息展示。
+        }
       }
-    });
-    const lastAssistant = visible
-      .map((item) => item.role === "assistant")
-      .lastIndexOf(true);
-    if (lastAssistant >= 0) visible[lastAssistant].citations = citations;
+      if ((item.role === "user" || item.role === "assistant") && item.content) {
+        visible.push({
+          ...createMessage(item.role, item.content),
+          citations: item.role === "assistant" ? [...turnCitations] : [],
+        });
+      }
+    }
     return visible;
   }
 
@@ -669,7 +672,7 @@ export default function App() {
                         <div className="sources-title"><span>⌕</span> 引用来源 <span className="source-count">{message.citations.length}</span></div>
                         {message.citations.map((citation, index) => (
                           <details className="source-card" key={`${citation.source}-${index}`}>
-                            <summary><span className="file-icon">▤</span><span className="source-name">{citation.source}</span><span className="source-score">{typeof citation.score === "number" ? `${Math.round(citation.score * 100)}%` : "来源"}</span></summary>
+                            <summary><span className="file-icon">▤</span><span className="source-name">{citation.source}</span><span className="source-score">{typeof citation.score === "number" ? `相关度 ${citation.score.toFixed(2)}` : "来源"}</span></summary>
                             <p>{citation.content}</p>
                           </details>
                         ))}

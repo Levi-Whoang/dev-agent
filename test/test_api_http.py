@@ -15,6 +15,11 @@ ALICE_HEADERS = {}
 BOB_HEADERS = {}
 
 
+# 从 HTTP SSE 正文提取事件，验证真实流响应中的完成或失败状态。
+def parse_sse_events(response):
+    return [json.loads(line[6:]) for line in response.text.splitlines() if line.startswith("data: ")]
+
+
 class MemorySessionManager:
     def __init__(self):
         self.sessions = {}
@@ -34,6 +39,10 @@ class MemorySessionManager:
     def get_messages(self, session_id):
         session = self.sessions.get(session_id)
         return list(session["messages"] if session else [])
+
+    # 保存真实 Agent 产生的消息，保持内存会话所有权和标题不变。
+    def save(self, session_id, messages):
+        self.sessions[session_id]["messages"] = list(messages)
 
     def clear(self, session_id):
         self.sessions[session_id]["messages"] = []
@@ -173,7 +182,7 @@ def asgi_app(monkeypatch):
     monkeypatch.setitem(sys.modules, "logs.logging_config", fake_logging)
     monkeypatch.setitem(sys.modules, "agent.runtime", fake_runtime)
     for module_name in (
-        "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+        "app", "app.main", "api.routes", "api.routes.sessions",
         "api.routes.users", "api.routes.documents", "app.errors",
     ):
         sys.modules.pop(module_name, None)
@@ -192,7 +201,7 @@ def asgi_app(monkeypatch):
         yield app_module.app, fake_agent
     finally:
         for module_name in (
-            "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+            "app", "app.main", "api.routes", "api.routes.sessions",
             "api.routes.users", "api.routes.documents", "app.errors",
         ):
             sys.modules.pop(module_name, None)
@@ -353,7 +362,7 @@ def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
     assert invalid.status_code == 422
     assert invalid.json()["code"] == 422
     assert fake_agent.calls == [
-        ("json", "兼容请求", make_stored_session_id("alice", "asgi-2"))
+        ("stream", "兼容请求", make_stored_session_id("alice", "asgi-2"))
     ]
 
 
@@ -376,7 +385,7 @@ def test_asgi_session_routes_use_injected_memory_store(asgi_app):
     created, listed, deleted, missing = anyio.run(make_requests)
 
     assert created.status_code == 200
-    assert listed.json()["data"] == [{"session_id": "asgi-3"}]
+    assert listed.json()["data"] == [{"session_id": "asgi-3", "title": "新对话"}]
     assert deleted.status_code == 200
     assert missing.status_code == 404
 
@@ -563,3 +572,103 @@ def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
     assert alice_session_id != bob_session_id
     assert len(fake_agent.session_manager.sessions) == 2
     assert all(call[2].count(":") == 1 for call in fake_agent.calls)
+
+
+# 用真实 Agent 和检索上下文工具验证引用只编码一次且 SSE 正常完成。
+@pytest.mark.parametrize("has_evidence", [True, False])
+def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidence):
+    from agent.agent import Agent
+    import tools.knowledge as knowledge
+    from test.test_agent import stream_chunk, stream_tool_call_delta
+
+    app, fake_agent = asgi_app
+    observed_owners = []
+
+    # 保留真实工具协议，只替换昂贵的 embedding 检索。
+    def search(query):
+        observed_owners.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
+        return [{"source": "company.txt", "content": "公司在深圳。", "score": 0.9}] if has_evidence else []
+
+    monkeypatch.setattr(knowledge, "knowledge_search", search)
+    llm = MagicMock()
+    llm.chat.completions.create.side_effect = [
+        iter([stream_chunk(tool_calls=[stream_tool_call_delta(
+            call_id="rag-call", name="knowledge_search_context", arguments='{"query":"公司在哪里"}',
+        )])]),
+        iter([stream_chunk(content="公司在深圳。" if has_evidence else "当前知识库无法确认。")]),
+    ]
+    real_agent = Agent(llm, [], {"knowledge_search_context": knowledge.knowledge_search_context})
+    real_agent.session_manager = fake_agent.session_manager
+    routes = importlib.import_module("api.routes.sessions")
+    monkeypatch.setattr(routes, "agent", real_agent)
+
+    async def request():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+            return await client.post("/chat", headers=ALICE_HEADERS, json={"message": "公司在哪里"})
+
+    response = anyio.run(request)
+    events = parse_sse_events(response)
+    assert [event["type"] for event in events] == ["delta", "done"]
+    assert observed_owners == [1]
+    assert len(events[-1]["citations"]) == int(has_evidence)
+    tool_messages = [m for record in fake_agent.session_manager.sessions.values() for m in record["messages"] if m["role"] == "tool"]
+    assert isinstance(json.loads(tool_messages[0]["content"]), dict)
+
+
+# 验证不同用户的作用域在每次线程池迭代中恢复，生成异常只有 error 终态。
+def test_http_stream_scope_and_error_terminal(asgi_app, monkeypatch):
+    import tools.knowledge as knowledge
+    app, fake_agent = asgi_app
+    observed = []
+
+    # 在多次恢复生成器时记录用户范围，并模拟生成过程失败。
+    def stream(message, session_id):
+        observed.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
+        yield "片段一"
+        observed.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
+        if message == "失败":
+            raise RuntimeError("模拟模型故障")
+        yield "片段二"
+        observed.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
+
+    monkeypatch.setattr(fake_agent, "run_stream", stream)
+
+    async def request():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+            first = await client.post("/chat", headers=ALICE_HEADERS, json={"message": "成功"})
+            second = await client.post("/chat", headers=BOB_HEADERS, json={"message": "失败"})
+            return first, second
+
+    first, second = anyio.run(request)
+    assert [e["type"] for e in parse_sse_events(first)] == ["delta", "delta", "done"]
+    assert [e["type"] for e in parse_sse_events(second)] == ["delta", "error"]
+    assert observed == [1, 1, 1, 2, 2]
+    assert knowledge._CURRENT_KNOWLEDGE_OWNER.get() is None
+
+
+# 验证 async 文档接口将同步服务放到线程池执行。
+@pytest.mark.parametrize("method", ["post", "put"])
+def test_document_write_service_runs_outside_event_loop(asgi_app, monkeypatch, method):
+    import threading
+    app, _ = asgi_app
+    routes = importlib.import_module("api.routes.documents")
+    service_threads = []
+
+    # 服务替身只记录执行线程，不接触真实文档和数据库。
+    def service(*args):
+        service_threads.append(threading.get_ident())
+        return {"document_id": "test-document"}
+
+    monkeypatch.setattr(routes, "create_document" if method == "post" else "replace_document_service", service)
+
+    async def request():
+        event_thread = threading.get_ident()
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+            response = await client.request(method, "/knowledge/documents" + ("/test-document" if method == "put" else ""),
+                headers=ALICE_HEADERS, files={"file": ("demo.txt", b"demo", "text/plain")})
+            return event_thread, response
+
+    event_thread, response = anyio.run(request)
+    assert response.status_code == (201 if method == "post" else 200)
+    assert len(service_threads) == 1
+    assert service_threads[0] != event_thread

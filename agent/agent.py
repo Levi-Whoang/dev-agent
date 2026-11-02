@@ -154,7 +154,7 @@ class Agent:
             raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
 
     def run_stream(self, user_input, session_id):
-        """逐段输出最终回答；工具调用轮次先执行工具，再继续生成。"""
+        """工具调用轮次先执行工具，最终回答完成并过滤后再输出。"""
         messages = self.session_manager.get_messages(session_id)
         messages.append({"role": "user", "content": user_input})
         self.session_manager.save(session_id, messages)

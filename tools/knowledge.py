@@ -1,6 +1,5 @@
 
 import math
-import json
 import os
 import re
 from contextlib import contextmanager
@@ -339,20 +338,17 @@ def knowledge_search(query: str) -> list[dict]:
     return results
 
 
-# 将检索证据和引用来源整理为 JSON 文本。
-def knowledge_search_context(query: str) -> str:
-    """以结构化 JSON 返回模型证据和 API 可展示的引用。"""
+# 返回结构化证据和引用，由 Agent 在协议边界统一序列化。
+def knowledge_search_context(query: str) -> dict:
+    """返回证据字典，避免工具结果在 Agent 中被双重编码。"""
     results = knowledge_search(query)
 
     if not results:
-        return json.dumps(
-            {
-                "status": "no_relevant_evidence",
-                "evidence": "NO_RELEVANT_EVIDENCE",
-                "citations": [],
-            },
-            ensure_ascii=False,
-        )
+        return {
+            "status": "no_relevant_evidence",
+            "evidence": "NO_RELEVANT_EVIDENCE",
+            "citations": [],
+        }
 
     evidence = []
 
@@ -368,23 +364,20 @@ def knowledge_search_context(query: str) -> str:
             )
         )
 
-    return json.dumps(
-        {
-            "status": "ok",
-            "evidence": "\n\n".join(evidence),
-            "citations": [
-                {
-                    "source": item["source"],
-                    "content": item["content"],
-                    "score": item["score"],
-                    "dense_score": item.get("dense_score"),
-                    "keyword_score": item.get("keyword_score"),
-                }
-                for item in results
-            ],
-        },
-        ensure_ascii=False,
-    )
+    return {
+        "status": "ok",
+        "evidence": "\n\n".join(evidence),
+        "citations": [
+            {
+                "source": item["source"],
+                "content": item["content"],
+                "score": item["score"],
+                "dense_score": item.get("dense_score"),
+                "keyword_score": item.get("keyword_score"),
+            }
+            for item in results
+        ],
+    }
 
 
 # 清除文档变更后需重建的检索缓存。

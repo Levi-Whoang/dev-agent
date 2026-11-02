@@ -275,41 +275,71 @@ export async function streamChat(
 const ACCESS_TOKEN_KEY = "dev-agent.access-token";
 const REFRESH_TOKEN_KEY = "dev-agent.refresh-token";
 
+let refreshFlight: { token: string; promise: Promise<string | null> } | null = null;
+
+// 只清理发起失败刷新时的登录状态，避免影响后来登录的账号。
+function clearExpiredTokens(refreshToken: string): void {
+  if (sessionStorage.getItem(REFRESH_TOKEN_KEY) !== refreshToken) return;
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+// 当前标签页中使用同一刷新令牌的请求共用一次刷新操作。
+function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  if (refreshFlight?.token === refreshToken) return refreshFlight.promise;
+  const promise = (async () => {
+    const response = await fetch(apiUrl("/auth/refresh"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!response.ok) {
+      if (response.status === 401) clearExpiredTokens(refreshToken);
+      return null;
+    }
+    const body = (await response.json()) as ApiEnvelope<TokenData>;
+    if (body.code !== 0 || !body.data?.access_token || !body.data?.refresh_token) {
+      return null;
+    }
+    // 刷新期间可能退出或切换账号，旧响应不能覆盖新状态。
+    if (sessionStorage.getItem(REFRESH_TOKEN_KEY) !== refreshToken) return null;
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, body.data.access_token);
+    sessionStorage.setItem(REFRESH_TOKEN_KEY, body.data.refresh_token);
+    return body.data.access_token;
+  })();
+  const flight = { token: refreshToken, promise };
+  refreshFlight = flight;
+  // 使用 then 的两条分支清理，避免额外产生未处理的拒绝 Promise。
+  const clearFlight = () => { if (refreshFlight === flight) refreshFlight = null; };
+  void promise.then(clearFlight, clearFlight);
+  return promise;
+}
+
+// 发送认证请求，并在访问令牌失效时共用刷新操作后重试一次。
 async function authorizedFetch(
   path: string,
   token: string,
   init: RequestInit = {},
 ): Promise<Response> {
   const currentToken = sessionStorage.getItem(ACCESS_TOKEN_KEY) || token;
+  const initialRefreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  const initialUsername = sessionStorage.getItem("dev-agent.username");
   const send = (accessToken: string) => {
     const headers = new Headers(init.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
     return fetch(apiUrl(path), { ...init, headers });
   };
-
   const response = await send(currentToken);
-  if (response.status !== 401) return response;
+  if (response.status !== 401 || !initialRefreshToken) return response;
+  if (sessionStorage.getItem("dev-agent.username") !== initialUsername) return response;
 
-  const refreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
-  if (!refreshToken) return response;
-  const refreshResponse = await fetch(apiUrl("/auth/refresh"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
-  });
-  if (!refreshResponse.ok) {
-    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-    return response;
+  // 较慢的旧请求返回时，其他请求可能已经完成轮换。
+  const latestToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  const latestRefreshToken = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!latestToken || !latestRefreshToken) return response;
+  if (latestRefreshToken !== initialRefreshToken) {
+    return latestToken !== currentToken ? send(latestToken) : response;
   }
-
-  const body = (await refreshResponse.json()) as ApiEnvelope<TokenData>;
-  if (body.code !== 0 || !body.data?.access_token || !body.data?.refresh_token) {
-    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-    return response;
-  }
-  sessionStorage.setItem(ACCESS_TOKEN_KEY, body.data.access_token);
-  sessionStorage.setItem(REFRESH_TOKEN_KEY, body.data.refresh_token);
-  return send(body.data.access_token);
+  const accessToken = await refreshAccessToken(initialRefreshToken);
+  return accessToken ? send(accessToken) : response;
 }

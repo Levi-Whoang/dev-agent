@@ -91,7 +91,7 @@ def api_module(monkeypatch):
 
     # 防止导入应用时创建真实 OpenAI 客户端或写入日志。
     for module_name in (
-        "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+        "app", "app.main", "api.routes", "api.routes.sessions",
         "api.routes.users", "api.routes.documents", "app.errors",
     ):
         sys.modules.pop(module_name, None)
@@ -100,7 +100,7 @@ def api_module(monkeypatch):
         yield module, fake_agent, fake_logging.logger
     finally:
         for module_name in (
-            "app", "app.main", "agent.runtime", "api.routes", "api.routes.sessions",
+            "app", "app.main", "api.routes", "api.routes.sessions",
             "api.routes.users", "api.routes.documents", "app.errors",
         ):
             sys.modules.pop(module_name, None)
