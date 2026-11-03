@@ -205,7 +205,7 @@ npm run dev
 }
 ```
 
-`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件包含 `content`（当前实现先缓冲完整的最终回答、过滤内部推理标签，再一次发送，并非逐字增量），结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
+`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件包含 `content`（工具决策完成后，最终回答逐段输出，并增量过滤内部推理标签），结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
 
 注册新用户时调用 `POST /auth/register`：
 
@@ -314,3 +314,23 @@ python -m pytest test/ -v
 通过实现一个可运行的 Agent 应用，系统实践大模型工具调用、RAG 检索、会话持久化、API 设计、异常处理和自动化测试等应用开发能力。
 
 在历史会话列表中可修改会话名称或删除会话。删除操作会请求后端 DELETE /sessions/{session_id}；删除当前会话后，聊天面板会清空。
+
+
+流式生成分为工具决策与最终回答两个阶段，最终回答不再注册工具。相比单轮请求会多一次模型调用；决策阶段完成前不会输出正文。前端“停止生成”请求 `POST /sessions/{session_id}/stop` 后中止浏览器读取；后端协作式停止并保存已输出的回答。停止接口必须认证，只能停止自己的会话。同一会话生成中再次提交返回 409。
+
+`TOOL_TIMEOUT_SECONDS` 默认 15 秒，模型请求超时为 20 秒。工具超时向模型返回 `tool_timeout`；工具线程最多 4 个，满载返回 `tool_busy`。超时/停止不能强杀已开始执行的同步函数，其外部副作用仍可能完成；生成停止需等待正在阻塞的模型读取返回。任务登记保存在进程内，当前请使用单 worker；多 worker 需要共享任务调度。日志记录任务开始/结束及工具名称、耗时、超时和失败，不记录工具参数或返回正文。
+
+
+RAG 检索模式评估：运行 `python -m evaluation.retrieval`，在相同公共语料和参数下比较纯向量与混合检索；完整报告位于 `evaluation/results/`，最新中文总结位于 `TXT/RAG检索对比评估结果.txt`。报告包含逐题差异、失败案例、标注检查、语料/问题集指纹和环境信息；具体指标定义见 `evaluation/README.md`。
+
+
+五项 RAG 质量评估：`python -m evaluation.quality` 计算新业务集的证据 Recall@K、MRR 和 Precision@K；加 `--generate --generation-limit 6` 实测均衡抽样答案的 Faithfulness 与无答案拒答准确率。输出见 `TXT/RAG五项指标评估结果.txt`，定义与生成调用范围见 `evaluation/README.md`。
+
+
+首字延迟：API 默认在启动阶段预热 embedding、公共向量及 BM25 索引（`RAG_WARMUP=true`），服务启动会更慢，但首次请求不再承担这部分模型加载。设为 false 可恢复惰性加载；私人文档仍在首次检索时编码。没有私人上传的账号复用公共向量。RAG 工具完成后直接进入最终流式回答，避免额外生成一遍完整答案；其他工具仍保留决策循环。日志中的 `rag_warmup`、`rag_search`、`llm_decision` 和 `agent_first_text` 用于区分预热、检索、决策及首正文延迟，不记录问题和答案正文。上传或重启导致缓存失效时仍可能重新编码。
+
+当前使用 `AsyncOpenAI` 和 SQLAlchemy 的 `AsyncEngine` / `AsyncSession`。MySQL 驱动为 `aiomysql`，SQLite 测试使用 `aiosqlite`；旧 `mysql+pymysql`、`sqlite+pysqlite` URL 会自动转换，已有数据库表和数据保持兼容。安装依赖使用 `python -m pip install -r requirements.txt`。
+
+完整Agent调用使用 `await agent.run(...)`，流式调用使用 `async for text in agent.run_stream(...)`。认证、会话和文档数据库服务及路由均通过await调用，每个数据库作用域使用独立Session并自动提交、异常/取消回滚及关闭。密码哈希、文档解析与文件操作仍在线程池执行，RAG工具仍由有界线程池承接，避免阻塞事件循环。
+
+流式输出、停止生成、RAG预热和跳过重复回答均保留。停止信号可以取消等待中的模型请求或分片读取，断连时关闭模型流并保存已输出正文；应用退出时关闭客户端、释放数据库连接池。已开始的同步工具无法强制终止，多worker任务共享和文档磁盘/数据库一致性仍需单独处理。

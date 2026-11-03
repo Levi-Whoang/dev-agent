@@ -1,6 +1,9 @@
 """组装 FastAPI 应用及功能路由。"""
 
 from contextlib import asynccontextmanager
+import os
+from starlette.concurrency import run_in_threadpool
+from tools.knowledge import warmup_knowledge
 
 from fastapi import FastAPI
 
@@ -15,7 +18,17 @@ from auth.jwt_auth import validate_auth_settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_auth_settings()
-    yield
+    if os.getenv("RAG_WARMUP", "true").lower() in {"true", "1", "yes"}:
+        await run_in_threadpool(warmup_knowledge)
+    try:
+        yield
+    finally:
+        from agent.runtime import client
+        try:
+            await client.close()
+        finally:
+            from modules.database import dispose_database
+            await dispose_database()
 
 
 app = FastAPI(title="Dev Agent API", lifespan=lifespan)

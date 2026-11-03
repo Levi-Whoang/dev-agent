@@ -16,12 +16,12 @@ class DuplicateUsernameError(Exception):
 class AuthRepository:
     """封装用户与令牌操作，业务逻辑不直接依赖数据库连接细节。"""
 
-    def create_user(self, username: str, password_hash: str) -> int:
+    async def create_user(self, username: str, password_hash: str) -> int:
         try:
-            with session_scope() as db:
+            async with session_scope() as db:
                 user = AuthUser(username=username, password_hash=password_hash)
                 db.add(user)
-                db.flush()
+                await db.flush()
                 return int(user.id)
         except IntegrityError as error:
             original_message = str(getattr(error, "orig", error)).lower()
@@ -29,13 +29,13 @@ class AuthRepository:
                 raise DuplicateUsernameError from error
             raise
 
-    def user_exists(self, username: str) -> bool:
-        with session_scope() as db:
-            return db.scalar(select(AuthUser.id).where(AuthUser.username == username)) is not None
+    async def user_exists(self, username: str) -> bool:
+        async with session_scope() as db:
+            return (await db.scalar(select(AuthUser.id).where(AuthUser.username == username))) is not None
 
-    def find_user(self, username: str) -> dict | None:
-        with session_scope() as db:
-            user = db.scalar(
+    async def find_user(self, username: str) -> dict | None:
+        async with session_scope() as db:
+            user = await db.scalar(
                 select(AuthUser).where(AuthUser.username == username)
             )
             if user is None:
@@ -46,11 +46,11 @@ class AuthRepository:
                 "password_hash": user.password_hash,
             }
 
-    def create_token(self, jti: str, user_id: int, expires_at: datetime) -> None:
+    async def create_token(self, jti: str, user_id: int, expires_at: datetime) -> None:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         expiry_utc = expires_at.astimezone(timezone.utc).replace(tzinfo=None)
-        with session_scope() as db:
-            db.execute(
+        async with session_scope() as db:
+            await db.execute(
                 delete(AuthToken).where(
                     (AuthToken.expires_at <= now)
                     | (AuthToken.revoked_at < now - timedelta(days=1))
@@ -65,10 +65,10 @@ class AuthRepository:
                 )
             )
 
-    def create_tokens(self, tokens: list[dict]) -> None:
+    async def create_tokens(self, tokens: list[dict]) -> None:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        with session_scope() as db:
-            db.execute(
+        async with session_scope() as db:
+            await db.execute(
                 delete(AuthToken).where(
                     (AuthToken.expires_at <= now)
                     | (AuthToken.revoked_at < now - timedelta(days=1))
@@ -84,10 +84,10 @@ class AuthRepository:
                 for item in tokens
             ])
 
-    def rotate_tokens(self, old_refresh_jti: str, old_access_jti: str, username: str, tokens: list[dict]) -> bool:
+    async def rotate_tokens(self, old_refresh_jti: str, old_access_jti: str, username: str, tokens: list[dict]) -> bool:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        with session_scope() as db:
-            active = db.scalar(
+        async with session_scope() as db:
+            active = await db.scalar(
                 select(AuthToken.jti)
                 .join(AuthUser, AuthUser.id == AuthToken.user_id)
                 .where(
@@ -100,7 +100,7 @@ class AuthRepository:
             )
             if active is None:
                 return False
-            db.execute(
+            await db.execute(
                 update(AuthToken)
                 .where(AuthToken.jti.in_([old_refresh_jti, old_access_jti]))
                 .values(revoked_at=now)
@@ -115,10 +115,10 @@ class AuthRepository:
             ])
         return True
 
-    def is_token_active(self, jti: str, username: str) -> bool:
+    async def is_token_active(self, jti: str, username: str) -> bool:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        with session_scope() as db:
-            return db.scalar(
+        async with session_scope() as db:
+            return (await db.scalar(
                 select(AuthToken.jti)
                 .join(AuthUser, AuthUser.id == AuthToken.user_id)
                 .where(
@@ -127,12 +127,12 @@ class AuthRepository:
                     AuthToken.revoked_at.is_(None),
                     AuthToken.expires_at > now,
                 )
-            ) is not None
+            )) is not None
 
-    def revoke_token(self, jti: str, username: str, related_jti: str | None = None) -> None:
+    async def revoke_token(self, jti: str, username: str, related_jti: str | None = None) -> None:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        with session_scope() as db:
-            db.execute(
+        async with session_scope() as db:
+            await db.execute(
                 update(AuthToken)
                 .where(
                     AuthToken.jti.in_([jti, related_jti]) if related_jti else AuthToken.jti == jti,
@@ -143,32 +143,32 @@ class AuthRepository:
                 .values(revoked_at=now)
             )
 
-    def login_failure_count(self, identity_hash: str, since: datetime) -> int:
-        with session_scope() as db:
-            db.execute(
+    async def login_failure_count(self, identity_hash: str, since: datetime) -> int:
+        async with session_scope() as db:
+            await db.execute(
                 delete(AuthLoginFailure).where(
                     AuthLoginFailure.attempted_at < since - timedelta(days=1)
                 )
             )
-            return int(db.scalar(
+            return int((await db.scalar(
                 select(func.count(AuthLoginFailure.id)).where(
                     AuthLoginFailure.identity_hash == identity_hash,
                     AuthLoginFailure.attempted_at >= since,
                 )
-            ) or 0)
+            )) or 0)
 
-    def record_login_failure(self, identity_hash: str, attempted_at: datetime) -> None:
-        with session_scope() as db:
+    async def record_login_failure(self, identity_hash: str, attempted_at: datetime) -> None:
+        async with session_scope() as db:
             db.add(AuthLoginFailure(identity_hash=identity_hash, attempted_at=attempted_at))
 
-    def clear_login_failures(self, identity_hash: str) -> None:
-        with session_scope() as db:
-            db.execute(delete(AuthLoginFailure).where(AuthLoginFailure.identity_hash == identity_hash))
+    async def clear_login_failures(self, identity_hash: str) -> None:
+        async with session_scope() as db:
+            await db.execute(delete(AuthLoginFailure).where(AuthLoginFailure.identity_hash == identity_hash))
 
-    def audit(self, event_type: str, username: str | None, source_hash: str | None, succeeded: bool) -> None:
-        with session_scope() as db:
+    async def audit(self, event_type: str, username: str | None, source_hash: str | None, succeeded: bool) -> None:
+        async with session_scope() as db:
             now = datetime.now(timezone.utc).replace(tzinfo=None)
-            db.execute(
+            await db.execute(
                 delete(AuthAuditEvent).where(
                     AuthAuditEvent.created_at < now - timedelta(days=180)
                 )

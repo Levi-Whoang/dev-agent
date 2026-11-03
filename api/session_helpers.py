@@ -21,17 +21,17 @@ def stored_session_id(user_id: str, session_id: str) -> str:
     return f"{session_prefix(user_id)}{session_id}"
 
 
-def database_user_id(username: str) -> int:
+async def database_user_id(username: str) -> int:
     """根据当前认证用户名读取用户表主键，供会话外键使用。"""
     from auth.jwt_auth import auth_repository
 
-    user = auth_repository.find_user(username)
+    user = await auth_repository.find_user(username)
     if user is None:
         raise HTTPException(status_code=401, detail="认证用户不存在")
     return int(user["id"])
 
 
-def resolve_chat_session(
+async def resolve_chat_session(
     session_manager,
     user_id: str,
     requested_session_id: str | None,
@@ -41,7 +41,7 @@ def resolve_chat_session(
     """选择本次聊天的公开 ID，并确保用户专属会话已创建。"""
     session_id = requested_session_id or uuid4().hex
     internal_id = stored_session_id(user_id, session_id)
-    if not session_manager.exists(internal_id):
+    if not (await session_manager.exists(internal_id)):
         title = " ".join(initial_title.split())[:120] or "新对话"
-        session_manager.create(internal_id, owner_user_id, title)
+        await session_manager.create(internal_id, owner_user_id, title)
     return session_id, internal_id

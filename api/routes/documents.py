@@ -3,7 +3,6 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from starlette.concurrency import run_in_threadpool
 
 from api.api_response import success_response
 from api.api_schemas import RenameDocumentRequest
@@ -43,9 +42,9 @@ async def _read_upload(upload: UploadFile) -> tuple[str, bytes]:
 
 
 # 查询已认证用户的数据库主键。
-def _owner_id(username: str) -> int:
+async def _owner_id(username: str) -> int:
     """获取当前登录用户的数据库主键。"""
-    return database_user_id(username)
+    return await database_user_id(username)
 
 
 # 把文档未找到业务异常转换成 HTTP 404。
@@ -68,8 +67,8 @@ async def upload_document(
     """上传文档并委托服务层完成解析、存储和元数据创建。"""
     filename, content = await _read_upload(file)
     try:
-        owner_id = await run_in_threadpool(_owner_id, current_user)
-        result = await run_in_threadpool(create_document, owner_id, filename, content)
+        owner_id = await _owner_id(current_user)
+        result = await create_document(owner_id, filename, content)
     except DocumentParseError as error:
         raise _parse_error(error) from error
     return success_response(result, "文档上传并加入知识库")
@@ -77,17 +76,20 @@ async def upload_document(
 
 # 返回当前用户的文档列表。
 @router.get("")
-def list_documents(current_user: str = Depends(get_current_user)):
+async def list_documents(current_user: str = Depends(get_current_user)):
     """列出当前登录用户上传的文档。"""
-    return success_response(list_documents_service(_owner_id(current_user)))
+    owner_id = await _owner_id(current_user)
+    documents = await list_documents_service(owner_id)
+    return success_response(documents)
 
 
 # 返回指定文档的元数据。
 @router.get("/{document_id}")
-def get_document(document_id: str, current_user: str = Depends(get_current_user)):
+async def get_document(document_id: str, current_user: str = Depends(get_current_user)):
     """读取当前用户文档的元数据。"""
     try:
-        result = get_document_service(_owner_id(current_user), document_id)
+        owner_id = await _owner_id(current_user)
+        result = await get_document_service(owner_id, document_id)
     except DocumentNotFoundError as error:
         raise _not_found(error) from error
     return success_response(result)
@@ -103,10 +105,8 @@ async def replace_document(
     """替换当前用户文档内容并返回更新后的元数据。"""
     filename, content = await _read_upload(file)
     try:
-        owner_id = await run_in_threadpool(_owner_id, current_user)
-        result = await run_in_threadpool(
-            replace_document_service, owner_id, document_id, filename, content
-        )
+        owner_id = await _owner_id(current_user)
+        result = await replace_document_service(owner_id, document_id, filename, content)
     except DocumentNotFoundError as error:
         raise _not_found(error) from error
     except DocumentParseError as error:
@@ -116,16 +116,15 @@ async def replace_document(
 
 # 校验并更新文档显示名称。
 @router.patch("/{document_id}")
-def rename_document(
+async def rename_document(
     document_id: str,
     request: RenameDocumentRequest,
     current_user: str = Depends(get_current_user),
 ):
     """修改当前用户文档名称。"""
     try:
-        result = rename_document_service(
-            _owner_id(current_user), document_id, request.name
-        )
+        owner_id = await _owner_id(current_user)
+        result = await rename_document_service(owner_id, document_id, request.name)
     except DocumentNotFoundError as error:
         raise _not_found(error) from error
     except ValueError as error:
@@ -135,10 +134,11 @@ def rename_document(
 
 # 删除指定文档及服务层管理的文件内容。
 @router.delete("/{document_id}")
-def delete_document(document_id: str, current_user: str = Depends(get_current_user)):
+async def delete_document(document_id: str, current_user: str = Depends(get_current_user)):
     """删除当前用户的文档及相关文件。"""
     try:
-        delete_document_service(_owner_id(current_user), document_id)
+        owner_id = await _owner_id(current_user)
+        await delete_document_service(owner_id, document_id)
     except DocumentNotFoundError as error:
         raise _not_found(error) from error
     return success_response({"document_id": document_id}, "文档已删除")

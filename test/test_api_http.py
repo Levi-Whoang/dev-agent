@@ -3,11 +3,19 @@ import json
 import sys
 from datetime import datetime, timezone
 from types import ModuleType
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
+from test.async_helpers import AsyncStream
 
 import anyio
 import httpx
 import pytest
+
+pytestmark = pytest.mark.anyio
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
 
 from api.session_helpers import stored_session_id as make_stored_session_id
 
@@ -24,7 +32,7 @@ class MemorySessionManager:
     def __init__(self):
         self.sessions = {}
 
-    def create(self, session_id, owner_user_id=None, title="新对话"):
+    async def create(self, session_id, owner_user_id=None, title="新对话"):
         if session_id in self.sessions:
             raise ValueError("duplicate")
         self.sessions[session_id] = {
@@ -33,31 +41,31 @@ class MemorySessionManager:
             "title": title,
         }
 
-    def exists(self, session_id):
+    async def exists(self, session_id):
         return session_id in self.sessions
 
-    def get_messages(self, session_id):
+    async def get_messages(self, session_id):
         session = self.sessions.get(session_id)
         return list(session["messages"] if session else [])
 
     # 保存真实 Agent 产生的消息，保持内存会话所有权和标题不变。
-    def save(self, session_id, messages):
+    async def save(self, session_id, messages):
         self.sessions[session_id]["messages"] = list(messages)
 
-    def clear(self, session_id):
+    async def clear(self, session_id):
         self.sessions[session_id]["messages"] = []
 
-    def delete(self, session_id):
+    async def delete(self, session_id):
         self.sessions.pop(session_id, None)
 
-    def rename(self, session_id, owner_user_id, title):
+    async def rename(self, session_id, owner_user_id, title):
         session = self.sessions.get(session_id)
         if not session or session["owner_user_id"] != owner_user_id:
             return False
         session["title"] = title
         return True
 
-    def list_sessions(self, owner_user_id):
+    async def list_sessions(self, owner_user_id):
         return [
             {"session_id": key, "title": session["title"]}
             for key, session in self.sessions.items()
@@ -72,7 +80,7 @@ class MemoryAuthRepository:
         self.next_user_id = 1
         self.login_failures = {}
 
-    def create_user(self, username, password_hash):
+    async def create_user(self, username, password_hash):
         from auth.repository import DuplicateUsernameError
 
         if username in self.users:
@@ -86,42 +94,42 @@ class MemoryAuthRepository:
         }
         return user_id
 
-    def find_user(self, username):
+    async def find_user(self, username):
         return self.users.get(username)
 
-    def create_token(self, jti, user_id, expires_at):
+    async def create_token(self, jti, user_id, expires_at):
         self.tokens[jti] = {
             "user_id": user_id,
             "expires_at": expires_at,
             "revoked": False,
         }
 
-    def create_tokens(self, rows):
+    async def create_tokens(self, rows):
         for row in rows:
-            self.create_token(row["jti"], row["user_id"], row["expires_at"])
+            await self.create_token(row["jti"], row["user_id"], row["expires_at"])
 
-    def rotate_tokens(self, old_refresh_jti, old_access_jti, username, rows):
-        if not self.is_token_active(old_refresh_jti, username):
+    async def rotate_tokens(self, old_refresh_jti, old_access_jti, username, rows):
+        if not ((await self.is_token_active(old_refresh_jti, username))):
             return False
         self.tokens[old_refresh_jti]["revoked"] = True
         if old_access_jti in self.tokens:
             self.tokens[old_access_jti]["revoked"] = True
-        self.create_tokens(rows)
+        await self.create_tokens(rows)
         return True
 
-    def login_failure_count(self, identity_hash, since):
+    async def login_failure_count(self, identity_hash, since):
         return len(self.login_failures.get(identity_hash, []))
 
-    def record_login_failure(self, identity_hash, attempted_at):
+    async def record_login_failure(self, identity_hash, attempted_at):
         self.login_failures.setdefault(identity_hash, []).append(attempted_at)
 
-    def clear_login_failures(self, identity_hash):
+    async def clear_login_failures(self, identity_hash):
         self.login_failures.pop(identity_hash, None)
 
-    def audit(self, event_type, username, source_hash, succeeded):
+    async def audit(self, event_type, username, source_hash, succeeded):
         return None
 
-    def is_token_active(self, jti, username):
+    async def is_token_active(self, jti, username):
         token = self.tokens.get(jti)
         user = self.users.get(username)
         return bool(
@@ -132,7 +140,7 @@ class MemoryAuthRepository:
             and token["expires_at"] > datetime.now(timezone.utc)
         )
 
-    def revoke_token(self, jti, username, related_jti=None):
+    async def revoke_token(self, jti, username, related_jti=None):
         token = self.tokens.get(jti)
         user = self.users.get(username)
         if token and user and token["user_id"] == user["id"]:
@@ -150,22 +158,22 @@ class ASGIFakeAgent:
         self.calls.append(("json", message, session_id))
         return f"完整回答：{message}"
 
-    def run_stream(self, message, session_id):
+    async def run_stream(self, message, session_id):
         self.calls.append(("stream", message, session_id))
         yield "第一段"
         yield "第二段"
 
 
 @pytest.fixture
-def asgi_app(monkeypatch):
+async def asgi_app(monkeypatch):
     from auth.passwords import hash_password
     import auth.jwt_auth as jwt_auth
 
     auth_repository = MemoryAuthRepository()
-    auth_repository.create_user(
+    await auth_repository.create_user(
         "alice", hash_password("alice-password", iterations=100_000)
     )
-    auth_repository.create_user(
+    await auth_repository.create_user(
         "bob", hash_password("bob-password", iterations=100_000)
     )
     monkeypatch.setattr(jwt_auth, "auth_repository", auth_repository)
@@ -188,10 +196,10 @@ def asgi_app(monkeypatch):
         sys.modules.pop(module_name, None)
     app_module = importlib.import_module("app")
     global ALICE_HEADERS, BOB_HEADERS
-    alice_token, _ = jwt_auth.create_access_token(
+    alice_token, _ = await jwt_auth.create_access_token(
         "alice", auth_repository.users["alice"]["id"]
     )
-    bob_token, _ = jwt_auth.create_access_token(
+    bob_token, _ = await jwt_auth.create_access_token(
         "bob", auth_repository.users["bob"]["id"]
     )
     ALICE_HEADERS = {"Authorization": f"Bearer {alice_token}"}
@@ -207,7 +215,7 @@ def asgi_app(monkeypatch):
             sys.modules.pop(module_name, None)
 
 
-def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
+async def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
     app, fake_agent = asgi_app
     fake_agent.session_manager.sessions[make_stored_session_id("alice", "asgi-1")] = {
         "owner_user_id": 1,
@@ -245,7 +253,7 @@ def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
             )
             return health, chat
 
-    health, chat = anyio.run(make_requests)
+    health, chat = await make_requests()
 
     assert health.status_code == 200
     assert health.json() == {"status": "ok"}
@@ -278,7 +286,7 @@ def test_asgi_health_and_sse_chat_with_credentials(asgi_app):
     ]
 
 
-def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
+async def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
     app, fake_agent = asgi_app
     citation = {
         "source": "faq.txt",
@@ -313,7 +321,7 @@ def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
                 },
             )
 
-    response = anyio.run(make_request)
+    response = await make_request()
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/event-stream")
     events = [
@@ -325,7 +333,7 @@ def test_asgi_json_chat_returns_citations_from_latest_turn(asgi_app):
     assert events[-1]["citations"] == [citation]
 
 
-def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
+async def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
     app, fake_agent = asgi_app
 
     async def make_requests():
@@ -345,7 +353,7 @@ def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
             invalid = await client.post("/chat", json={"message": ""})
             return chat, invalid
 
-    chat, invalid = anyio.run(make_requests)
+    chat, invalid = await make_requests()
 
     assert chat.status_code == 200
     assert chat.headers["content-type"].startswith("text/event-stream")
@@ -366,7 +374,7 @@ def test_asgi_chat_always_streams_and_validates_requests(asgi_app):
     ]
 
 
-def test_asgi_session_routes_use_injected_memory_store(asgi_app):
+async def test_asgi_session_routes_use_injected_memory_store(asgi_app):
     app, _ = asgi_app
 
     async def make_requests():
@@ -382,7 +390,7 @@ def test_asgi_session_routes_use_injected_memory_store(asgi_app):
             missing = await client.get("/sessions/asgi-3/messages")
             return created, listed, deleted, missing
 
-    created, listed, deleted, missing = anyio.run(make_requests)
+    created, listed, deleted, missing = await make_requests()
 
     assert created.status_code == 200
     assert listed.json()["data"] == [{"session_id": "asgi-3", "title": "新对话"}]
@@ -390,7 +398,7 @@ def test_asgi_session_routes_use_injected_memory_store(asgi_app):
     assert missing.status_code == 404
 
 
-def test_asgi_requires_authentication_except_health(asgi_app):
+async def test_asgi_requires_authentication_except_health(asgi_app):
     app, _ = asgi_app
 
     async def make_requests():
@@ -407,14 +415,14 @@ def test_asgi_requires_authentication_except_health(asgi_app):
             )
             return health, sessions, bad_token
 
-    health, sessions, bad_token = anyio.run(make_requests)
+    health, sessions, bad_token = await make_requests()
     assert health.status_code == 200
     assert sessions.status_code == 401
     assert sessions.headers["www-authenticate"] == "Bearer"
     assert bad_token.status_code == 401
 
 
-def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
+async def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
     app, _ = asgi_app
 
     async def make_requests():
@@ -477,7 +485,7 @@ def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
         failure,
         logged_out,
         revoked_request,
-    ) = anyio.run(make_requests)
+    ) = await make_requests()
     assert registered.status_code == 201
     assert registered.json()["data"]["username"] == "new-user"
     assert duplicate.status_code == 409
@@ -491,7 +499,7 @@ def test_asgi_login_issues_jwt_and_rejects_invalid_credentials(asgi_app):
     assert revoked_request.status_code == 401
 
 
-def test_asgi_session_ownership_and_list_are_scoped_per_user(asgi_app):
+async def test_asgi_session_ownership_and_list_are_scoped_per_user(asgi_app):
     app, fake_agent = asgi_app
 
     async def make_requests():
@@ -521,9 +529,7 @@ def test_asgi_session_ownership_and_list_are_scoped_per_user(asgi_app):
             )
             return created, alice_list, bob_list, bob_read, bob_clear, bob_delete
 
-    created, alice_list, bob_list, bob_read, bob_clear, bob_delete = anyio.run(
-        make_requests
-    )
+    created, alice_list, bob_list, bob_read, bob_clear, bob_delete = await make_requests()
     assert created.status_code == 200
     assert [item["session_id"] for item in alice_list.json()["data"]] == [
         "alice-private"
@@ -535,7 +541,7 @@ def test_asgi_session_ownership_and_list_are_scoped_per_user(asgi_app):
     assert len(fake_agent.session_manager.sessions) == 1
 
 
-def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
+async def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
     app, fake_agent = asgi_app
 
     async def make_requests():
@@ -556,7 +562,7 @@ def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
             )
             return alice, bob
 
-    alice, bob = anyio.run(make_requests)
+    alice, bob = await make_requests()
     def completed_session_id(response):
         return next(
             json.loads(line[6:])["session_id"]
@@ -576,10 +582,10 @@ def test_asgi_chat_without_session_id_creates_unique_user_sessions(asgi_app):
 
 # 用真实 Agent 和检索上下文工具验证引用只编码一次且 SSE 正常完成。
 @pytest.mark.parametrize("has_evidence", [True, False])
-def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidence):
+async def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidence):
     from agent.agent import Agent
     import tools.knowledge as knowledge
-    from test.test_agent import stream_chunk, stream_tool_call_delta
+    from test.test_agent import stream_chunk, make_message, make_tool_call, llm_response
 
     app, fake_agent = asgi_app
     observed_owners = []
@@ -591,11 +597,10 @@ def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidenc
 
     monkeypatch.setattr(knowledge, "knowledge_search", search)
     llm = MagicMock()
+    llm.chat.completions.create = AsyncMock()
     llm.chat.completions.create.side_effect = [
-        iter([stream_chunk(tool_calls=[stream_tool_call_delta(
-            call_id="rag-call", name="knowledge_search_context", arguments='{"query":"公司在哪里"}',
-        )])]),
-        iter([stream_chunk(content="公司在深圳。" if has_evidence else "当前知识库无法确认。")]),
+        llm_response(make_message(tool_calls=[make_tool_call("knowledge_search_context", '{"query":"公司在哪里"}', "rag-call")])),
+        AsyncStream([stream_chunk(content="公司在深圳。" if has_evidence else "当前知识库无法确认。")]),
     ]
     real_agent = Agent(llm, [], {"knowledge_search_context": knowledge.knowledge_search_context})
     real_agent.session_manager = fake_agent.session_manager
@@ -606,7 +611,7 @@ def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidenc
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
             return await client.post("/chat", headers=ALICE_HEADERS, json={"message": "公司在哪里"})
 
-    response = anyio.run(request)
+    response = await request()
     events = parse_sse_events(response)
     assert [event["type"] for event in events] == ["delta", "done"]
     assert observed_owners == [1]
@@ -616,13 +621,13 @@ def test_real_rag_tool_reaches_http_citations(asgi_app, monkeypatch, has_evidenc
 
 
 # 验证不同用户的作用域在每次线程池迭代中恢复，生成异常只有 error 终态。
-def test_http_stream_scope_and_error_terminal(asgi_app, monkeypatch):
+async def test_http_stream_scope_and_error_terminal(asgi_app, monkeypatch):
     import tools.knowledge as knowledge
     app, fake_agent = asgi_app
     observed = []
 
     # 在多次恢复生成器时记录用户范围，并模拟生成过程失败。
-    def stream(message, session_id):
+    async def stream(message, session_id):
         observed.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
         yield "片段一"
         observed.append(knowledge._CURRENT_KNOWLEDGE_OWNER.get())
@@ -639,23 +644,23 @@ def test_http_stream_scope_and_error_terminal(asgi_app, monkeypatch):
             second = await client.post("/chat", headers=BOB_HEADERS, json={"message": "失败"})
             return first, second
 
-    first, second = anyio.run(request)
+    first, second = await request()
     assert [e["type"] for e in parse_sse_events(first)] == ["delta", "delta", "done"]
     assert [e["type"] for e in parse_sse_events(second)] == ["delta", "error"]
     assert observed == [1, 1, 1, 2, 2]
     assert knowledge._CURRENT_KNOWLEDGE_OWNER.get() is None
 
 
-# 验证 async 文档接口将同步服务放到线程池执行。
+# 验证文档接口直接等待异步服务。
 @pytest.mark.parametrize("method", ["post", "put"])
-def test_document_write_service_runs_outside_event_loop(asgi_app, monkeypatch, method):
+async def test_document_write_service_is_awaited(asgi_app, monkeypatch, method):
     import threading
     app, _ = asgi_app
     routes = importlib.import_module("api.routes.documents")
     service_threads = []
 
     # 服务替身只记录执行线程，不接触真实文档和数据库。
-    def service(*args):
+    async def service(*args):
         service_threads.append(threading.get_ident())
         return {"document_id": "test-document"}
 
@@ -668,7 +673,42 @@ def test_document_write_service_runs_outside_event_loop(asgi_app, monkeypatch, m
                 headers=ALICE_HEADERS, files={"file": ("demo.txt", b"demo", "text/plain")})
             return event_thread, response
 
-    event_thread, response = anyio.run(request)
+    event_thread, response = await request()
     assert response.status_code == (201 if method == "post" else 200)
     assert len(service_threads) == 1
-    assert service_threads[0] != event_thread
+    assert service_threads[0] == event_thread
+
+
+# 停止接口需要认证且不能跨用户停止任务。
+async def test_stop_generation_ownership(asgi_app):
+    from agent.control import begin_generation, finish_generation
+    app, fake_agent = asgi_app
+    key = make_stored_session_id("alice", "stop-test")
+    await fake_agent.session_manager.create(key, 1)
+    event = begin_generation(key)
+    async def requests():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+            assert (await client.post("/sessions/stop-test/stop")).status_code == 401
+            assert (await client.post("/sessions/stop-test/stop", headers=BOB_HEADERS)).status_code == 404
+            assert not event.is_set()
+            response = await client.post("/sessions/stop-test/stop", headers=ALICE_HEADERS)
+            assert response.json()["data"]["stopped"] is True
+            assert event.is_set()
+    try:
+        await requests()
+    finally:
+        finish_generation(key, event)
+
+
+# 应用退出时异步关闭模型客户端连接。
+async def test_lifespan_closes_async_client(asgi_app, monkeypatch):
+    app, _ = asgi_app
+    client = MagicMock()
+    client.close = AsyncMock()
+    monkeypatch.setattr(sys.modules["agent.runtime"], "client", client, raising=False)
+    monkeypatch.setenv("RAG_WARMUP", "false")
+    async def lifecycle():
+        async with app.router.lifespan_context(app):
+            pass
+    await lifecycle()
+    client.close.assert_awaited_once()

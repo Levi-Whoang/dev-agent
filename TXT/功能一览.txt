@@ -1,5 +1,5 @@
 项目文件与文件夹功能一览
-更新时间：2026-10-31 00:41:00 +08:00
+更新时间：2026-11-02 21:45:51 +08:00
 说明：按当前工作区整理。自动生成的虚拟环境、缓存和 Git 内部文件仅说明目录用途；本地密钥、数据库及工具个人配置不读取具体内容。
 
 一、根目录文件
@@ -17,6 +17,8 @@
 二、agent/：Agent 与会话持久化
 - __init__.py：将目录标记为 Python 包。
 - agent.py：Agent 主循环；调用大模型、处理工具调用，并提供普通和流式运行逻辑。
+- control.py：进程内生成任务登记、停止信号、有界工具线程池和工具超时日志。
+- stream_filter.py：跨模型分片过滤内部推理标签，输出公开正文。
 - runtime.py：加载模型 API 配置，创建共享 OpenAI 客户端和 Agent 实例。
 - session.py：会话消息及会话元数据的数据库读写、创建、查询、改名、清空和删除。
 
@@ -182,3 +184,54 @@
 - frontend/node_modules/、frontend/dist/：前端依赖和构建产物目录（当前清单不逐项列举；通常由 npm install/build 生成）。
 
 后续维护规则：新增项目文件时，在本文件相应目录下补一条“文件名：用途”；新增目录时先写目录职责，再列出其中新增文件。删除或迁移文件时同步更新对应条目。不要在本清单中写入密钥、口令或数据库内容。
+
+RAG Evaluation 新增模块
+- evaluation/：纯向量与混合检索成对评估模块。
+- evaluation/__init__.py：评估包入口。
+- evaluation/metrics.py：证据覆盖、来源/证据排名、无答案误召回、分类与成对差异指标。
+- evaluation/retrieval.py：执行对照实验、审查标注、收集版本环境、输出 JSON/TXT。
+- evaluation/README.md：评估运行方法与指标边界说明。
+- evaluation/results/：带时间戳的实际评估报告目录。
+- test/test_rag_evaluation.py：指标分母、来源与证据区别、正例提升及负例退化测试。
+- TXT/RAG检索对比评估结果.txt：最近一次实际检索对照的中文总结。
+- evaluation/results/retrieval_comparison_20261102_205333.json：本次公共演示语料检索对照的逐题结构化报告。
+- evaluation/results/retrieval_comparison_20261102_205333.txt：本次公共演示语料检索对照的中文结果总结。
+- evaluation/results/retrieval_comparison_20261102_205359.json：本次公共演示语料检索对照的逐题结构化报告。
+- evaluation/results/retrieval_comparison_20261102_205359.txt：本次公共演示语料检索对照的中文结果总结。
+
+RAG 五项指标扩展
+- evaluation/quality.py：证据级 Recall/MRR/Precision 与真实生成忠实度、无答案拒答评估；可均衡抽样调用生成模型和裁判。
+- evaluation/business_dataset.json：business-eval-1.0 虚构业务评估集，包含20题、标准答案和来源/原文证据标注。
+- test/test_rag_quality.py：证据分母、裁判合法性、空拒答及幻觉伪拒答测试。
+- demo_data/knowledge_base/business_company.txt：虚构星桥云企业定位和服务区域。
+- demo_data/knowledge_base/business_orders.txt：虚构采购审批、撤销、退款规则。
+- demo_data/knowledge_base/business_inventory.txt：虚构库存预警和批次追溯规则。
+- demo_data/knowledge_base/business_security.txt：虚构备份、保留期与报表导出权限。
+- demo_data/knowledge_base/business_support.txt：虚构故障响应、试用和管理员培训政策。
+- TXT/RAG五项指标评估结果.txt：最近一次五项指标实测与口径说明。
+- TXT/功能一览.txt：20题检索及6题/模式生成裁判的逐题实测结果。
+- TXT/功能一览.txt：上述实验的中文说明。
+
+- TXT/首字延迟诊断与优化.txt：首字延迟成因、修复、真实单次对照和限制。
+- TXT/首字延迟诊断数据.json：RAG冷/热检索与模型首正文的单次原始耗时数据。
+
+[2026-11-02 21:36:18 +08:00] async第一阶段功能更新
+- test/async_helpers.py：异步模型流测试替身、连接关闭跟踪和异步分片收集。
+- agent/runtime.py：共享AsyncOpenAI异步客户端和Agent实例。
+- agent/control.py：进程内生成任务、异步网络取消等待和同步工具线程池的异步结果等待。
+- api/chat_helpers.py：原生异步SSE封装与生成生命周期管理，同步引用读取在线程池执行。
+
+[2026-11-02 21:45:51 +08:00] 数据库异步改造功能更新
+- test/test_async_database.py：真实异步SQLite仓储、事务取消回滚、令牌轮换、文档权限与认证审计集成测试。
+- modules/database.py：异步引擎、独立AsyncSession事务作用域、异步建表及连接池释放。
+- auth/repository.py、agent/session.py：异步认证与会话数据仓储。
+- services/documents.py：异步文档数据库服务，文件解析读写在线程池执行。
+
+[2026-11-03 14:38:01 +08:00] 取消回退后的当前功能状态
+- modules/database.py：SQLAlchemy异步引擎、兼容URL、独立AsyncSession事务与连接池释放。
+- agent/runtime.py、agent/control.py：AsyncOpenAI客户端、可取消网络等待、有界工具线程池的异步等待。
+- api/chat_helpers.py：异步SSE、引用提取、检索用户上下文及断连清理。
+- auth/repository.py、agent/session.py、services/documents.py：异步认证/会话/文档数据库访问，同步文件与密码计算在线程池执行。
+- test/async_helpers.py：异步模型流、关闭状态和分片收集测试替身，恢复原文件路径。
+- test/test_async_database.py：异步SQLite认证/令牌/文档所有权、独立Session、异常与取消回滚集成测试，恢复原文件路径。
+- 上轮中断回退的临时同步替代文件test/stream_helpers.py、test/test_database.py已被上述异步文件替代，当前不存在。

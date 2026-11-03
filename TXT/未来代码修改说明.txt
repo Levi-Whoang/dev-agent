@@ -282,3 +282,69 @@
 修改后：每次恢复生成器独立设置/重置用户上下文，输出终态前关闭生成器；工具返回字典并在协议边界编码一次，历史引用兼容旧双重编码；前端合并刷新任务并检查令牌状态变化，历史按轮次展示引用；文档写入同步调用转线程池；修复测试注入及添加组合链路测试。未认证响应补充 WWW-Authenticate，说明文档与实际输出模式保持一致。
 涉及文件：api/chat_helpers.py、tools/knowledge.py、api/routes/documents.py、frontend/src/api.ts、frontend/src/App.tsx、frontend/package.json、frontend/test/auth-refresh.test.mjs、frontend/README.md、test/test_api.py、test/test_api_http.py、test/test_knowledge.py、auth/jwt_auth.py、agent/agent.py、README.md、TXT/功能一览.txt。
 验证：前端 3 项回归通过、生产构建通过；后端选定 30 项通过、3 项 sklearn 相关评分测试未执行；编译和差异空白检查通过。后端使用 Python 3.10 临时依赖而非项目损坏的 Python 3.12 环境，因此原锁定环境仍待复测。没有真实模型/数据库联调；NO3 第二、三阶段的一致性和性能问题尚未全部修复。
+
+
+[2026-11-02 20:44:42 +08:00] 流式输出、停止生成及工具执行控制
+修改前：最终回答全量缓冲后输出，无停止接口与按钮，工具同步执行没有时间预算。
+修改后：最终回答逐段发送并过滤推理标签；可按会话停止、保存部分答案并清理任务；工具执行具有等待超时和并发上限，新增任务/工具日志。
+涉及：agent/agent.py、agent/control.py、agent/stream_filter.py、api/chat_helpers.py、api/routes/sessions.py、frontend/src/api.ts、frontend/src/App.tsx、test/test_agent.py、test/test_api_http.py、README.md、TXT/功能一览.txt。
+实现真正的最终回答增量输出：工具决策与最终生成分离，最终阶段不传工具，逐分片过滤推理标签；停止接口按用户会话命名空间隔离，前端停止按钮通知后端并 AbortController 取消读取；后端关闭模型流、保存已发送回答，登记生成状态并拒绝同会话重复生成。工具执行增加四线程并发上限、默认 15 秒等待超时、取消检查和名称/耗时/完成/超时/失败日志；生成增加开始/结束日志。新增 agent/control.py、agent/stream_filter.py 并更新功能一览和 README。
+验证：后端 test_agent.py 与 test_api_http.py 共 25 项通过，覆盖实际分片到达、停止保存、跨分片推理过滤、工具超时、停止 API 未认证与跨用户拒绝；前端 3 项测试和生产构建通过。后端仍使用 Python 3.10 临时测试依赖环境，非原 Python 3.12 锁定环境。未调用真实模型或 MySQL。限制：停止是协作式取消，阻塞模型读取最多等待请求超时；已执行同步工具不能被强杀；任务控制为进程内，当前按单 worker 使用；工具决策与回答分离会增加模型请求。
+
+
+[2026-11-02 20:55:23 +08:00] RAG Evaluation 检索对照评估
+修改前：已有参数扫描评估，但缺少纯向量/混合检索直接对照与独立评估模块。
+修改后：新增 evaluation/{__init__.py,metrics.py,retrieval.py,README.md}、test/test_rag_evaluation.py 和版本化报告；tools/knowledge.py 提供检索策略切换，保留应用默认混合检索；扩充检索基线测试并同步文档。
+新增 evaluation 模块，在同一公共语料、模型、切分、阈值和 Top-K 下比较纯向量策略重建与当前混合检索。评估复用生产 search_knowledge，默认 knowledge_search 仍使用混合策略；保存指标、分类、逐题结果、失败案例、成对变化、gold_audit、语料/数据集指纹、模型和环境。实测 80 条（50 正例、30 负例），纯向量证据覆盖命中率 70%（35/50），混合 74%（37/50），来源 MRR 0.6133→0.6767，误召回均为 5/30（16.67%）；2 题补回、0 题命中退化。发现 6 个正例标注来源缺少标准词，报告已明示且没有静默剔除。该分数不是最终回答准确率，也不是完整历史提交性能。
+结果：TXT/RAG检索对比评估结果.txt；历史 JSON/TXT 位于 evaluation/results。第一次沙箱运行曾在模型加载期间无输出，检查时实际已完成；随后离线复核第二次输出指标一致。此次 .venv 已恢复为 Python 3.12.13，可使用本地真实 embedding 缓存；未调用 LLM/MySQL，未读取个人上传文档。指标与检索回归 15 项通过；最初 3 项临时目录权限错误在沙箱外复核后消除。功能一览和 README 已同步更新。
+
+
+[2026-11-02 21:06:19 +08:00] 五项RAG指标与虚构公司业务评估
+修改前：独立评估只有检索覆盖和来源排名，无实际生成忠实度或拒答测量。
+修改后：新增五项质量评估、证据标注业务集与实际生成裁判；指标、分母、失败和样本范围均记录。
+涉及 evaluation/quality.py、evaluation/business_dataset.json、evaluation/README.md、test/test_rag_quality.py、demo_data/knowledge_base/business_*.txt、README.md、TXT/功能一览.txt 和结果报告。
+按用户指定五项指标新增 evaluation/quality.py：基于来源+完整标注引文计算证据 Recall@K、正确证据 MRR、固定 K 分母的 Precision@K；基于真实生成和原子陈述裁判计算 Faithfulness、无答案准确率，并区分仅检索无答案率与空证据拒答率。新增5份明确虚构的星桥云业务语料和20题评估集（12正例、8负例），全部证据可映射到分块；保留旧80题和历史报告。
+实测：K=3，纯向量/混合 Recall 25%/91.67%，MRR 0.25/0.9167；全题 Precision 5%/18.33%，正例 Precision 8.33%/30.56%。每模式均衡抽样6题生成并裁判（3正3负），忠实度均100%（各8项事实），无答案准确率均100%（各3题），生成错误0；正例拒答率纯向量1/3、混合0/3。仅检索无答案准确率37.5%/25%，显示混合补召回也增加无答案干扰。结果不能外推整体正确率，裁判和生成同模型存在偏差；相关性使用引文匹配而非完整语义人工判定。实际运行的是固定检索证据到生成答案链路，不含Agent自主选工具。
+结果写入 TXT/RAG五项指标评估结果.txt 与 evaluation/results/rag_quality_*.json/.txt。README、功能一览更新；7项指标测试通过。新增虚构资料经配置知识库为demo_data时可用于应用检索；未改动用户个人文档或数据库。
+
+
+[2026-11-02 21:16:08 +08:00] 首字延迟定位与优化
+修改前：RAG首请求承担模型/语料编码，工具后额外生成并丢弃完整答案，无上传账号重复编码公共语料。
+修改后：应用启动预热、RAG证据直达最终流式、共享公共向量、新增分阶段日志。
+涉及：agent/agent.py、tools/knowledge.py、app/main.py、.env.example、test/test_agent.py、test/test_api_http.py、test/test_knowledge.py、README.md、TXT/功能一览.txt。
+首字延迟诊断与修复
+时间：2026-11-02 21:16:08 +08:00
+已确认原因：
+1. RAG 惰性加载 embedding 模型并编码全部公共片段，首次调用承担冷启动。
+2. RAG 工具返回后，模型又以非流式方式生成一遍完整答案，这份正文被丢弃，再调用最终流式回答；多一次不必要的模型等待。
+3. 即使没有私人文档，原来各用户仍分别缓存并编码相同公共语料。
+
+修改：启动阶段默认预热模型、公共向量和 BM25；RAG 工具完成直接进入最终流式回答；无上传用户共享公共向量；新增 llm_decision、rag_search、agent_first_text、rag_warmup 分阶段日志。
+
+实测（本地缓存模型、虚构公共资料、内存会话）：
+冷 RAG 13.207秒；热 RAG 0.012秒。
+热 RAG 条件首正文：重建原流程 3.538秒，优化流程 1.944秒。
+只有各一次模型对照，且模型请求顺序固定，存在网络/供应商缓存影响，不能将差值解释为稳定提升比例。基线通过关闭本轮RAG直达最终阶段分支构造，并非历史提交。没有测量浏览器、反向代理或MySQL耗时，不能声称生产端到端瓶颈已全部消除。
+
+验证：39项Agent/API/检索回归通过，包含减少一次模型调用、流式、停止、权限和公共向量复用。最初基准脚本因为stdin中load_dotenv自动找路径失败，改为显式.env路径后完成测量；未改用户密钥或读取历史对话。
+限制：冷启动转移到服务启动阶段，并没有消灭初始化成本；RAG_WARMUP=false会恢复冷启动等待。私人上传文档首次编码、上传后缓存失效、模型网络及历史长度仍可能增加延迟；当前保持单worker运行建议。
+
+[2026-11-02 21:36:18 +08:00] async第一阶段修改说明
+修改前：同步模型客户端和Agent、同步流由线程池逐次驱动；停止等待模型时需等待同步读取返回。
+修改后：AsyncOpenAI与原生异步Agent/SSE，异步取消网络等待；同步数据库和工具由线程池承接，添加关闭连接及断连保存清理。
+涉及：agent/agent.py、agent/control.py、agent/runtime.py、api/chat_helpers.py、app/main.py、test/evaluate_rag_answers.py、test/test_agent.py、test/test_rag_agent.py、test/test_api.py、test/test_api_http.py、test/async_helpers.py、README.md、TXT/功能一览.txt。
+完整函数级前后对比已写在同期本次对话总结。验证：73项离线测试通过，差异空白检查通过；未进行本轮真实模型和数据库联调。
+
+[2026-11-02 21:45:51 +08:00] async第二阶段数据库改造
+修改前：数据库采用同步Engine/Session/PyMySQL，Agent及文档服务在线程池中访问数据库。
+修改后：AsyncEngine/AsyncSession/aiomysql，认证、会话、文档和路由原生await；密码和文件工作单独在线程池，应用关闭释放异步池。
+涉及：modules/database.py、auth/repository.py、auth/jwt_auth.py、agent/session.py、agent/agent.py、services/documents.py、api/session_helpers.py、api/chat_helpers.py、api/routes/users.py、api/routes/sessions.py、api/routes/documents.py、app/main.py、requirements.txt、.env.example、README.md、test/test_async_database.py和相关已有测试/评估脚本、TXT/功能一览.txt。
+函数级对比详见同期项目总结。验证79项离线测试通过，真实MySQL只读SELECT1成功；无生产业务写入验证。
+
+[2026-11-03 14:38:01 +08:00] 取消上轮同步回退并修复异步调用链
+修改前：上轮同步回退被中断，工作区已有同步OpenAI、SQLAlchemy Engine/Session及同步仓储/Agent，README与测试曾切换同步，原有异步专用测试文件已被同步版本替换。用户随后明确取消回退。
+修改后：恢复异步运行，不回退功能。modules/database.py恢复AsyncEngine/async_sessionmaker、独立AsyncSession事务作用域、异步建表与退出释放连接池；旧同步MySQL/SQLite URL自动转换为aiomysql/aiosqlite。auth/repository.py、agent/session.py、auth/jwt_auth.py、api/session_helpers.py及用户/会话/文档路由恢复async/await，密码哈希单独在线程池执行。services/documents.py数据库操作原生await，文件解析/读写/改名在线程池；创建后显式refresh服务端时间字段，保留UTC时间修复。
+agent/runtime.py恢复AsyncOpenAI；agent/agent.py恢复模型调用和分片读取的取消等待、异步工具结果等待；agent/control.py恢复非阻塞Future等待和await_or_stop。api/chat_helpers.py恢复原生异步SSE和同任务检索上下文，断连清理关闭模型流并保存已输出正文；app/main.py退出时await关闭客户端与连接池。停止生成、增量推理过滤、RAG预热和跳过重复回答继续生效。
+测试与文档：requirements.txt恢复aiomysql/aiosqlite依赖；README更新为异步现状。test/async_helpers.py、test/test_async_database.py恢复，移除上轮临时同步替代文件test/stream_helpers.py和test/test_database.py。其余Agent/API/会话/评估测试同步匹配异步接口；保留显式关闭生成器的测试，并覆盖取消网络请求、断连关闭、异常及取消事务回滚。
+结果：完整离线测试81 passed，3.43秒；git diff --check通过。初轮三处测试适配问题（误await字典values、漏await查询）均已修复。测试使用SQLite和模型替身，不代表真实LLM/MySQL端到端压测。Windows沙箱的事件循环socketpair初始化曾阻塞，离线测试经允许在沙箱外正常执行。未修改.env、数据库表结构或真实用户数据，未提交推送，用户已有无关改动保留。
+边界：同步工具超时后仍可能在后台执行；多worker停止状态共享、同会话写入一致性、磁盘与数据库事务一致性仍需单独处理，本轮不宣称已解决。

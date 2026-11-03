@@ -1,8 +1,10 @@
+from test.async_helpers import AsyncStream, collect
 import json
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
+
 
 import agent.agent as agent_module
 from agent.agent import Agent
@@ -22,10 +24,10 @@ class FakeSessionManager:
     def __init__(self):
         self.sessions = {}
 
-    def get_messages(self, session_id):
+    async def get_messages(self, session_id):
         return list(self.sessions.get(session_id, []))
 
-    def save(self, session_id, messages):
+    async def save(self, session_id, messages):
         self.sessions[session_id] = list(messages)
 
 
@@ -89,6 +91,7 @@ def stream_tool_call_delta(
 def make_agent(monkeypatch, *messages, tool_registry=None):
     monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
     client = MagicMock()
+    client.chat.completions.create = AsyncMock()
     client.chat.completions.create.side_effect = [
         llm_response(message) for message in messages
     ]
@@ -100,12 +103,12 @@ def make_agent(monkeypatch, *messages, tool_registry=None):
     return agent, client
 
 
-def get_tool_message(agent, session_id):
-    messages = agent.session_manager.get_messages(session_id)
+async def get_tool_message(agent, session_id):
+    messages = await agent.session_manager.get_messages(session_id)
     return next(message for message in messages if message.get("role") == "tool")
 
 
-def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
+async def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
     call = make_tool_call("calculate", json.dumps({"a": 10, "b": 20}))
     agent, client = make_agent(
         monkeypatch,
@@ -114,7 +117,7 @@ def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
         tool_registry={"calculate": calculate},
     )
 
-    result = agent.run("计算 10 + 20", session_id="test_user")
+    result = await agent.run("计算 10 + 20", session_id="test_user")
 
     assert result == "计算结果是 30"
     assert client.chat.completions.create.call_count == 2
@@ -122,10 +125,10 @@ def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
     assert first_request["tool_choice"] == "auto"
     assert first_request["messages"][0]["role"] == "system"
 
-    messages = agent.session_manager.get_messages("test_user")
+    messages = await agent.session_manager.get_messages("test_user")
     assert any(message.get("role") == "tool" for message in messages)
     assert messages[-1]["content"] == "计算结果是 30"
-    assert json.loads(get_tool_message(agent, "test_user")["content"]) == 30
+    assert json.loads(((await get_tool_message(agent, "test_user")))["content"]) == 30
 
 
 @pytest.mark.parametrize(
@@ -153,7 +156,7 @@ def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
             "explode",
             json.dumps({"value": 1}),
             {"explode": explode},
-            "工具执行失败: boom",
+            "工具执行失败",
         ),
         (
             "untyped",
@@ -170,7 +173,7 @@ def test_agent_executes_tool_and_persists_final_answer(monkeypatch):
         "invalid-tool-schema",
     ],
 )
-def test_agent_returns_tool_errors_to_the_model(
+async def test_agent_returns_tool_errors_to_the_model(
     monkeypatch,
     tool_name,
     arguments,
@@ -185,16 +188,16 @@ def test_agent_returns_tool_errors_to_the_model(
         tool_registry=registry,
     )
 
-    assert agent.run("执行工具", session_id="error_case") == "处理完毕"
+    assert (await agent.run("执行工具", session_id="error_case")) == "处理完毕"
 
-    tool_result = json.loads(get_tool_message(agent, "error_case")["content"])
+    tool_result = json.loads(((await get_tool_message(agent, "error_case")))["content"])
     assert expected_error in json.dumps(tool_result, ensure_ascii=False)
     assert client.chat.completions.create.call_count == 2
     second_request = client.chat.completions.create.call_args_list[1].kwargs
     assert any(message.get("role") == "tool" for message in second_request["messages"])
 
 
-def test_agent_stops_after_maximum_tool_iterations(monkeypatch):
+async def test_agent_stops_after_maximum_tool_iterations(monkeypatch):
     def increment(value: int):
         return value + 1
 
@@ -216,56 +219,210 @@ def test_agent_stops_after_maximum_tool_iterations(monkeypatch):
     )
 
     with pytest.raises(RuntimeError, match="超过最大决策轮数"):
-        agent.run("一直调用工具", session_id="iteration_limit")
+        await agent.run("一直调用工具", session_id="iteration_limit")
 
     assert client.chat.completions.create.call_count == 10
-    messages = agent.session_manager.get_messages("iteration_limit")
+    messages = await agent.session_manager.get_messages("iteration_limit")
     assert sum(message.get("role") == "tool" for message in messages) == 10
 
 
-def test_agent_streams_final_answer_and_persists_complete_message(monkeypatch):
+async def test_agent_streams_final_answer_and_persists_complete_message(monkeypatch):
     monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
     client = MagicMock()
-    client.chat.completions.create.return_value = iter([
+    client.chat.completions.create = AsyncMock()
+    client.chat.completions.create.side_effect = [llm_response(make_message(content="决策草稿")), AsyncStream([
         stream_chunk(content="你好"),
         stream_chunk(content="，世界！"),
-    ])
+    ])]
     agent = Agent(client, tools=[], tool_registry={})
 
-    chunks = list(agent.run_stream("打招呼", session_id="stream-1"))
+    chunks = await collect(agent.run_stream("打招呼", session_id="stream-1"))
 
     assert chunks == ["你好", "，世界！"]
     assert client.chat.completions.create.call_args.kwargs["stream"] is True
-    assert agent.session_manager.get_messages("stream-1")[-1] == {
+    assert ((await agent.session_manager.get_messages("stream-1")))[-1] == {
         "role": "assistant",
         "content": "你好，世界！",
     }
 
 
-def test_agent_streams_tool_call_round_then_streams_final_answer(monkeypatch):
+async def test_agent_streams_tool_call_round_then_streams_final_answer(monkeypatch):
     monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
     client = MagicMock()
+    client.chat.completions.create = AsyncMock()
     client.chat.completions.create.side_effect = [
-        iter([
-            stream_chunk(tool_calls=[stream_tool_call_delta(
-                call_id="call_stream",
-                name="calculate",
-                arguments='{"a":',
-            )]),
-            stream_chunk(tool_calls=[stream_tool_call_delta(
-                arguments="10,\"b\":20}",
-            )]),
-        ]),
-        iter([stream_chunk(content="结果是 30")]),
+        llm_response(make_message(tool_calls=[make_tool_call("calculate", '{"a":10,"b":20}', "call_stream")])),
+        llm_response(make_message(content="决策结束")),
+        AsyncStream([stream_chunk(content="结果是 30")]),
     ]
     agent = Agent(client, tools=[], tool_registry={"calculate": calculate})
 
-    chunks = list(agent.run_stream("计算 10 + 20", session_id="stream-tool"))
+    chunks = await collect(agent.run_stream("计算 10 + 20", session_id="stream-tool"))
 
     assert chunks == ["结果是 30"]
-    assert client.chat.completions.create.call_count == 2
-    messages = agent.session_manager.get_messages("stream-tool")
+    assert client.chat.completions.create.call_count == 3
+    messages = await agent.session_manager.get_messages("stream-tool")
     assert messages[-1] == {"role": "assistant", "content": "结果是 30"}
     tool_message = next(message for message in messages if message["role"] == "tool")
     assert tool_message["tool_call_id"] == "call_stream"
     assert json.loads(tool_message["content"]) == 30
+
+
+# 在消费完模型流之前即可拿到正文，停止后关闭流并保存已发送文本。
+async def test_real_incremental_and_stop(monkeypatch):
+    from threading import Event
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    consumed = []
+    def chunks():
+        for text in ["<thi", "nk>隐藏</think>你好", "世界"]:
+            consumed.append(text)
+            yield stream_chunk(content=text)
+    response = AsyncStream(chunks())
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock()
+    client.chat.completions.create.side_effect = [llm_response(make_message(content="草稿")), response]
+    agent = Agent(client, [], {})
+    event = Event()
+    stream = agent.run_stream("你好", "stop", event)
+    assert (await anext(stream)) == "你好"
+    assert len(consumed) == 2
+    event.set()
+    assert (await collect(stream)) == []
+    assert response.closed
+    assert ((await agent.session_manager.get_messages("stop")))[-1]["content"] == "你好"
+    assert "tools" not in client.chat.completions.create.call_args.kwargs
+
+
+# 工具超时返回可识别错误且不无限等待。
+async def test_tool_timeout():
+    from agent.control import execute_tool
+    from threading import Event
+    release = Event()
+    def slow():
+        release.wait(1)
+    try:
+        result = await execute_tool(slow, {}, 0.02)
+        assert result["code"] == "tool_timeout"
+    finally:
+        release.set()
+
+
+# RAG 工具完成后直接流式回答，不能再请求一次无用的完整答案。
+async def test_rag_skips_duplicate_answer(monkeypatch):
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    def knowledge_search_context(query: str):
+        return {"evidence":"公开证据"}
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock()
+    client.chat.completions.create.side_effect = [
+        llm_response(make_message(tool_calls=[make_tool_call("knowledge_search_context", '{"query":"问题"}')])),
+        AsyncStream([stream_chunk(content="第一段"),stream_chunk(content="第二段")]),
+    ]
+    agent = Agent(client, [], {"knowledge_search_context":knowledge_search_context})
+    assert (await collect(agent.run_stream("问题", "fast-rag"))) == ["第一段", "第二段"]
+    assert client.chat.completions.create.call_count == 2
+
+
+# 提前关闭异步生成器时关闭模型连接，并保存已经发送的正文。
+async def test_close_stream_closes_and_saves(monkeypatch):
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    response = AsyncStream([stream_chunk(content="已发送"), stream_chunk(content="尚未发送")])
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock()
+    client.chat.completions.create.side_effect = [llm_response(make_message(content="决策")), response]
+    agent = Agent(client, [], {})
+    stream = agent.run_stream("测试", "disconnect")
+    assert (await anext(stream)) == "已发送"
+    await stream.aclose()
+    assert response.closed
+    assert (await agent.session_manager.get_messages("disconnect"))[-1]["content"] == "已发送"
+
+
+# 停止信号取消尚未返回的模型请求，避免等待网络超时。
+async def test_stop_cancels_pending_model(monkeypatch):
+    import asyncio
+    from threading import Event
+    from agent.control import GenerationStopped
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    entered = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    # 用可取消等待模拟迟迟未返回的网络请求。
+    async def request(**kwargs):
+        entered.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(side_effect=request)
+    agent = Agent(client, [], {})
+    event = Event()
+    stream = agent.run_stream("问题", "pending-stop", event)
+    task = asyncio.create_task(anext(stream))
+    await asyncio.wait_for(entered.wait(), timeout=1)
+    event.set()
+    with pytest.raises(GenerationStopped):
+        await asyncio.wait_for(task, timeout=1)
+    assert cancelled.is_set()
+    await stream.aclose()
+
+
+# 网络等待期间事件循环仍可执行其他任务。
+async def test_network_wait_does_not_block_loop():
+    import asyncio
+    from threading import Event
+    from agent.control import await_or_stop
+    ready = asyncio.Event()
+
+    # 等待另一个任务发出信号，模拟网络响应就绪。
+    async def network():
+        await ready.wait()
+        return "ok"
+
+    task = asyncio.create_task(await_or_stop(network(), Event()))
+    await asyncio.sleep(0)
+    assert not task.done()
+    ready.set()
+    assert await asyncio.wait_for(task, timeout=1) == "ok"
+
+
+# 取消分片读取后关闭模型连接，并保存此前已发送的正文。
+async def test_cancel_stream_closes_and_saves(monkeypatch):
+    import asyncio
+    monkeypatch.setattr(agent_module, "SessionManager", FakeSessionManager)
+    entered = asyncio.Event()
+
+    class WaitingStream(AsyncStream):
+        # 首片段之后持续等待，用于模拟浏览器断开连接。
+        async def __anext__(self):
+            if not hasattr(self, "sent"):
+                self.sent = True
+                return stream_chunk(content="已发送")
+            entered.set()
+            await asyncio.Event().wait()
+
+    response = WaitingStream([])
+    client = MagicMock()
+    client.chat.completions.create = AsyncMock(side_effect=[llm_response(make_message(content="决策")), response])
+    agent = Agent(client, [], {})
+    stream = agent.run_stream("测试", "cancelled-disconnect")
+    assert await anext(stream) == "已发送"
+    reading = asyncio.create_task(anext(stream))
+    await asyncio.wait_for(entered.wait(), timeout=1)
+    reading.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await reading
+    assert response.closed
+    assert (await agent.session_manager.get_messages("cancelled-disconnect"))[-1]["content"] == "已发送"
+
+
+
+
+pytestmark = pytest.mark.anyio
+
+# 测试统一使用项目的asyncio运行时。
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"

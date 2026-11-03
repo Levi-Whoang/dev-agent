@@ -1,10 +1,15 @@
 import json
 import os
 import re
+import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 from tools.schema import create_args_model
 from pydantic import ValidationError
 from agent.session import SessionManager
+from agent.control import execute_tool, await_or_stop, GenerationStopped
 
 class Agent:
 
@@ -40,16 +45,17 @@ class Agent:
         self.tool_registry = tool_registry
         self.session_manager = SessionManager()
 
-    def run(self, user_input, session_id):
+    # 异步执行模型决策和工具调用，返回完整回答供内部评估使用。
+    async def run(self, user_input, session_id):
 
-        messages = self.session_manager.get_messages(session_id)
+        messages = await self.session_manager.get_messages(session_id)
 
         messages.append({
             "role": "user",
             "content": user_input
         })
 
-        self.session_manager.save(session_id, messages)
+        await self.session_manager.save(session_id, messages)
         #最多10轮决策
         max_iterations = 10
 
@@ -59,7 +65,7 @@ class Agent:
             messages[0] = self._system_prompt
 
         for _ in range(max_iterations):
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=os.getenv("LLM_MODEL"),
                 messages=messages,
                 tools=self.tools,
@@ -74,7 +80,7 @@ class Agent:
 
             # LLM 不需要工具
             if not message.tool_calls:
-                self.session_manager.save(session_id, messages)
+                await self.session_manager.save(session_id, messages)
                 return message.content
 
             # LLM 要调用工具
@@ -101,7 +107,7 @@ class Agent:
                         )
                     })
 
-                    self.session_manager.save(session_id, messages)
+                    await self.session_manager.save(session_id, messages)
 
                     continue
 
@@ -132,7 +138,7 @@ class Agent:
 
                     else:
                         try:
-                            result = tool(**validated_args.model_dump())
+                            result = await execute_tool(tool, validated_args.model_dump(), float(os.getenv("TOOL_TIMEOUT_SECONDS", "15")))
                         except Exception as e:
                             result = {
                                 "error": f"工具执行失败: {str(e)}"
@@ -147,109 +153,87 @@ class Agent:
                     )
                 })
 
-            self.session_manager.save(session_id, messages)
+            await self.session_manager.save(session_id, messages)
 
         else:
-            self.session_manager.save(session_id, messages)
+            await self.session_manager.save(session_id, messages)
             raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
 
-    def run_stream(self, user_input, session_id):
-        """工具调用轮次先执行工具，最终回答完成并过滤后再输出。"""
-        messages = self.session_manager.get_messages(session_id)
+    # 工具决策与最终输出分离，最终阶段不注册工具以防输出工具草稿。
+    async def run_stream(self, user_input, session_id, stop_event=None):
+        from threading import Event
+        from agent.stream_filter import PublicTextFilter
+        stop_event = stop_event or Event()
+        started = time.perf_counter()
+        messages = await self.session_manager.get_messages(session_id)
         messages.append({"role": "user", "content": user_input})
-        self.session_manager.save(session_id, messages)
-
         if not messages or messages[0].get("role") != "system":
             messages.insert(0, self._system_prompt)
         else:
             messages[0] = self._system_prompt
-
+        await self.session_manager.save(session_id, messages)
         for _ in range(10):
-            response_stream = self.client.chat.completions.create(
-                model=os.getenv("LLM_MODEL"),
-                messages=messages,
-                tools=self.tools,
-                tool_choice="auto",
-                stream=True,
-            )
-            content_parts = []
-            streamed_tool_calls = {}
-
-            try:
-                for chunk in response_stream:
-                    if not chunk.choices:
-                        continue
-
-                    delta = chunk.choices[0].delta
-                    content = getattr(delta, "content", None)
-                    if content:
-                        content_parts.append(content)
-                    # 独立 reasoning_content 字段只用于模型内部推理，不发送给客户端。
-
-                    for tool_delta in getattr(delta, "tool_calls", None) or []:
-                        index = tool_delta.index
-                        tool_call = streamed_tool_calls.setdefault(
-                            index,
-                            {
-                                "id": "",
-                                "type": "function",
-                                "function": {"name": "", "arguments": ""},
-                            },
-                        )
-                        if tool_delta.id:
-                            tool_call["id"] = tool_delta.id
-
-                        function_delta = tool_delta.function
-                        if function_delta:
-                            if function_delta.name:
-                                tool_call["function"]["name"] += function_delta.name
-                            if function_delta.arguments:
-                                tool_call["function"]["arguments"] += function_delta.arguments
-            finally:
-                close = getattr(response_stream, "close", None)
-                if close:
-                    close()
-
-            tool_calls = [
-                streamed_tool_calls[index]
-                for index in sorted(streamed_tool_calls)
-            ]
-            message = {
-                "role": "assistant",
-                "content": "".join(content_parts) or None,
-            }
-            if tool_calls:
-                message["tool_calls"] = tool_calls
-                # 工具决策轮的文本可能包含推理草稿，不保存在会话历史。
-                message.pop("content", None)
-            messages.append({key: value for key, value in message.items() if value is not None})
-
-            if not tool_calls:
-                # 仅发送最终答复，过滤工具轮草稿和常见隐藏推理标签。
-                public_answer = self._public_answer("".join(content_parts))
-                if public_answer:
-                    messages[-1]["content"] = public_answer
-                else:
-                    messages[-1].pop("content", None)
-                self.session_manager.save(session_id, messages)
-                if public_answer:
-                    yield public_answer
+            if stop_event.is_set():
                 return
+            decision_started = time.perf_counter()
+            response = await await_or_stop(self.client.chat.completions.create(
+                model=os.getenv("LLM_MODEL"), messages=messages, tools=self.tools,
+                tool_choice="auto", timeout=20,
+            ), stop_event)
+            logger.info("llm_decision session_id=%s duration=%.3f", session_id, time.perf_counter()-decision_started)
+            decision = response.choices[0].message
+            if not decision.tool_calls:
+                break
+            saved = decision.model_dump(exclude_none=True)
+            saved.pop("content", None)
+            messages.append(saved)
+            for call in saved["tool_calls"]:
+                result = await self._execute_streamed_tool(call, stop_event)
+                messages.append({"role": "tool", "tool_call_id": call["id"],
+                                 "content": json.dumps(result, ensure_ascii=False)})
+            await self.session_manager.save(session_id, messages)
+            # 知识证据已经就绪，直接进入最终流式回答，避免再生成并丢弃一遍完整答案。
+            if all(call["function"]["name"] in {"knowledge_search", "knowledge_search_context"} for call in saved["tool_calls"]):
+                break
+        else:
+            raise RuntimeError("Agent 超过最大决策轮数")
+        if stop_event.is_set():
+            return
+        response_stream = await await_or_stop(self.client.chat.completions.create(
+            model=os.getenv("LLM_MODEL"), messages=messages, stream=True, timeout=20,
+        ), stop_event)
+        public_filter = PublicTextFilter()
+        parts = []
+        try:
+            while not stop_event.is_set():
+                try:
+                    chunk = await await_or_stop(anext(response_stream), stop_event)
+                except (StopAsyncIteration, GenerationStopped):
+                    break
+                if stop_event.is_set():
+                    break
+                if not chunk.choices:
+                    continue
+                content = public_filter.feed(getattr(chunk.choices[0].delta, "content", None) or "")
+                if content:
+                    if not parts:
+                        logger.info("agent_first_text session_id=%s duration=%.3f", session_id, time.perf_counter()-started)
+                    parts.append(content)
+                    yield content
+        finally:
+            import anyio
+            # 断连取消期间仍关闭连接，并保存已经输出的正文。
+            with anyio.CancelScope(shield=True):
+                try:
+                    await response_stream.close()
+                finally:
+                    if parts:
+                        messages.append({"role": "assistant", "content": "".join(parts)})
+                        await self.session_manager.save(session_id, messages)
 
-            for tool_call in tool_calls:
-                result = self._execute_streamed_tool(tool_call)
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tool_call["id"],
-                    "content": json.dumps(result, ensure_ascii=False),
-                })
+    # 校验工具参数并等待有界线程池执行结果。
 
-            self.session_manager.save(session_id, messages)
-
-        self.session_manager.save(session_id, messages)
-        raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
-
-    def _execute_streamed_tool(self, tool_call):
+    async def _execute_streamed_tool(self, tool_call, stop_event=None):
         function = tool_call["function"]
         tool_name = function["name"]
 
@@ -274,6 +258,8 @@ class Agent:
             return {"error": f"工具执行前发生错误: {error}"}
 
         try:
-            return tool(**validated_args.model_dump())
+            from agent.control import execute_tool
+            return await execute_tool(tool, validated_args.model_dump(),
+                                float(os.getenv("TOOL_TIMEOUT_SECONDS", "15")), stop_event)
         except Exception as error:
             return {"error": f"工具执行失败: {error}"}

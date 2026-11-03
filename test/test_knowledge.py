@@ -223,3 +223,36 @@ def test_partial_keyword_overlap_cannot_bypass_dense_threshold(monkeypatch):
     monkeypatch.setattr(knowledge, "SIMILARITY_THRESHOLD", 0.55)
 
     assert knowledge.knowledge_search("Python FastAPI 月薪") == []
+
+
+# 纯向量模式不允许关键词绕过阈值，混合模式可补回同一低向量分片段。
+def test_dense_baseline_excludes_keyword_rescue(monkeypatch):
+    items = ({"source": "job.txt", "content": "Python"},)
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda: items)
+    monkeypatch.setattr(knowledge, "get_knowledge_vectors", lambda: np.array([[0.2, 0.98]]))
+    class Model:
+        # 使用固定查询向量隔离模型下载。
+        def encode(self, texts, normalize_embeddings):
+            return np.array([[1.0, 0.0]])
+    monkeypatch.setattr(knowledge, "get_embedding_model", lambda: Model())
+    assert knowledge.search_knowledge("Python", "dense") == []
+    assert len(knowledge.search_knowledge("Python", "hybrid")) == 1
+    with pytest.raises(ValueError):
+        knowledge.search_knowledge("Python", "invalid")
+
+
+# 无私人文档的账号复用公共向量，避免每个账号重复编码公共语料。
+def test_user_without_documents_reuses_public_vectors(monkeypatch):
+    items = ({"source":"public.txt", "content":"公共文档"},)
+    monkeypatch.setattr(knowledge, "load_knowledge", lambda owner_user_id=None: items)
+    calls = []
+    class Model:
+        # 记录语料编码次数。
+        def encode(self, texts, normalize_embeddings):
+            calls.append(texts)
+            return np.array([[1.0, 0.0]])
+    monkeypatch.setattr(knowledge, "get_embedding_model", lambda: Model())
+    shared = knowledge.get_knowledge_vectors()
+    assert knowledge.get_knowledge_vectors(1) is shared
+    assert knowledge.get_knowledge_vectors(2) is shared
+    assert len(calls) == 1

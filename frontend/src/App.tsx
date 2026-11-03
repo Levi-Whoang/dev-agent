@@ -14,6 +14,7 @@ import {
   renameSession,
   registerUser,
   streamChat,
+  stopGeneration,
 } from "./api";
 import type { ChatEvent, Citation, KnowledgeDocument, SessionSummary, StoredMessage } from "./api";
 
@@ -61,6 +62,7 @@ export default function App() {
   const [replacingDocumentId, setReplacingDocumentId] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
+  const generationAbort = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -306,6 +308,10 @@ export default function App() {
     setInput("");
     setChatError("");
     setStreaming(true);
+    const activeSessionId = sessionId || crypto.randomUUID();
+    setSessionId(activeSessionId);
+    const controller = new AbortController();
+    generationAbort.current = controller;
     const userMessage = createMessage("user", message);
     const assistantMessage = createMessage("assistant", "");
     setMessages((current) => [...current, userMessage, assistantMessage]);
@@ -317,7 +323,7 @@ export default function App() {
     };
 
     try {
-      await streamChat(token, message, sessionId, (event: ChatEvent) => {
+      await streamChat(token, message, activeSessionId, (event: ChatEvent) => {
         if (event.type === "delta" && event.content) {
           updateAssistant((item) => ({ ...item, content: item.content + event.content }));
         } else if (event.type === "done") {
@@ -329,8 +335,9 @@ export default function App() {
         } else if (event.type === "error") {
           throw new Error(event.message || "生成回复时发生错误");
         }
-      });
+      }, controller.signal);
     } catch (error) {
+      if (controller.signal.aborted) return;
       const messageText = error instanceof Error ? error.message : "请求失败，请稍后重试";
       setChatError(messageText);
       if (/401|未认证|认证失败|JWT/i.test(messageText)) {
@@ -343,6 +350,7 @@ export default function App() {
         setSessionId(null);
       }
     } finally {
+      generationAbort.current = null;
       setStreaming(false);
     }
   }
@@ -701,6 +709,10 @@ export default function App() {
               maxLength={4000}
               disabled={streaming}
             />
+            {streaming && <button type="button" onClick={() => {
+              if (sessionId) void stopGeneration(token, sessionId).catch((error) => setChatError(String(error)));
+              generationAbort.current?.abort();
+            }}>停止生成</button>}
             <button className="send-button" type="submit" disabled={!input.trim() || streaming} aria-label={streaming ? "正在生成" : "发送消息"}>
               {streaming ? <span className="send-spinner" /> : <span>↑</span>}
             </button>

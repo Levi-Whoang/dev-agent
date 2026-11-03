@@ -1,4 +1,6 @@
 
+import time
+import logging
 import math
 import os
 import re
@@ -115,6 +117,9 @@ def get_knowledge_vectors(owner_user_id: int | None = None):
 
     if not knowledge:
         return None
+    # 没有私人上传时直接复用已预热的公共向量，不按用户重复编码。
+    if owner_user_id is not None and knowledge == load_knowledge():
+        return get_knowledge_vectors()
 
     texts = [item["content"] for item in knowledge]
 
@@ -252,7 +257,18 @@ def _bm25_scores(query: str, owner_user_id: int | None = None) -> list[float]:
 
 # 融合向量分和关键词分检索相关知识证据。
 def knowledge_search(query: str) -> list[dict]:
-    """融合向量相似度和 BM25 关键词分，返回排序后的证据片段。"""
+    """Agent 默认使用混合检索。"""
+    started = time.perf_counter()
+    try:
+        return search_knowledge(query, "hybrid")
+    finally:
+        logging.getLogger(__name__).info("rag_search duration=%.3f", time.perf_counter()-started)
+
+
+# 在相同索引与过滤规则下切换纯向量和混合检索，供对照评估复用。
+def search_knowledge(query: str, mode: str = "hybrid") -> list[dict]:
+    if mode not in {"dense", "hybrid"}:
+        raise ValueError("mode 必须为 dense 或 hybrid")
     owner_user_id = _CURRENT_KNOWLEDGE_OWNER.get()
     if owner_user_id is None:
         knowledge = load_knowledge()
@@ -276,8 +292,8 @@ def knowledge_search(query: str) -> list[dict]:
         knowledge_vectors,
     )[0]
 
-    keyword_scores = _bm25_scores(query, owner_user_id)
-    keyword_coverages = _keyword_coverages(query, owner_user_id)
+    keyword_scores = (_bm25_scores(query) if owner_user_id is None else _bm25_scores(query, owner_user_id)) if mode == "hybrid" else [0.0] * len(knowledge)
+    keyword_coverages = _keyword_coverages(query, owner_user_id) if mode == "hybrid" else [0.0] * len(knowledge)
     qualified_keyword_indices = {
         index
         for index, coverage in enumerate(keyword_coverages)
@@ -386,3 +402,12 @@ def refresh_knowledge_cache() -> None:
     load_knowledge.cache_clear()
     get_knowledge_vectors.cache_clear()
     _get_keyword_index.cache_clear()
+
+
+# 启动阶段预加载模型、公共向量和关键词索引，将冷启动从用户请求移出。
+def warmup_knowledge():
+    started = time.perf_counter()
+    get_embedding_model()
+    get_knowledge_vectors()
+    _get_keyword_index()
+    logging.getLogger(__name__).info("rag_warmup duration=%.3f", time.perf_counter()-started)

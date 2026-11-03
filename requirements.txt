@@ -66,3 +66,6 @@ pypdf==5.9.0
 python-docx==1.2.0
 openpyxl==3.1.5
 python-pptx==1.0.2
+
+aiomysql==0.3.2
+aiosqlite==0.22.1

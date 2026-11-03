@@ -7,6 +7,7 @@ import os
 from uuid import uuid4
 
 import jwt
+from starlette.concurrency import run_in_threadpool
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -60,27 +61,28 @@ def _source_hash(source: str) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
-def _audit(event: str, username: str | None, source: str | None, succeeded: bool) -> None:
+async def _audit(event: str, username: str | None, source: str | None, succeeded: bool) -> None:
     try:
-        auth_repository.audit(event, username, _source_hash(source) if source else None, succeeded)
+        await auth_repository.audit(event, username, _source_hash(source) if source else None, succeeded)
     except Exception:
         # 审计故障不覆盖认证结果；应用日志记录事件类别和异常，不含凭据。
         import logging
         logging.getLogger(__name__).exception("认证审计写入失败 event=%s", event)
 
 
-def register_user(username: str, password: str, verification_code: str, source: str | None = None) -> dict:
+async def register_user(username: str, password: str, verification_code: str, source: str | None = None) -> dict:
     normalized = normalize_username(username)
     expected_code = os.getenv("AUTH_REGISTRATION_CODE", "")
     if not expected_code or not hmac.compare_digest(verification_code, expected_code):
-        _audit("register", normalized, source, False)
+        await _audit("register", normalized, source, False)
         raise HTTPException(status_code=403, detail="注册验证码无效或未配置")
     try:
-        user_id = auth_repository.create_user(normalized, hash_password(password))
+        password_hash = await run_in_threadpool(hash_password, password)
+        user_id = await auth_repository.create_user(normalized, password_hash)
     except DuplicateUsernameError as error:
-        _audit("register", normalized, source, False)
+        await _audit("register", normalized, source, False)
         raise HTTPException(status_code=409, detail="用户名已被注册") from error
-    _audit("register", normalized, source, True)
+    await _audit("register", normalized, source, True)
     return {"user_id": user_id, "username": normalized}
 
 
@@ -108,9 +110,9 @@ def _make_token_pair(username: str, user_id: int) -> tuple[str, str, int, list[d
     return access, refresh, access_jti, rows
 
 
-def _issue_pair(username: str, user_id: int) -> dict:
+async def _issue_pair(username: str, user_id: int) -> dict:
     access, refresh, _, rows = _make_token_pair(username, user_id)
-    auth_repository.create_tokens(rows)
+    await auth_repository.create_tokens(rows)
     return {
         "access_token": access,
         "refresh_token": refresh,
@@ -120,7 +122,7 @@ def _issue_pair(username: str, user_id: int) -> dict:
     }
 
 
-def create_access_token(username: str, user_id: int) -> tuple[str, int]:
+async def create_access_token(username: str, user_id: int) -> tuple[str, int]:
     """为现有 API 测试和内部调用保留单 access token helper。"""
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(minutes=ACCESS_EXPIRE_MINUTES)
@@ -130,31 +132,31 @@ def create_access_token(username: str, user_id: int) -> tuple[str, int]:
          "jti": jti, "token_use": "access"},
         _jwt_secret(), algorithm=JWT_ALGORITHM,
     )
-    auth_repository.create_token(jti, user_id, expires_at)
+    await auth_repository.create_token(jti, user_id, expires_at)
     return token, ACCESS_EXPIRE_MINUTES * 60
 
 
-def login_user(username: str, password: str, source: str) -> dict | None:
+async def login_user(username: str, password: str, source: str) -> dict | None:
     normalized = normalize_username(username)
     identity_hash = _source_hash(f"{normalized}\0{source}")
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     window_start = now - timedelta(minutes=LOGIN_WINDOW_MINUTES)
-    if auth_repository.login_failure_count(identity_hash, window_start) >= LOGIN_FAILURE_LIMIT:
-        _audit("login_rate_limited", normalized, source, False)
+    if (await auth_repository.login_failure_count(identity_hash, window_start)) >= LOGIN_FAILURE_LIMIT:
+        await _audit("login_rate_limited", normalized, source, False)
         raise HTTPException(status_code=429, detail="登录失败次数过多，请 15 分钟后重试")
 
-    user = auth_repository.find_user(normalized)
+    user = await auth_repository.find_user(normalized)
     # 即使用户名不存在也执行一次 PBKDF2，减小用户名枚举造成的耗时差异。
     dummy_hash = "pbkdf2_sha256$310000$00112233445566778899aabbccddeeff$" + "0" * 64
-    password_matches = verify_password(password, user["password_hash"] if user else dummy_hash)
+    password_matches = await run_in_threadpool(verify_password, password, user["password_hash"] if user else dummy_hash)
     if not user or not password_matches:
-        auth_repository.record_login_failure(identity_hash, now)
-        _audit("login", normalized, source, False)
+        await auth_repository.record_login_failure(identity_hash, now)
+        await _audit("login", normalized, source, False)
         return None
 
-    auth_repository.clear_login_failures(identity_hash)
-    token_pair = _issue_pair(user["username"], int(user["id"]))
-    _audit("login", normalized, source, True)
+    await auth_repository.clear_login_failures(identity_hash)
+    token_pair = await _issue_pair(user["username"], int(user["id"]))
+    await _audit("login", normalized, source, True)
     return token_pair
 
 
@@ -171,11 +173,11 @@ def _decode_token(token: str) -> dict:
         raise HTTPException(status_code=401, detail="JWT 无效或已过期") from error
 
 
-def refresh_token_pair(token: str, source: str | None = None) -> dict:
+async def refresh_token_pair(token: str, source: str | None = None) -> dict:
     try:
         payload = _decode_token(token)
     except HTTPException:
-        _audit("refresh", None, source, False)
+        await _audit("refresh", None, source, False)
         raise
     username = payload.get("sub")
     refresh_jti = payload.get("jti")
@@ -183,17 +185,17 @@ def refresh_token_pair(token: str, source: str | None = None) -> dict:
     if payload.get("token_use") != "refresh" or not all(
         isinstance(item, str) for item in (username, refresh_jti, access_jti)
     ):
-        _audit("refresh", username if isinstance(username, str) else None, source, False)
+        await _audit("refresh", username if isinstance(username, str) else None, source, False)
         raise HTTPException(status_code=401, detail="刷新令牌无效")
-    user = auth_repository.find_user(username)
+    user = await auth_repository.find_user(username)
     if not user:
-        _audit("refresh", username, source, False)
+        await _audit("refresh", username, source, False)
         raise HTTPException(status_code=401, detail="刷新令牌无效")
     access, refresh, new_access_jti, rows = _make_token_pair(username, int(user["id"]))
-    if not auth_repository.rotate_tokens(refresh_jti, access_jti, username, rows):
-        _audit("refresh", username, source, False)
+    if not (await auth_repository.rotate_tokens(refresh_jti, access_jti, username, rows)):
+        await _audit("refresh", username, source, False)
         raise HTTPException(status_code=401, detail="刷新令牌已过期或已使用")
-    _audit("refresh", username, source, True)
+    await _audit("refresh", username, source, True)
     return {
         "access_token": access, "refresh_token": refresh, "token_type": "bearer",
         "expires_in": ACCESS_EXPIRE_MINUTES * 60,
@@ -201,7 +203,7 @@ def refresh_token_pair(token: str, source: str | None = None) -> dict:
     }
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
     if credentials is None or credentials.scheme.lower() != "bearer":
@@ -215,16 +217,16 @@ def get_current_user(
         payload.get("token_use") != "access"
         or not isinstance(username, str)
         or not isinstance(jti, str)
-        or not auth_repository.is_token_active(jti, username)
+        or not (await auth_repository.is_token_active(jti, username))
     ):
         raise HTTPException(status_code=401, detail="JWT 无效或已撤销")
     return username
 
 
-def revoke_access_token(token: str, username: str, source: str | None = None) -> None:
+async def revoke_access_token(token: str, username: str, source: str | None = None) -> None:
     payload = _decode_token(token)
     jti, refresh_jti = payload.get("jti"), payload.get("refresh_jti")
     if payload.get("sub") != username or payload.get("token_use") != "access" or not isinstance(jti, str):
         raise HTTPException(status_code=401, detail="JWT 无效")
-    auth_repository.revoke_token(jti, username, refresh_jti if isinstance(refresh_jti, str) else None)
-    _audit("logout", username, source, True)
+    await auth_repository.revoke_token(jti, username, refresh_jti if isinstance(refresh_jti, str) else None)
+    await _audit("logout", username, source, True)

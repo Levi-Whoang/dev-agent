@@ -12,9 +12,9 @@ from modules.models import ChatSession
 class SessionManager:
     """通过 SQLAlchemy 管理聊天历史和会话元数据。"""
 
-    def get_messages(self, session_id: str) -> list[dict]:
-        with session_scope() as db:
-            record = db.get(ChatSession, session_id)
+    async def get_messages(self, session_id: str) -> list[dict]:
+        async with session_scope() as db:
+            record = await db.get(ChatSession, session_id)
             if record is None:
                 return []
             messages = record.messages
@@ -22,43 +22,43 @@ class SessionManager:
         # 兼容旧数据中以字符串形式保存的 JSON 内容。
         return json.loads(messages) if isinstance(messages, str) else messages
 
-    def exists(self, session_id: str) -> bool:
-        with session_scope() as db:
-            return db.scalar(
+    async def exists(self, session_id: str) -> bool:
+        async with session_scope() as db:
+            return (await db.scalar(
                 select(ChatSession.session_id).where(
                     ChatSession.session_id == session_id
                 )
-            ) is not None
+            )) is not None
 
-    def save(self, session_id: str, messages: list[dict]) -> None:
-        with session_scope() as db:
-            record = db.get(ChatSession, session_id)
+    async def save(self, session_id: str, messages: list[dict]) -> None:
+        async with session_scope() as db:
+            record = await db.get(ChatSession, session_id)
             if record is None:
                 db.add(ChatSession(session_id=session_id, messages=messages))
             else:
                 record.messages = messages
 
-    def clear(self, session_id: str) -> None:
+    async def clear(self, session_id: str) -> None:
         """清空聊天记录，但保留会话及其标题。"""
-        with session_scope() as db:
-            record = db.get(ChatSession, session_id)
+        async with session_scope() as db:
+            record = await db.get(ChatSession, session_id)
             if record is not None:
                 record.messages = []
 
-    def delete(self, session_id: str) -> None:
+    async def delete(self, session_id: str) -> None:
         """删除整个会话。"""
-        with session_scope() as db:
-            record = db.get(ChatSession, session_id)
+        async with session_scope() as db:
+            record = await db.get(ChatSession, session_id)
             if record is not None:
-                db.delete(record)
+                await db.delete(record)
 
-    def create(
+    async def create(
         self,
         session_id: str,
         owner_user_id: int | None = None,
         title: str = "新对话",
     ) -> None:
-        with session_scope() as db:
+        async with session_scope() as db:
             db.add(
                 ChatSession(
                     session_id=session_id,
@@ -68,9 +68,9 @@ class SessionManager:
                 )
             )
 
-    def rename(self, session_id: str, owner_user_id: int, title: str) -> bool:
-        with session_scope() as db:
-            record = db.scalar(
+    async def rename(self, session_id: str, owner_user_id: int, title: str) -> bool:
+        async with session_scope() as db:
+            record = await db.scalar(
                 select(ChatSession).where(
                     ChatSession.session_id == session_id,
                     ChatSession.owner_user_id == owner_user_id,
@@ -81,13 +81,13 @@ class SessionManager:
             record.title = title
             return True
 
-    def list_sessions(self, owner_user_id: int) -> list[dict]:
-        with session_scope() as db:
-            records = db.scalars(
+    async def list_sessions(self, owner_user_id: int) -> list[dict]:
+        async with session_scope() as db:
+            records = (await db.scalars(
                 select(ChatSession)
                 .where(ChatSession.owner_user_id == owner_user_id)
                 .order_by(ChatSession.updated_at.desc())
-            ).all()
+            )).all()
             return [
                 {
                     "session_id": record.session_id,

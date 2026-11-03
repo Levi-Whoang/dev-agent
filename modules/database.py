@@ -1,82 +1,76 @@
-"""SQLAlchemy engine、Session 工厂和 ORM 表初始化。"""
-
-from contextlib import contextmanager
+"""SQLAlchemy 异步引擎、独立 Session 与事务管理。"""
+from contextlib import asynccontextmanager
+import asyncio
 import os
-from threading import Lock
-from typing import Iterator
+from typing import AsyncIterator
 
 from dotenv import load_dotenv
-from sqlalchemy import Engine, URL, create_engine
-from sqlalchemy.orm import Session, sessionmaker
-
+from sqlalchemy import URL, make_url
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from modules.models import Base
 
 load_dotenv()
-
-_engine: Engine | None = None
-_session_factory: sessionmaker[Session] | None = None
+_engine: AsyncEngine | None = None
+_session_factory: async_sessionmaker[AsyncSession] | None = None
 _initialized = False
-_engine_lock = Lock()
-_initialization_lock = Lock()
+_initialization_lock = asyncio.Lock()
 
 
-def get_engine() -> Engine:
-    """按环境配置惰性创建数据库引擎。"""
+# 根据配置构造异步驱动URL，兼容原有同步MySQL或SQLite连接串。
+def database_url():
+    configured = os.getenv("DATABASE_URL")
+    url = make_url(configured) if configured else URL.create(
+        "mysql+aiomysql", username=os.getenv("MYSQL_USER", "root"), password=os.getenv("MYSQL_PASSWORD"),
+        host=os.getenv("MYSQL_HOST", "127.0.0.1"), port=int(os.getenv("MYSQL_PORT", "3306")),
+        database=os.getenv("MYSQL_DATABASE", "agent_db"), query={"charset": "utf8mb4"})
+    if url.drivername in {"mysql", "mysql+pymysql"}:
+        url = url.set(drivername="mysql+aiomysql")
+    elif url.drivername in {"sqlite", "sqlite+pysqlite"}:
+        url = url.set(drivername="sqlite+aiosqlite")
+    if url.drivername not in {"mysql+aiomysql", "sqlite+aiosqlite"}:
+        raise ValueError("DATABASE_URL 必须使用 mysql+aiomysql 或 sqlite+aiosqlite")
+    return url
+
+
+# 惰性创建异步引擎，不在导入时连接数据库。
+def get_engine() -> AsyncEngine:
     global _engine, _session_factory
     if _engine is None:
-        with _engine_lock:
-            if _engine is None:
-                database_url = os.getenv("DATABASE_URL")
-                if database_url:
-                    url = database_url
-                else:
-                    url = URL.create(
-                        "mysql+pymysql",
-                        username=os.getenv("MYSQL_USER", "root"),
-                        password=os.getenv("MYSQL_PASSWORD"),
-                        host=os.getenv("MYSQL_HOST", "127.0.0.1"),
-                        port=int(os.getenv("MYSQL_PORT", "3306")),
-                        database=os.getenv("MYSQL_DATABASE", "agent_db"),
-                        query={"charset": "utf8mb4"},
-                    )
-                _engine = create_engine(
-                    url,
-                    pool_pre_ping=True,
-                    connect_args={"connect_timeout": 5}
-                    if str(url).startswith("mysql")
-                    else {},
-                )
-                _session_factory = sessionmaker(
-                    bind=_engine, expire_on_commit=False
-                )
+        url = database_url()
+        _engine = create_async_engine(url, pool_pre_ping=True,
+            connect_args={"connect_timeout": 5} if url.get_backend_name() == "mysql" else {})
+        _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
     return _engine
 
 
-def initialize_database() -> Engine:
-    """按 ORM 模型创建缺失表，不自动修改已有表结构。"""
+# 在事务连接上创建缺失表，不自动迁移已有结构。
+async def initialize_database() -> AsyncEngine:
     global _initialized
     engine = get_engine()
-    if _initialized:
-        return engine
-    with _initialization_lock:
+    async with _initialization_lock:
         if not _initialized:
-            Base.metadata.create_all(engine)
+            async with engine.begin() as connection:
+                await connection.run_sync(Base.metadata.create_all)
             _initialized = True
     return engine
 
 
-@contextmanager
-def session_scope() -> Iterator[Session]:
-    """提供带自动提交、回滚和关闭的 ORM Session。"""
-    global _session_factory
-    engine = initialize_database()
+# 每次调用创建独立Session，自动提交、异常及取消回滚并关闭。
+@asynccontextmanager
+async def session_scope() -> AsyncIterator[AsyncSession]:
+    await initialize_database()
     assert _session_factory is not None
-    db = _session_factory(bind=engine)
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-    finally:
-        db.close()
+    async with _session_factory() as db:
+        async with db.begin():
+            yield db
+
+
+# 应用退出时释放连接池并重置初始化状态。
+async def dispose_database():
+    global _engine, _session_factory, _initialized, _initialization_lock
+    if _engine is not None:
+        await _engine.dispose()
+    _engine = None
+    _session_factory = None
+    _initialized = False
+    _initialization_lock = asyncio.Lock()

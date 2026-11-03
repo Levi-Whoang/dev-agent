@@ -226,8 +226,10 @@ export async function streamChat(
   message: string,
   sessionId: string | null,
   onEvent: (event: ChatEvent) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const response = await authorizedFetch("/chat", token, {
+    signal,
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -342,4 +344,11 @@ async function authorizedFetch(
   }
   const accessToken = await refreshAccessToken(initialRefreshToken);
   return accessToken ? send(accessToken) : response;
+}
+
+
+// 请求后端停止当前用户会话的生成任务。
+export async function stopGeneration(token: string, sessionId: string): Promise<void> {
+  const response = await authorizedFetch(`/sessions/${encodeURIComponent(sessionId)}/stop`, token, { method: "POST" });
+  if (!response.ok) throw new Error(await readError(response));
 }

@@ -1,7 +1,7 @@
 
 import json
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -17,10 +17,10 @@ class FakeSessionManager:
     def __init__(self):
         self.sessions = {}
 
-    def get_messages(self, session_id):
+    async def get_messages(self, session_id):
         return list(self.sessions.get(session_id, []))
 
-    def save(self, session_id, messages):
+    async def save(self, session_id, messages):
         self.sessions[session_id] = list(messages)
 
 
@@ -70,7 +70,7 @@ def make_llm_message(content=None, tool_calls=None):
         ),
     ],
 )
-def test_rag_agent_end_to_end(
+async def test_rag_agent_end_to_end(
     monkeypatch,
     tool_result,
     final_answer,
@@ -123,6 +123,7 @@ def test_rag_agent_end_to_end(
     )
 
     client = MagicMock()
+    client.chat.completions.create = AsyncMock()
     client.chat.completions.create.side_effect = [
         SimpleNamespace(
             choices=[SimpleNamespace(message=first_message)]
@@ -146,7 +147,7 @@ def test_rag_agent_end_to_end(
         if tool_result == "NO_RELEVANT_EVIDENCE"
         else "公司在哪里？"
     )
-    result = agent.run(query, session_id="rag_test")
+    result = await agent.run(query, session_id="rag_test")
 
     # 5. 验证最终回答和调用链
     assert expected in result
@@ -169,3 +170,11 @@ def test_rag_agent_end_to_end(
         tool_result == "NO_RELEVANT_EVIDENCE"
         and "NO_RELEVANT_EVIDENCE" in tool_messages[0]["content"]
     )
+
+
+pytestmark = pytest.mark.anyio
+
+# 测试统一使用项目的asyncio运行时。
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"

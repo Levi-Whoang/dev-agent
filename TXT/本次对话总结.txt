@@ -186,3 +186,99 @@ TXT 时间戳规则与注释语言偏好（2026-10-21）
 根据代码分析 NO3 完成首轮修复：SSE 用户作用域 set/reset 放在每次 next 内，避免上下文跨 yield；knowledge_search_context 返回字典，由 Agent 单次 JSON 编码，并兼容旧消息引用；前端共用 refresh Promise、保护后登录账号、正确处理延迟 401；历史引用按 user 边界恢复，相关分展示为相关度；文档上传/替换中的用户 ID 查询和同步服务转线程池；修正测试夹具移除模拟 Agent 的问题和过时断言，并补充真实工具到 ASGI/SSE 引用、成功/失败终态、用户作用域及线程池回归用例。补充未认证响应 Bearer challenge；修正 README 旧数据回填和逐字输出描述。前端新增 auth-refresh.test.mjs，功能一览同步更新。
 验证：前端 npm test 3 项通过，npm run build 通过；后端 30 项通过、3 项因临时环境缺少 sklearn 被排除；Python 编译和 git diff --check 通过。原 .venv 引用的 Python 3.12 不存在，使用系统 Python 3.10 + 临时安装的依赖运行离线后端测试（FastAPI 0.162.0、SQLAlchemy 2.0.55、Pydantic 2.14.2 等），并非 requirements.txt 原锁定环境。沙箱的 asyncio socketpair 阻塞后，离线测试在获准的沙箱外运行。未调用真实模型或 MySQL，未改动旧上传文件或 NO3 报告，未上传 GitHub。
 后续仍需处理：文档磁盘与数据库事务一致性、解析资源预算、同会话并发和上下文预算、索引快照与多 worker 失效、最终答案安全增量输出。
+
+
+[2026-11-02 20:44:42 +08:00] 流式输出、停止生成及工具执行控制
+实现真正的最终回答增量输出：工具决策与最终生成分离，最终阶段不传工具，逐分片过滤推理标签；停止接口按用户会话命名空间隔离，前端停止按钮通知后端并 AbortController 取消读取；后端关闭模型流、保存已发送回答，登记生成状态并拒绝同会话重复生成。工具执行增加四线程并发上限、默认 15 秒等待超时、取消检查和名称/耗时/完成/超时/失败日志；生成增加开始/结束日志。新增 agent/control.py、agent/stream_filter.py 并更新功能一览和 README。
+验证：后端 test_agent.py 与 test_api_http.py 共 25 项通过，覆盖实际分片到达、停止保存、跨分片推理过滤、工具超时、停止 API 未认证与跨用户拒绝；前端 3 项测试和生产构建通过。后端仍使用 Python 3.10 临时测试依赖环境，非原 Python 3.12 锁定环境。未调用真实模型或 MySQL。限制：停止是协作式取消，阻塞模型读取最多等待请求超时；已执行同步工具不能被强杀；任务控制为进程内，当前按单 worker 使用；工具决策与回答分离会增加模型请求。
+
+
+[2026-11-02 20:55:23 +08:00] RAG Evaluation 检索对照评估
+新增 evaluation 模块，在同一公共语料、模型、切分、阈值和 Top-K 下比较纯向量策略重建与当前混合检索。评估复用生产 search_knowledge，默认 knowledge_search 仍使用混合策略；保存指标、分类、逐题结果、失败案例、成对变化、gold_audit、语料/数据集指纹、模型和环境。实测 80 条（50 正例、30 负例），纯向量证据覆盖命中率 70%（35/50），混合 74%（37/50），来源 MRR 0.6133→0.6767，误召回均为 5/30（16.67%）；2 题补回、0 题命中退化。发现 6 个正例标注来源缺少标准词，报告已明示且没有静默剔除。该分数不是最终回答准确率，也不是完整历史提交性能。
+结果：TXT/RAG检索对比评估结果.txt；历史 JSON/TXT 位于 evaluation/results。第一次沙箱运行曾在模型加载期间无输出，检查时实际已完成；随后离线复核第二次输出指标一致。此次 .venv 已恢复为 Python 3.12.13，可使用本地真实 embedding 缓存；未调用 LLM/MySQL，未读取个人上传文档。指标与检索回归 15 项通过；最初 3 项临时目录权限错误在沙箱外复核后消除。功能一览和 README 已同步更新。
+
+
+[2026-11-02 21:06:19 +08:00] 五项RAG指标与虚构公司业务评估
+按用户指定五项指标新增 evaluation/quality.py：基于来源+完整标注引文计算证据 Recall@K、正确证据 MRR、固定 K 分母的 Precision@K；基于真实生成和原子陈述裁判计算 Faithfulness、无答案准确率，并区分仅检索无答案率与空证据拒答率。新增5份明确虚构的星桥云业务语料和20题评估集（12正例、8负例），全部证据可映射到分块；保留旧80题和历史报告。
+实测：K=3，纯向量/混合 Recall 25%/91.67%，MRR 0.25/0.9167；全题 Precision 5%/18.33%，正例 Precision 8.33%/30.56%。每模式均衡抽样6题生成并裁判（3正3负），忠实度均100%（各8项事实），无答案准确率均100%（各3题），生成错误0；正例拒答率纯向量1/3、混合0/3。仅检索无答案准确率37.5%/25%，显示混合补召回也增加无答案干扰。结果不能外推整体正确率，裁判和生成同模型存在偏差；相关性使用引文匹配而非完整语义人工判定。实际运行的是固定检索证据到生成答案链路，不含Agent自主选工具。
+结果写入 TXT/RAG五项指标评估结果.txt 与 evaluation/results/rag_quality_*.json/.txt。README、功能一览更新；7项指标测试通过。新增虚构资料经配置知识库为demo_data时可用于应用检索；未改动用户个人文档或数据库。
+
+
+[2026-11-02 21:16:08 +08:00] 首字延迟定位与优化
+首字延迟诊断与修复
+时间：2026-11-02 21:16:08 +08:00
+已确认原因：
+1. RAG 惰性加载 embedding 模型并编码全部公共片段，首次调用承担冷启动。
+2. RAG 工具返回后，模型又以非流式方式生成一遍完整答案，这份正文被丢弃，再调用最终流式回答；多一次不必要的模型等待。
+3. 即使没有私人文档，原来各用户仍分别缓存并编码相同公共语料。
+
+修改：启动阶段默认预热模型、公共向量和 BM25；RAG 工具完成直接进入最终流式回答；无上传用户共享公共向量；新增 llm_decision、rag_search、agent_first_text、rag_warmup 分阶段日志。
+
+实测（本地缓存模型、虚构公共资料、内存会话）：
+冷 RAG 13.207秒；热 RAG 0.012秒。
+热 RAG 条件首正文：重建原流程 3.538秒，优化流程 1.944秒。
+只有各一次模型对照，且模型请求顺序固定，存在网络/供应商缓存影响，不能将差值解释为稳定提升比例。基线通过关闭本轮RAG直达最终阶段分支构造，并非历史提交。没有测量浏览器、反向代理或MySQL耗时，不能声称生产端到端瓶颈已全部消除。
+
+验证：39项Agent/API/检索回归通过，包含减少一次模型调用、流式、停止、权限和公共向量复用。最初基准脚本因为stdin中load_dotenv自动找路径失败，改为显式.env路径后完成测量；未改用户密钥或读取历史对话。
+限制：冷启动转移到服务启动阶段，并没有消灭初始化成本；RAG_WARMUP=false会恢复冷启动等待。私人上传文档首次编码、上传后缓存失效、模型网络及历史长度仍可能增加延迟；当前保持单worker运行建议。
+
+[2026-11-02 21:17:56 +08:00] 更新 TXT 记录偏好
+用户要求：没有明确要求时，不为每次任务额外创建新的 TXT。后续只追加现有 TXT/本次对话总结.txt；有代码修改时同步追加 TXT/未来代码修改说明.txt，保留准确时间与修改前后说明。新增或迁移项目文件时继续维护现有 TXT/功能一览.txt。本轮未修改代码。
+
+[2026-11-02 21:26:51 +08:00] 讨论项目 async 改造可行性
+核对当前代码：模型为同步 OpenAI 客户端，数据库为同步 SQLAlchemy/PyMySQL，SSE 使用异步生成器在线程池中驱动同步 Agent，文档同步任务已放线程池。建议分阶段：优先改模型调用和Agent/SSE为原生异步，完善取消/超时与连接关闭；后续将数据库访问整体迁移到AsyncSession及异步驱动；embedding、解析、密码哈希等计算或同步工作仍使用有界执行器。async主要改善并发等待和停止响应，不保证单请求模型首字或向量计算变快，也不会自动解决同会话并发覆盖和多worker任务隔离。本轮仅检查与建议，未修改源代码、未新建TXT。
+
+[2026-11-02 21:36:18 +08:00] async第一阶段：函数清单与前后对比
+用户要求先完成 async 第一阶段，并把改为异步的函数和修改前后对比写入现有项目总结。
+
+由同步改为原生 async 的函数：
+1. agent/agent.py — Agent.run：之前 def，直接同步请求模型、读写会话并调用工具；现在 async def，await 模型请求和异步工具等待，同步会话读写由 run_in_threadpool 承接，调用方式由 agent.run(...) 改为 await agent.run(...)。
+2. agent/agent.py — Agent.run_stream：之前同步生成器，for 读取同步模型流，每次 next 在线程池执行；现在异步生成器，await 请求异步模型，await 可取消的 anext 读取分片，通过 async for 消费，保留分片过滤、首字日志、停止后保存部分答案和 RAG 直达最终回答优化。
+3. agent/agent.py — Agent._execute_streamed_tool：之前同步等待线程池结果；现在 async def，参数校验后 await execute_tool，线程执行期间不阻塞事件循环。
+4. agent/control.py — execute_tool：之前 future.result(timeout=...) 同步轮询；现在 asyncio.wrap_future + await asyncio.wait 异步轮询，保留最多4个同步工具线程、超时和停止检查、用户ContextVar传播、工具完成/失败日志。同步工具本身未改成async，超时不能强杀已运行函数。
+5. api/chat_helpers.py — chat_event_stream：之前同步SSE生成器，依赖线程池驱动next；现在异步SSE生成器，直接异步迭代Agent并await aclose，用户检索范围在当前异步任务内设置，引用读取仍在线程池执行。
+6. test/evaluate_rag_answers.py — main：之前同步评估入口和OpenAI客户端；现在async入口、AsyncOpenAI客户端和await Agent.run，finally异步关闭客户端，命令行用asyncio.run启动。
+
+原来已经是 async、本次改变内部实现的函数：
+- api/chat_helpers.py — managed_chat_stream：原来每个分片都await run_in_threadpool(next,...)；现在直接async for消费SSE，不再用线程等待模型，finally关闭异步生成器并释放任务登记。
+- app/main.py — lifespan：原来只做启动校验和知识库预热；现在在退出阶段await client.close，预热依然在线程池执行。
+
+新增异步函数：
+- agent/control.py — await_or_stop：等待网络操作时检查停止信号，收到停止或外部取消后取消并回收请求任务，不再等到20秒网络超时才响应停止。
+- test/async_helpers.py — AsyncStream.__anext__、AsyncStream.close、collect：仅供异步测试的模型流替身与输出收集。
+
+其他配套变化：agent/runtime.py 客户端由OpenAI替换为AsyncOpenAI；测试模型方法改用AsyncMock，相关测试改为异步调用，新增等待模型时停止、事件循环可继续执行、断连清理与应用退出关闭客户端测试。同步数据库仓储/ORM、密码哈希、embedding和文档解析没有迁移；本阶段只给同步工作安排线程执行。现有同步脚本如自定义直接调用Agent的代码需要改成await/async for；同步SQLAlchemy迁移属于第二阶段。
+
+验证：Python3.12项目.venv中完整离线测试73项通过（pytest test/）；git diff --check通过。没有本轮真实模型API/MySQL联调，没有声称首字或并发性能提升百分比。测试验证取消信号能中止挂起模型请求、断连时关闭流并保存部分答案、检索及API权限行为保持。任务登记仍为进程内，跨worker控制与会话并发写一致性不是async自动解决的问题。本轮未新建TXT、未上传GitHub。
+
+[2026-11-02 21:45:51 +08:00] async第二阶段数据库改造
+继续完成async第二阶段：异步数据库访问与认证/会话/文档全链路。
+
+函数清单与修改前后对比：
+1. modules/database.py：initialize_database 由同步 create_all 改为异步事务连接 + await connection.run_sync(create_all)；session_scope 由同步contextmanager/Session改为asynccontextmanager/AsyncSession，每个作用域独立Session、自动提交/异常及取消回滚/关闭；新增dispose_database异步释放连接池。get_engine仍为普通函数，仅创建异步引擎对象，不执行网络连接；database_url新增URL归一化。
+2. auth/repository.py：AuthRepository.create_user、user_exists、find_user、create_token、create_tokens、rotate_tokens、is_token_active、revoke_token、login_failure_count、record_login_failure、clear_login_failures、audit 全部改为async。db.scalar/scalars/execute/flush/delete按需await，db.add/add_all为内存状态操作保持同步。令牌轮换仍在同一事务中校验、锁定和撤销旧记录并新增令牌。
+3. agent/session.py：SessionManager.get_messages、exists、save、clear、delete、create、rename、list_sessions改为async，调用端直接await。Agent.run/run_stream从run_in_threadpool(仓储操作)改为原生await；不再用线程池等待数据库。
+4. auth/jwt_auth.py：_audit、register_user、_issue_pair、create_access_token、login_user、refresh_token_pair、get_current_user、revoke_access_token改为async，传播await到仓储。密码哈希和验证继续在线程池执行，JWT纯计算和配置校验保持普通函数。
+5. api/session_helpers.py：database_user_id、resolve_chat_session改为async；api/chat_helpers.py的latest_turn_citations改为async，SSE直接await引用查询。
+6. api/routes/users.py：issue_token、register、refresh、logout改为async。
+7. api/routes/sessions.py：chat、clear_session、create_session、list_sessions、get_session_messages、rename_session、delete_session、stop_session_generation改为async。
+8. services/documents.py：create_document、list_documents、get_document、replace_document、rename_document、delete_document改为async。仅同步解析与磁盘操作放在线程池，ORM操作在当前异步任务await。创建文档flush后显式refresh，兼容MySQL没有INSERT RETURNING而导致时间默认值未加载的情况。
+9. api/routes/documents.py：_owner_id及原同步列表/详情/改名/删除端点改为async；原本已async的上传/替换移除整段文档服务线程池包装，直接await异步服务。
+10. app/main.py：原async lifespan新增退出时dispose_database，确保模型客户端关闭后仍释放数据库连接池。
+
+驱动与配置：默认mysql+pymysql改为mysql+aiomysql；DATABASE_URL旧MySQL与SQLite同步驱动形式会自动转换为mysql+aiomysql/sqlite+aiosqlite，不修改.env或现有表结构。新增requirements依赖aiomysql==0.3.2、aiosqlite==0.22.1并在项目.venv安装。其他环境需要重新安装requirements并重启。
+
+测试与结果：项目Python3.12 .venv中全套79项离线测试通过；新增test/test_async_database.py覆盖真实异步SQLite仓储提交/重复写入回滚、事务中任务取消回滚、独立Session、令牌轮换撤销、文档所有权CRUD、完整注册登录刷新登出和审计。原有模型流、停止、权限和检索测试同步切换async替身并通过。配置MySQL仅执行只读SELECT 1返回1，确认aiomysql连接成功，未对真实用户表做业务写入验证。git diff --check通过。
+
+边界：数据库表结构不自动迁移；异步不自动修复同会话JSON覆盖、多worker任务隔离、文档磁盘与DB事务一致性，相关问题仍单独存在。检索向量计算、解析、文件读写、密码哈希仍是同步计算任务，由线程池承接；数据库Session不跨线程共享。用户现有其他文件改动保持原样，本轮没有新建TXT或上传GitHub。
+
+[2026-11-02 21:48:07 +08:00] 解释项目异步范围、前后差异及作用
+解释目前异步范围及收益：模型客户端改AsyncOpenAI，Agent.run/run_stream及工具结果等待改async，SSE直接异步读取分片；数据库AsyncEngine/AsyncSession/aiomysql，认证仓储、会话仓储、文档数据库服务和各业务路由通过await串联。此前同步请求也可由FastAPI线程池并发处理，但等待模型和数据库时会占线程；现在网络等待让出事件循环，减少线程等待占用，便于响应停止和断连，事务作用域自动提交/回滚及关闭，退出时释放客户端和连接池。
+同步保留：embedding、BM25和文本切分、Office/PDF解析、文件读写、密码哈希等计算/同步任务，主要通过工具或文件/密码线程池执行；并非所有业务都成为原生异步。async不会自动缩短模型推理、数据库SQL或embedding计算耗时，也不自动并行执行有依赖的步骤、不解决同会话写覆盖和多worker控制。此前首字加速主要来自公共语料预热和删除重复模型生成，与本轮异步改造分别解释。说明前后差异和实际使用场景，不宣称已证明吞吐提升百分比。本轮仅说明并记录，未改代码或新建TXT。
+
+[2026-11-02 21:53:14 +08:00] 说明异步改造代价与 SQLAlchemy 的保留情况
+用户询问异步改造缺点，以及是否舍弃SQLAlchemy。核对modules/database.py、modules/models.py、auth/repository.py：仍使用SQLAlchemy ORM、模型关系、查询表达式、事务和连接池；仅将同步Engine/Session切换为AsyncEngine/AsyncSession，MySQL底层驱动改aiomysql，SQLite改aiosqlite。说明新增依赖、await调用传播、异步取消与资源生命周期管理、禁止并发共享AsyncSession、ORM隐式懒加载注意事项；阻塞计算仍需线程池，异步不保证单次请求更快，连接池和数据库容量仍限制并发。现有会话并发覆盖、文件与数据库一致性、多进程停止状态共享不是本次异步改造自动解决的问题。本轮只核对和说明，未修改源代码、未重新运行测试，未新建TXT。
+
+[2026-11-03 14:38:01 +08:00] 取消同步回退，恢复异步实现并修复中断遗留
+用户改变要求：不要回退到同步版本，修复当前代码。本次核对上轮中断后的工作区，同步回退已经写入多个源文件，因此逐项恢复SQLAlchemy AsyncEngine/AsyncSession、AsyncOpenAI、Agent.run/run_stream、工具异步等待，以及认证/会话/文档仓储和路由的await调用链。保留现有JWT刷新撤销、所有权校验、停止生成、引用、RAG预热、首字优化、评估与前端功能。修复数据库URL驱动兼容、MySQL服务端默认时间显式refresh、同步文件解析和密码哈希的线程池分工、模型取消和流关闭/已输出文本保存，补回取消与事务回滚回归检查。
+验证：完整离线测试81项通过（3.43秒），覆盖真实异步SQLite、HTTP/ASGI权限、认证、文档与模型流替身；git diff --check通过。没有调用真实LLM，没有在真实用户数据库执行写入，没有运行浏览器端人工测试。恢复的是异步版本，SQLAlchemy ORM与现有表结构继续使用；没有提交或推送GitHub。TXT只更新已有文件并保留历史内容。

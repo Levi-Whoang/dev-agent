@@ -1,6 +1,8 @@
 """知识库文档的解析、文件存储和数据库业务逻辑。"""
 
-from datetime import datetime
+from starlette.concurrency import run_in_threadpool
+
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -86,14 +88,14 @@ def _parse_and_save(
 
 
 # 创建用户文档记录并将解析文本加入知识库。
-def create_document(owner_user_id: int, filename: str, content: bytes) -> dict:
+async def create_document(owner_user_id: int, filename: str, content: bytes) -> dict:
     """创建用户文档记录并将解析文本加入知识库。"""
     document_id = str(uuid4())
-    parsed, original_path, extracted_path = _parse_and_save(
+    parsed, original_path, extracted_path = await run_in_threadpool(_parse_and_save,
         owner_user_id, document_id, filename, content
     )
     try:
-        with session_scope() as db:
+        async with session_scope() as db:
             document = KnowledgeDocument(
                 document_id=document_id,
                 owner_user_id=owner_user_id,
@@ -103,95 +105,97 @@ def create_document(owner_user_id: int, filename: str, content: bytes) -> dict:
                 extracted_path=extracted_path,
             )
             db.add(document)
-            db.flush()
+            await db.flush()
+            # 显式加载MySQL服务端默认时间，避免异步隐式查询。
+            await db.refresh(document)
             result = _serialize(document)
     except Exception:
-        _remove_stored_file(original_path)
-        _remove_stored_file(extracted_path)
+        await run_in_threadpool(_remove_stored_file, original_path)
+        await run_in_threadpool(_remove_stored_file, extracted_path)
         raise
     refresh_knowledge_cache()
     return result
 
 
 # 按上传用户列出文档并转换为响应数据。
-def list_documents(owner_user_id: int) -> list[dict]:
+async def list_documents(owner_user_id: int) -> list[dict]:
     """按上传用户列出文档并转换为响应数据。"""
-    with session_scope() as db:
-        documents = db.scalars(
+    async with session_scope() as db:
+        documents = (await db.scalars(
             select(KnowledgeDocument)
             .where(KnowledgeDocument.owner_user_id == owner_user_id)
             .order_by(KnowledgeDocument.created_at.desc())
-        ).all()
+        )).all()
         return [_serialize(document) for document in documents]
 
 
 # 读取指定用户文档元数据，未找到时抛出业务异常。
-def get_document(owner_user_id: int, document_id: str) -> dict:
+async def get_document(owner_user_id: int, document_id: str) -> dict:
     """读取指定用户文档元数据，未找到时抛出业务异常。"""
-    with session_scope() as db:
-        document = db.scalar(_document_query(document_id, owner_user_id))
+    async with session_scope() as db:
+        document = await db.scalar(_document_query(document_id, owner_user_id))
         if document is None:
             raise DocumentNotFoundError(document_id)
         return _serialize(document)
 
 
 # 替换当前用户文档内容、解析结果和修改时间。
-def replace_document(owner_user_id: int, document_id: str, filename: str, content: bytes) -> dict:
+async def replace_document(owner_user_id: int, document_id: str, filename: str, content: bytes) -> dict:
     """替换当前用户文档内容、解析结果和修改时间。"""
-    with session_scope() as db:
-        document = db.scalar(_document_query(document_id, owner_user_id))
+    async with session_scope() as db:
+        document = await db.scalar(_document_query(document_id, owner_user_id))
         if document is None:
             raise DocumentNotFoundError(document_id)
         old_original, old_extracted = document.original_path, document.extracted_path
-        parsed, original_path, extracted_path = _parse_and_save(
+        parsed, original_path, extracted_path = await run_in_threadpool(_parse_and_save,
             owner_user_id, document_id, filename, content
         )
         document.name = parsed.name
         document.file_format = parsed.file_format
         document.original_path = original_path
         document.extracted_path = extracted_path
-        document.modified_at = datetime.utcnow()
+        document.modified_at = datetime.now(timezone.utc).replace(tzinfo=None)
         result = _serialize(document)
     if old_original != original_path:
-        _remove_stored_file(old_original)
+        await run_in_threadpool(_remove_stored_file, old_original)
     if old_extracted != extracted_path:
-        _remove_stored_file(old_extracted)
+        await run_in_threadpool(_remove_stored_file, old_extracted)
     refresh_knowledge_cache()
     return result
 
 
 # 修改文档显示名称并同步更新检索文本来源名称。
-def rename_document(owner_user_id: int, document_id: str, name: str) -> dict:
+async def rename_document(owner_user_id: int, document_id: str, name: str) -> dict:
     """修改文档显示名称并同步更新检索文本来源名称。"""
     name = Path(name.strip().replace("\\", "/")).name
     if not name:
         raise ValueError("文档名称不能为空")
-    with session_scope() as db:
-        document = db.scalar(_document_query(document_id, owner_user_id))
+    async with session_scope() as db:
+        document = await db.scalar(_document_query(document_id, owner_user_id))
         if document is None:
             raise DocumentNotFoundError(document_id)
         old_path = (KNOWLEDGE_DIR / document.extracted_path).resolve()
         new_path = old_path.with_name(f"{document_id}--{name}.txt")
-        new_path.parent.mkdir(parents=True, exist_ok=True)
-        if old_path.exists():
-            old_path.replace(new_path)
+        await run_in_threadpool(new_path.parent.mkdir, parents=True, exist_ok=True)
+        if await run_in_threadpool(old_path.exists):
+            await run_in_threadpool(old_path.replace, new_path)
         document.name = name
         document.extracted_path = _relative(new_path)
-        document.modified_at = datetime.utcnow()
+        document.modified_at = datetime.now(timezone.utc).replace(tzinfo=None)
         result = _serialize(document)
     refresh_knowledge_cache()
     return result
 
 
 # 删除当前用户的文档记录、原文件和检索文本。
-def delete_document(owner_user_id: int, document_id: str) -> None:
+async def delete_document(owner_user_id: int, document_id: str) -> None:
     """删除当前用户的文档记录、原文件和检索文本。"""
-    with session_scope() as db:
-        document = db.scalar(_document_query(document_id, owner_user_id))
+    async with session_scope() as db:
+        document = await db.scalar(_document_query(document_id, owner_user_id))
         if document is None:
             raise DocumentNotFoundError(document_id)
         original_path, extracted_path = document.original_path, document.extracted_path
-        db.delete(document)
-    _remove_stored_file(original_path)
-    _remove_stored_file(extracted_path)
+        await db.delete(document)
+    await run_in_threadpool(_remove_stored_file, original_path)
+    await run_in_threadpool(_remove_stored_file, extracted_path)
     refresh_knowledge_cache()
