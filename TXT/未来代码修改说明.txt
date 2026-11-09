@@ -356,3 +356,9 @@ Agent与工具：agent/agent.py完整回答/流式回答复用校验执行，识
 API与配置：app/main.py启动时发现MCP并挂载api/routes/mcp.py的认证状态接口GET /mcp/filesystem；返回当前用户目录名称，不暴露服务器路径。requirements.txt新增固定mcp/jsonschema；integrations/mcp/node/package.json及package-lock固定Server与Node依赖；.env.example记录开关、目录、写权限、node命令和超时，.gitignore忽略工作文件与Node安装目录。原.env和IDE .mcp.json未改。
 测试：新增test/test_mcp.py覆盖发现/去重、JSON Schema、登录上下文、路径/多文件/移动两端校验、失败降级、只读、异步停止和超时连接清理、两种Agent循环和RAG接MCP多步调用；test/test_api_http.py新增状态认证及用户范围检查，生命周期测试禁用真实MCP。新增scripts/smoke_mcp.py连接真实官方Server，在临时目录验证读写、用户隔离及Server拒绝越界，不调用真实模型或数据库。完整测试92 passed in 4.44s，pip check和diff检查通过。
 使用与边界：依赖已在当前工作区环境安装，重启后端自动发现；其他环境pip安装requirements后执行npm ci --prefix integrations/mcp/node --ignore-scripts --no-audit --no-fund。README新增安装/运行/对话示例和官方参考。每次工具调用有Server启动开销；文件写入不自动建立RAG索引；无文件管理前端；没有开放删除、图片读取或任意命令。停止不撤销已完成的文件写入，目录限制不是OS沙箱。无真实用户数据改动、无Git提交推送。
+
+[2026-11-09 21:24:00 +08:00] 抽取Agent统一消息与工具执行逻辑
+修改前：agent/agent.py中普通run和run_stream分别初始化消息、序列化工具助手消息及构造tool结果；普通run中重复实现JSON解析、本地/MCP参数校验、工具查找、执行和异常转换，流式流程则使用另一个执行入口。容易出现参数校验与错误行为不一致。
+修改后：新增agent/tool_execution.py，提供normalize_tool_call、assistant_tool_message和execute_tool_call，统一模型调用规范化、消息序列化、JSON解析、本地Pydantic/MCP JSON Schema校验、工具执行及错误结果。Agent._begin_turn统一系统/历史/用户消息初始化；_tool_result_message统一工具返回消息格式。普通run和run_stream各自保留清晰的决策循环、普通完整返回或流式正文输出；两者调用同一工具入口，流式仍传stop_event，普通执行使用默认超时。
+文件：agent/tool_execution.py（新增）；agent/agent.py（复用共享处理逻辑）。功能一览尚未追加，本次未增加文件夹，只增加单个模块。
+验证：本次只检查代码与改动结构，未运行测试或其他自动化验证；没有声称通过测试。

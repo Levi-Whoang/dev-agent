@@ -17,3 +17,5 @@ frontend/.env.local
 frontend/.env.*.local
 integrations/mcp/node/node_modules/
 mcp_workspace/
+demo_data
+knowledge_base

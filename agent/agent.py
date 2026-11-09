@@ -6,12 +6,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from tools.schema import create_args_model
-from pydantic import ValidationError
-from jsonschema import ValidationError as SchemaValidationError
 from integrations.mcp.tools import MCPTool
 from agent.session import SessionManager
-from agent.control import execute_tool, await_or_stop, GenerationStopped
+from agent.control import await_or_stop, GenerationStopped
+from agent.tool_execution import assistant_tool_message, execute_tool_call
 
 class Agent:
 
@@ -54,12 +52,7 @@ class Agent:
 
         messages = await self.session_manager.get_messages(session_id)
 
-        messages.append({
-            "role": "user",
-            "content": user_input
-        })
-
-        await self.session_manager.save(session_id, messages)
+        messages = await self._begin_turn(user_input, session_id)
         #最多10轮决策
         max_iterations = 10
 
@@ -77,10 +70,7 @@ class Agent:
             )
 
             message = response.choices[0].message
-            saved_message = message.model_dump(exclude_none=True)
-            if message.tool_calls:
-                saved_message.pop("content", None)
-            messages.append(saved_message)
+            messages.append(assistant_tool_message(message))
 
             # LLM 不需要工具
             if not message.tool_calls:
@@ -90,15 +80,8 @@ class Agent:
             # LLM 要调用工具
             for tool_call in message.tool_calls:
 
-                result = await self._execute_streamed_tool({
-                    "id": tool_call.id,
-                    "function": {"name": tool_call.function.name,
-                                 "arguments": tool_call.function.arguments},
-                })
-                messages.append({
-                    "role": "tool", "tool_call_id": tool_call.id,
-                    "content": json.dumps(result, ensure_ascii=False),
-                })
+                result = await execute_tool_call(self.tool_registry, tool_call)
+                messages.append(self._tool_result_message(tool_call.id, result))
 
             await self.session_manager.save(session_id, messages)
 
@@ -112,13 +95,7 @@ class Agent:
         from agent.stream_filter import PublicTextFilter
         stop_event = stop_event or Event()
         started = time.perf_counter()
-        messages = await self.session_manager.get_messages(session_id)
-        messages.append({"role": "user", "content": user_input})
-        if not messages or messages[0].get("role") != "system":
-            messages.insert(0, self._system_prompt)
-        else:
-            messages[0] = self._system_prompt
-        await self.session_manager.save(session_id, messages)
+        messages = await self._begin_turn(user_input, session_id)
         for _ in range(10):
             if stop_event.is_set():
                 return
@@ -131,13 +108,11 @@ class Agent:
             decision = response.choices[0].message
             if not decision.tool_calls:
                 break
-            saved = decision.model_dump(exclude_none=True)
-            saved.pop("content", None)
+            saved = assistant_tool_message(decision)
             messages.append(saved)
             for call in saved["tool_calls"]:
-                result = await self._execute_streamed_tool(call, stop_event)
-                messages.append({"role": "tool", "tool_call_id": call["id"],
-                                 "content": json.dumps(result, ensure_ascii=False)})
+                result = await execute_tool_call(self.tool_registry, call, stop_event=stop_event)
+                messages.append(self._tool_result_message(call["id"], result))
             await self.session_manager.save(session_id, messages)
             # 仅有本地工具时保留RAG首字优化；MCP任务可能还需根据证据继续写文件。
             if (not any(isinstance(tool, MCPTool) for tool in self.tool_registry.values())
@@ -179,40 +154,19 @@ class Agent:
                         messages.append({"role": "assistant", "content": "".join(parts)})
                         await self.session_manager.save(session_id, messages)
 
-    # 校验工具参数并等待有界线程池执行结果。
+    # 读取历史并把系统消息与新用户输入组成统一轮次。
+    async def _begin_turn(self, user_input, session_id):
+        messages = await self.session_manager.get_messages(session_id)
+        messages.append({"role": "user", "content": user_input})
+        if not messages or messages[0].get("role") != "system":
+            messages.insert(0, self._system_prompt)
+        else:
+            messages[0] = self._system_prompt
+        await self.session_manager.save(session_id, messages)
+        return messages
 
-    async def _execute_streamed_tool(self, tool_call, stop_event=None):
-        function = tool_call["function"]
-        tool_name = function["name"]
-
-        try:
-            tool_arguments = json.loads(function["arguments"])
-        except json.JSONDecodeError as error:
-            return {"error": f"工具参数格式错误: {error}"}
-
-        tool = self.tool_registry.get(tool_name)
-        if tool is None:
-            return {"error": f"工具不存在: {tool_name}"}
-
-        try:
-            if isinstance(tool, MCPTool):
-                arguments = tool.validate_arguments(tool_arguments)
-            else:
-                args_model = create_args_model(tool)
-                arguments = args_model(**tool_arguments).model_dump()
-        except SchemaValidationError:
-            return {"error": "工具参数校验失败", "code": "invalid_tool_arguments"}
-        except ValidationError as error:
-            return {
-                "error": "工具参数校验失败",
-                "details": error.errors(include_context=False),
-            }
-        except Exception as error:
-            return {"error": f"工具执行前发生错误: {error}"}
-
-        try:
-            from agent.control import execute_tool
-            return await execute_tool(tool, arguments,
-                                float(os.getenv("TOOL_TIMEOUT_SECONDS", "15")), stop_event)
-        except Exception as error:
-            return {"error": f"工具执行失败: {error}"}
+    # 统一构造工具结果消息，保证普通与流式流程格式一致。
+    @staticmethod
+    def _tool_result_message(tool_call_id, result):
+        return {"role": "tool", "tool_call_id": tool_call_id,
+                "content": json.dumps(result, ensure_ascii=False)}

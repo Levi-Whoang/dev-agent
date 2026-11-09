@@ -256,3 +256,7 @@ RAG 五项指标扩展
 - app/main.py：新增启动时发现MCP并注册状态路由。
 - agent/agent.py、agent/control.py、tools/schema.py：新增远端schema校验和异步MCP工具执行。
 - tools/knowledge.py：新增当前可信用户ID读取，供检索与MCP共用用户范围。
+
+
+[2026-11-09 21:24:00 +08:00] agent/tool_execution.py：规范化模型工具调用消息，统一JSON解析、本地及MCP参数校验、工具执行和错误映射，供普通与流式Agent复用。
+

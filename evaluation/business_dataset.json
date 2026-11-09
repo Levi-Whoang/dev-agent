@@ -1,0 +1,306 @@
+{
+  "version": "business-eval-1.0",
+  "fictional": true,
+  "cases": [
+    {
+      "id": "B001",
+      "query": "星桥云面向哪些客户？",
+      "answer": "星桥云面向中小型制造企业。",
+      "expected": [
+        "星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_company.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E001",
+          "source": "business_company.txt",
+          "quote": "星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。"
+        }
+      ]
+    },
+    {
+      "id": "B002",
+      "query": "星桥云目前服务哪里？",
+      "answer": "星桥云当前服务区域为中国大陆。",
+      "expected": [
+        "星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_company.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E002",
+          "source": "business_company.txt",
+          "quote": "星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。"
+        }
+      ]
+    },
+    {
+      "id": "B003",
+      "query": "采购订单金额五万元找谁审批？",
+      "answer": "需要采购主管与财务经理双人审批。",
+      "expected": [
+        "星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_orders.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E003",
+          "source": "business_orders.txt",
+          "quote": "星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。"
+        }
+      ]
+    },
+    {
+      "id": "B004",
+      "query": "已发货的采购单能直接撤销吗？",
+      "answer": "已发货订单不能直接撤销。",
+      "expected": [
+        "采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_orders.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E004",
+          "source": "business_orders.txt",
+          "quote": "采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。"
+        }
+      ]
+    },
+    {
+      "id": "B005",
+      "query": "退款审核通过后多久打款？",
+      "answer": "财务应在5个工作日内原路退款。",
+      "expected": [
+        "星桥云退款申请通过审核后，财务应在5个工作日内原路退款。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_orders.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E005",
+          "source": "business_orders.txt",
+          "quote": "星桥云退款申请通过审核后，财务应在5个工作日内原路退款。"
+        }
+      ]
+    },
+    {
+      "id": "B006",
+      "query": "库存预警什么时候发送汇总？",
+      "answer": "每天上午9点发送汇总通知。",
+      "expected": [
+        "星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_inventory.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E006",
+          "source": "business_inventory.txt",
+          "quote": "星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。"
+        }
+      ]
+    },
+    {
+      "id": "B007",
+      "query": "批次追溯记录保留多久？",
+      "answer": "追溯记录保存3年。",
+      "expected": [
+        "库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_inventory.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E007",
+          "source": "business_inventory.txt",
+          "quote": "库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。"
+        }
+      ]
+    },
+    {
+      "id": "B008",
+      "query": "数据库全量备份多久一次保留多久？",
+      "answer": "每天凌晨2点执行数据库全量备份，备份保存30天。",
+      "expected": [
+        "星桥云每天凌晨2点执行数据库全量备份，备份保存30天。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_security.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E008",
+          "source": "business_security.txt",
+          "quote": "星桥云每天凌晨2点执行数据库全量备份，备份保存30天。"
+        }
+      ]
+    },
+    {
+      "id": "B009",
+      "query": "普通采购员可以导出订单报表吗？",
+      "answer": "普通采购员不能导出。",
+      "expected": [
+        "星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_security.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E009",
+          "source": "business_security.txt",
+          "quote": "星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。"
+        }
+      ]
+    },
+    {
+      "id": "B010",
+      "query": "核心订单服务不可用时多久响应？",
+      "answer": "支持团队须在30分钟内首次响应。",
+      "expected": [
+        "星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_support.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E010",
+          "source": "business_support.txt",
+          "quote": "星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。"
+        }
+      ]
+    },
+    {
+      "id": "B011",
+      "query": "标准试用期和到期数据保留时间是多少？",
+      "answer": "标准试用期为14天，试用到期后数据保留7天。",
+      "expected": [
+        "星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_support.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E011",
+          "source": "business_support.txt",
+          "quote": "星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。"
+        }
+      ]
+    },
+    {
+      "id": "B012",
+      "query": "企业版包含多少次培训？",
+      "answer": "企业版包含2次远程管理员培训。",
+      "expected": [
+        "星桥云企业版包含2次远程管理员培训，每次90分钟。"
+      ],
+      "category": "business_answerable",
+      "sources": [
+        "business_support.txt"
+      ],
+      "evidence": [
+        {
+          "id": "E012",
+          "source": "business_support.txt",
+          "quote": "星桥云企业版包含2次远程管理员培训，每次90分钟。"
+        }
+      ]
+    },
+    {
+      "id": "B013",
+      "query": "星桥云企业版一年多少钱？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B014",
+      "query": "星河科技老板的手机号码是多少？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B015",
+      "query": "星桥云今年的合同收入有多少？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B016",
+      "query": "星桥云承诺的故障赔偿金额是多少？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B017",
+      "query": "试用期可不可以无限延期？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B018",
+      "query": "星桥云库存接口每秒最大支持多少请求？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B019",
+      "query": "海外数据中心位于哪个城市？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    },
+    {
+      "id": "B020",
+      "query": "星桥云是否支持支付宝自动扣款？",
+      "answer": null,
+      "expected": null,
+      "category": "business_no_answer",
+      "sources": [],
+      "evidence": []
+    }
+  ]
+}
