@@ -1,0 +1,1146 @@
+{
+  "version": "rag-quality-1.0",
+  "generated_at": "2026-11-02T21:04:26.288758+08:00",
+  "dataset_version": "business-eval-1.0",
+  "dataset_sha256": "6c1e109a0178ab4ba3eff678f1605f8f0781ba9dd8f204f4ddeec5d58796c9e2",
+  "corpus_sha256": "3b79cc89765407632e10ded28a8af2967a3f15b27ab99732076a58f3ecd5c0b3",
+  "k": 3,
+  "chunk_size": 300,
+  "threshold": 0.6,
+  "generation_model": "deepseek-flash",
+  "judge_model": "deepseek-flash",
+  "selected_generation_ids": [
+    "B001",
+    "B002",
+    "B003",
+    "B013",
+    "B014",
+    "B015"
+  ],
+  "modes": {
+    "dense": {
+      "metrics": {
+        "recall_at_k": 0.25,
+        "mrr": 0.25,
+        "precision_at_k": 0.05,
+        "precision_at_k_answerable": 0.08333333333333333,
+        "faithfulness": 1.0,
+        "no_answer_accuracy": 1.0,
+        "empty_evidence_refusal_accuracy": 1.0,
+        "retrieval_no_answer_accuracy": 0.375,
+        "generation_count": 6,
+        "negative_generation_count": 3,
+        "answerable_refusal_rate": 0.3333333333333333,
+        "generation_errors": 0,
+        "judged_claims": 8
+      },
+      "cases": [
+        {
+          "id": "B001",
+          "query": "星桥云面向哪些客户？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [
+            "E001"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.6395,
+              "dense_score": 0.6395,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6235,
+              "dense_score": 0.6235,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6227,
+              "dense_score": 0.6227,
+              "keyword_score": 0.0
+            }
+          ],
+          "generation": {
+            "answer": "星桥云面向**中小型制造企业**。",
+            "judgment": {
+              "refused": false,
+              "answered_question": true,
+              "claims": [
+                {
+                  "text": "星桥云面向中小型制造企业。",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": false
+          }
+        },
+        {
+          "id": "B002",
+          "query": "星桥云目前服务哪里？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [
+            "E002"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.6987,
+              "dense_score": 0.6987,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.693,
+              "dense_score": 0.693,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6586,
+              "dense_score": 0.6586,
+              "keyword_score": 0.0
+            }
+          ],
+          "generation": {
+            "answer": "星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+            "judgment": {
+              "refused": false,
+              "answered_question": true,
+              "claims": [
+                {
+                  "text": "星桥云当前服务区域为中国大陆",
+                  "supported": true
+                },
+                {
+                  "text": "星桥云不承诺海外数据中心部署",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": false
+          }
+        },
+        {
+          "id": "B003",
+          "query": "采购订单金额五万元找谁审批？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": [],
+          "generation": {
+            "answer": "未提供相关审批制度或证据，无法确定“采购订单金额五万元”应由谁审批。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "未提供相关审批制度或证据",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B004",
+          "query": "已发货的采购单能直接撤销吗？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B005",
+          "query": "退款审核通过后多久打款？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B006",
+          "query": "库存预警什么时候发送汇总？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E006"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n库存预警\n星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。\n\n批次追溯\n库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。",
+              "source": "business_inventory.txt",
+              "score": 0.6721,
+              "dense_score": 0.6721,
+              "keyword_score": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B007",
+          "query": "批次追溯记录保留多久？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B008",
+          "query": "数据库全量备份多久一次保留多久？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B009",
+          "query": "普通采购员可以导出订单报表吗？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B010",
+          "query": "核心订单服务不可用时多久响应？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B011",
+          "query": "标准试用期和到期数据保留时间是多少？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B012",
+          "query": "企业版包含多少次培训？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B013",
+          "query": "星桥云企业版一年多少钱？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6765,
+              "dense_score": 0.6765,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6737,
+              "dense_score": 0.6737,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6664,
+              "dense_score": 0.6664,
+              "keyword_score": 0.0
+            }
+          ],
+          "generation": {
+            "answer": "提供的证据中没有星桥云企业版的价格或年费信息，因此无法回答“一年多少钱”。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "提供的证据中没有星桥云企业版的价格或年费信息",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B014",
+          "query": "星河科技老板的手机号码是多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "公司介绍（虚构示例）\n\n星河科技是一家虚构的软件技术企业，主要开发企业内部管理系统、数据分析工具和智能问答应用。公司的研发工作包括需求分析、后端开发、接口测试、数据管理和应用部署。本文中的企业名称、组织信息和业务情况均为演示用途，不代表真实企业。\n\n公司项目采用迭代开发方式。研发人员根据业务需求拆分任务，通过代码评审、自动化测试和版本管理降低交付风险。涉及公司真实业务的问题必须以经过确认的内部资料为依据。",
+              "source": "demo_company_overview.txt",
+              "score": 0.6233,
+              "dense_score": 0.6233,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.6082,
+              "dense_score": 0.6082,
+              "keyword_score": 0.0
+            }
+          ],
+          "generation": {
+            "answer": "提供的证据中没有星河科技老板的手机号码，无法回答。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "提供的证据中没有星河科技老板的手机号码",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B015",
+          "query": "星桥云今年的合同收入有多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6052,
+              "dense_score": 0.6052,
+              "keyword_score": 0.0
+            }
+          ],
+          "generation": {
+            "answer": "无法根据提供的证据回答。证据仅包含星桥云的订单审批、订单撤销和退款时限规则，未提供“今年合同收入”的数据。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "证据仅包含星桥云的订单审批、订单撤销和退款时限规则",
+                  "supported": true
+                },
+                {
+                  "text": "证据未提供“今年合同收入”的数据",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B016",
+          "query": "星桥云承诺的故障赔偿金额是多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6972,
+              "dense_score": 0.6972,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6739,
+              "dense_score": 0.6739,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6452,
+              "dense_score": 0.6452,
+              "keyword_score": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B017",
+          "query": "试用期可不可以无限延期？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B018",
+          "query": "星桥云库存接口每秒最大支持多少请求？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n库存预警\n星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。\n\n批次追溯\n库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。",
+              "source": "business_inventory.txt",
+              "score": 0.6482,
+              "dense_score": 0.6482,
+              "keyword_score": 0.0
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6113,
+              "dense_score": 0.6113,
+              "keyword_score": 0.0
+            }
+          ]
+        },
+        {
+          "id": "B019",
+          "query": "海外数据中心位于哪个城市？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B020",
+          "query": "星桥云是否支持支付宝自动扣款？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        }
+      ]
+    },
+    "hybrid": {
+      "metrics": {
+        "recall_at_k": 0.9166666666666666,
+        "mrr": 0.9166666666666666,
+        "precision_at_k": 0.18333333333333332,
+        "precision_at_k_answerable": 0.3055555555555555,
+        "faithfulness": 1.0,
+        "no_answer_accuracy": 1.0,
+        "empty_evidence_refusal_accuracy": null,
+        "retrieval_no_answer_accuracy": 0.25,
+        "generation_count": 6,
+        "negative_generation_count": 3,
+        "answerable_refusal_rate": 0.0,
+        "generation_errors": 0,
+        "judged_claims": 8
+      },
+      "cases": [
+        {
+          "id": "B001",
+          "query": "星桥云面向哪些客户？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [
+            "E001"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.6395,
+              "dense_score": 0.6395,
+              "keyword_score": 14.0326
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6235,
+              "dense_score": 0.6235,
+              "keyword_score": 11.5438
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6227,
+              "dense_score": 0.6227,
+              "keyword_score": 11.0466
+            }
+          ],
+          "generation": {
+            "answer": "星桥云面向**中小型制造企业**。（来源：business_company.txt）",
+            "judgment": {
+              "refused": false,
+              "answered_question": true,
+              "claims": [
+                {
+                  "text": "星桥云面向中小型制造企业。",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": false
+          }
+        },
+        {
+          "id": "B002",
+          "query": "星桥云目前服务哪里？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [
+            "E002"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.7891,
+              "dense_score": 0.6987,
+              "keyword_score": 21.4813
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.693,
+              "dense_score": 0.693,
+              "keyword_score": 13.7368
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6586,
+              "dense_score": 0.6586,
+              "keyword_score": 11.0466
+            }
+          ],
+          "generation": {
+            "answer": "星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+            "judgment": {
+              "refused": false,
+              "answered_question": true,
+              "claims": [
+                {
+                  "text": "星桥云当前服务区域为中国大陆",
+                  "supported": true
+                },
+                {
+                  "text": "星桥云不承诺海外数据中心部署",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": false
+          }
+        },
+        {
+          "id": "B003",
+          "query": "采购订单金额五万元找谁审批？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E003"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.7192,
+              "dense_score": 0.5989,
+              "keyword_score": 42.2276
+            }
+          ],
+          "generation": {
+            "answer": "采购订单金额五万元（达到50000元）时，需要**采购主管与财务经理双人审批**。",
+            "judgment": {
+              "refused": false,
+              "answered_question": true,
+              "claims": [
+                {
+                  "text": "采购订单金额达到50000元时，需要采购主管与财务经理双人审批。",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": false
+          }
+        },
+        {
+          "id": "B004",
+          "query": "已发货的采购单能直接撤销吗？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E004"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6984,
+              "dense_score": 0.5691,
+              "keyword_score": 37.8833
+            }
+          ]
+        },
+        {
+          "id": "B005",
+          "query": "退款审核通过后多久打款？",
+          "answerable": true,
+          "recall_at_k": 0.0,
+          "mrr": 0,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B006",
+          "query": "库存预警什么时候发送汇总？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E006"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n库存预警\n星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。\n\n批次追溯\n库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。",
+              "source": "business_inventory.txt",
+              "score": 0.7705,
+              "dense_score": 0.6721,
+              "keyword_score": 45.768
+            }
+          ]
+        },
+        {
+          "id": "B007",
+          "query": "批次追溯记录保留多久？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E007"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n库存预警\n星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。\n\n批次追溯\n库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。",
+              "source": "business_inventory.txt",
+              "score": 0.6778,
+              "dense_score": 0.5397,
+              "keyword_score": 48.6634
+            }
+          ]
+        },
+        {
+          "id": "B008",
+          "query": "数据库全量备份多久一次保留多久？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E008"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6831,
+              "dense_score": 0.5473,
+              "keyword_score": 37.1764
+            }
+          ]
+        },
+        {
+          "id": "B009",
+          "query": "普通采购员可以导出订单报表吗？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E009"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6982,
+              "dense_score": 0.5688,
+              "keyword_score": 48.9382
+            }
+          ]
+        },
+        {
+          "id": "B010",
+          "query": "核心订单服务不可用时多久响应？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E010"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.707,
+              "dense_score": 0.5814,
+              "keyword_score": 52.1475
+            }
+          ]
+        },
+        {
+          "id": "B011",
+          "query": "标准试用期和到期数据保留时间是多少？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E011"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6504,
+              "dense_score": 0.5006,
+              "keyword_score": 42.0374
+            }
+          ]
+        },
+        {
+          "id": "B012",
+          "query": "企业版包含多少次培训？",
+          "answerable": true,
+          "recall_at_k": 1.0,
+          "mrr": 1.0,
+          "precision_at_k": 0.3333333333333333,
+          "relevant_flags": [
+            true
+          ],
+          "matched_evidence_ids": [
+            "E012"
+          ],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6574,
+              "dense_score": 0.5106,
+              "keyword_score": 25.1031
+            }
+          ]
+        },
+        {
+          "id": "B013",
+          "query": "星桥云企业版一年多少钱？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.7735,
+              "dense_score": 0.6765,
+              "keyword_score": 29.4368
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6737,
+              "dense_score": 0.6737,
+              "keyword_score": 10.2937
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6664,
+              "dense_score": 0.6664,
+              "keyword_score": 11.0466
+            }
+          ],
+          "generation": {
+            "answer": "提供的证据中没有星桥云企业版的价格信息，因此无法回答“一年多少钱”。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "提供的证据中没有星桥云企业版的价格信息",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B014",
+          "query": "星河科技老板的手机号码是多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "公司介绍（虚构示例）\n\n星河科技是一家虚构的软件技术企业，主要开发企业内部管理系统、数据分析工具和智能问答应用。公司的研发工作包括需求分析、后端开发、接口测试、数据管理和应用部署。本文中的企业名称、组织信息和业务情况均为演示用途，不代表真实企业。\n\n公司项目采用迭代开发方式。研发人员根据业务需求拆分任务，通过代码评审、自动化测试和版本管理降低交付风险。涉及公司真实业务的问题必须以经过确认的内部资料为依据。",
+              "source": "demo_company_overview.txt",
+              "score": 0.6233,
+              "dense_score": 0.6233,
+              "keyword_score": 7.382
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.6082,
+              "dense_score": 0.6082,
+              "keyword_score": 13.4169
+            }
+          ],
+          "generation": {
+            "answer": "提供的证据中没有包含星河科技老板的手机号码，因此无法回答。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "提供的证据中没有包含星河科技老板的手机号码",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B015",
+          "query": "星桥云今年的合同收入有多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6052,
+              "dense_score": 0.6052,
+              "keyword_score": 10.2937
+            }
+          ],
+          "generation": {
+            "answer": "提供的证据中没有关于“星桥云今年合同收入”的数据，无法回答该问题。证据仅包含订单审批、订单撤销和退款时限等业务规则。",
+            "judgment": {
+              "refused": true,
+              "answered_question": false,
+              "claims": [
+                {
+                  "text": "证据中没有关于星桥云今年合同收入的数据",
+                  "supported": true
+                },
+                {
+                  "text": "证据包含订单审批、订单撤销和退款时限等业务规则",
+                  "supported": true
+                }
+              ]
+            },
+            "faithfulness": 1.0,
+            "correct_refusal": true
+          }
+        },
+        {
+          "id": "B016",
+          "query": "星桥云承诺的故障赔偿金额是多少？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n故障响应\n星桥云P1故障指核心订单服务不可用，支持团队须在30分钟内首次响应。\n\n试用政策\n星桥云标准试用期为14天，试用到期后数据保留7天供用户导出。\n\n培训安排\n星桥云企业版包含2次远程管理员培训，每次90分钟。",
+              "source": "business_support.txt",
+              "score": 0.6972,
+              "dense_score": 0.6972,
+              "keyword_score": 14.9184
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n订单审批\n星桥云中采购订单金额达到50000元时，需要采购主管与财务经理双人审批。\n\n订单撤销\n采购订单仅在状态为待审核时允许申请人撤销，已发货订单不能直接撤销。\n\n退款时限\n星桥云退款申请通过审核后，财务应在5个工作日内原路退款。",
+              "source": "business_orders.txt",
+              "score": 0.6739,
+              "dense_score": 0.6739,
+              "keyword_score": 13.6562
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6452,
+              "dense_score": 0.6452,
+              "keyword_score": 11.0466
+            }
+          ]
+        },
+        {
+          "id": "B017",
+          "query": "试用期可不可以无限延期？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        },
+        {
+          "id": "B018",
+          "query": "星桥云库存接口每秒最大支持多少请求？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false,
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n库存预警\n星桥云库存预警在可用库存低于安全库存时触发，每天上午9点发送汇总通知。\n\n批次追溯\n库存批次追溯保留供应商批号与入库时间，追溯记录保存3年。",
+              "source": "business_inventory.txt",
+              "score": 0.6482,
+              "dense_score": 0.6482,
+              "keyword_score": 27.5802
+            },
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n数据备份\n星桥云每天凌晨2点执行数据库全量备份，备份保存30天。\n\n导出权限\n星桥云订单报表仅允许租户管理员与财务角色导出，普通采购员不能导出。",
+              "source": "business_security.txt",
+              "score": 0.6113,
+              "dense_score": 0.6113,
+              "keyword_score": 11.0466
+            }
+          ]
+        },
+        {
+          "id": "B019",
+          "query": "海外数据中心位于哪个城市？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [
+            false
+          ],
+          "matched_evidence_ids": [],
+          "retrieved": [
+            {
+              "content": "星河科技 / 星桥云业务规则（虚构演示，版本 business-demo-1.0）\n以下规则仅用于项目开发评估，不对应真实企业。\n\n公司与产品\n星河科技是一家虚构的软件企业，其供应链产品名为星桥云，面向中小型制造企业。\n\n服务地区\n星桥云当前服务区域为中国大陆，不承诺海外数据中心部署。",
+              "source": "business_company.txt",
+              "score": 0.5908,
+              "dense_score": 0.4154,
+              "keyword_score": 30.7126
+            }
+          ]
+        },
+        {
+          "id": "B020",
+          "query": "星桥云是否支持支付宝自动扣款？",
+          "answerable": false,
+          "recall_at_k": null,
+          "mrr": null,
+          "precision_at_k": 0.0,
+          "relevant_flags": [],
+          "matched_evidence_ids": [],
+          "retrieved": []
+        }
+      ]
+    }
+  },
+  "retriever_config": {
+    "CHUNK_SIZE": 300,
+    "CHUNK_OVERLAP": 50,
+    "TOP_K": 3,
+    "SIMILARITY_THRESHOLD": 0.6,
+    "DENSE_WEIGHT": 0.7,
+    "KEYWORD_WEIGHT": 0.3,
+    "KEYWORD_MIN_COVERAGE": 0.4,
+    "BM25_K1": 1.5,
+    "BM25_B": 0.75
+  },
+  "summary_updated_at": "2026-11-02 21:06:19 +08:00"
+}

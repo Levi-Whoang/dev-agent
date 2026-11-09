@@ -43,6 +43,11 @@ _CURRENT_KNOWLEDGE_OWNER: ContextVar[int | None] = ContextVar(
 )
 
 
+# 获取服务端设置的当前用户ID，供检索及MCP文件权限校验共用。
+def get_current_owner_id() -> int | None:
+    return _CURRENT_KNOWLEDGE_OWNER.get()
+
+
 # 设置当前聊天的知识库文档所有者范围。
 @contextmanager
 def knowledge_owner_scope(owner_user_id: int | None):

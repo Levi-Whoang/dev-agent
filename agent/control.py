@@ -1,5 +1,6 @@
 """生成任务与工具执行控制。"""
 import asyncio
+import inspect
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from contextvars import copy_context
 from threading import Event, Lock, BoundedSemaphore
@@ -32,6 +33,22 @@ def finish_generation(key, event):
             del _tasks[key]
 # 有界线程执行工具，超时或取消后停止等待，保留用户上下文。
 async def execute_tool(tool, arguments, timeout, stop_event=None):
+    if inspect.iscoroutinefunction(tool) or inspect.iscoroutinefunction(getattr(tool, "__call__", None)):
+        started = time.monotonic()
+        logger.info("tool_start tool=%s", tool.__name__)
+        try:
+            async with asyncio.timeout(timeout):
+                result = await await_or_stop(tool(**arguments), stop_event)
+            logger.info("tool_complete tool=%s duration=%.3f", tool.__name__, time.monotonic()-started)
+            return result
+        except GenerationStopped:
+            return {"error": "生成已停止", "code": "cancelled"}
+        except TimeoutError:
+            logger.warning("tool_timeout tool=%s duration=%.3f", tool.__name__, time.monotonic()-started)
+            return {"error": "工具超时", "code": "tool_timeout"}
+        except Exception:
+            logger.warning("tool_failed tool=%s duration=%.3f", tool.__name__, time.monotonic()-started)
+            return {"error": "工具执行失败", "code": "tool_failed"}
     if not _slots.acquire(blocking=False):
         return {"error": "工具繁忙", "code": "tool_busy"}
     started = time.monotonic()

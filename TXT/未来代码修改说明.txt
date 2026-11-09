@@ -348,3 +348,11 @@ agent/runtime.py恢复AsyncOpenAI；agent/agent.py恢复模型调用和分片读
 测试与文档：requirements.txt恢复aiomysql/aiosqlite依赖；README更新为异步现状。test/async_helpers.py、test/test_async_database.py恢复，移除上轮临时同步替代文件test/stream_helpers.py和test/test_database.py。其余Agent/API/会话/评估测试同步匹配异步接口；保留显式关闭生成器的测试，并覆盖取消网络请求、断连关闭、异常及取消事务回滚。
 结果：完整离线测试81 passed，3.43秒；git diff --check通过。初轮三处测试适配问题（误await字典values、漏await查询）均已修复。测试使用SQLite和模型替身，不代表真实LLM/MySQL端到端压测。Windows沙箱的事件循环socketpair初始化曾阻塞，离线测试经允许在沙箱外正常执行。未修改.env、数据库表结构或真实用户数据，未提交推送，用户已有无关改动保留。
 边界：同步工具超时后仍可能在后台执行；多worker停止状态共享、同会话写入一致性、磁盘与数据库事务一致性仍需单独处理，本轮不宣称已解决。
+
+[2026-11-04 21:18:51 +08:00] Filesystem MCP客户端、Agent工具桥接和用户隔离
+修改前：应用只注册本地Python函数，create_args_model从函数签名生成参数，工具全部交给同步线程池；无MCP客户端、工具发现或状态接口。.mcp.json只包含IDE的pycharm连接，应用不读取它。
+修改后：新增integrations/mcp/config.py读取配置；filesystem.py通过SDK Client和stdio启动官方Node Server，分页发现工具、注册明确适配的11个文本/目录工具，失败时降级。tools.py保留Server JSON Schema、增加filesystem_命名并校验参数；runtime.py提供惰性网关。每次工具调用从服务端上下文取得所有者，只允许mcp_workspace/user-ID下路径；多文件路径与移动两端均校验，Server启动参数也只授权该用户目录。默认允许用户明确要求的写入，可设只读；返回文本截断24000字符。子进程按次启动和关闭，没有跨任务保存SDK连接。
+Agent与工具：agent/agent.py完整回答/流式回答复用校验执行，识别MCPTool并按JSON Schema验证；agent/control.py识别原生异步函数/可调用对象，直接await并复用停止/超时/日志。tools/schema.py支持MCP原始schema；tools/knowledge.py新增可信用户上下文getter。MCP工具注册后不能在RAG结束时提前跳出，避免检索后无法继续读写文件；无MCP时保留RAG快捷路径。这意味着启用MCP时普通RAG也可能多一次模型决策，README明确记录代价。
+API与配置：app/main.py启动时发现MCP并挂载api/routes/mcp.py的认证状态接口GET /mcp/filesystem；返回当前用户目录名称，不暴露服务器路径。requirements.txt新增固定mcp/jsonschema；integrations/mcp/node/package.json及package-lock固定Server与Node依赖；.env.example记录开关、目录、写权限、node命令和超时，.gitignore忽略工作文件与Node安装目录。原.env和IDE .mcp.json未改。
+测试：新增test/test_mcp.py覆盖发现/去重、JSON Schema、登录上下文、路径/多文件/移动两端校验、失败降级、只读、异步停止和超时连接清理、两种Agent循环和RAG接MCP多步调用；test/test_api_http.py新增状态认证及用户范围检查，生命周期测试禁用真实MCP。新增scripts/smoke_mcp.py连接真实官方Server，在临时目录验证读写、用户隔离及Server拒绝越界，不调用真实模型或数据库。完整测试92 passed in 4.44s，pip check和diff检查通过。
+使用与边界：依赖已在当前工作区环境安装，重启后端自动发现；其他环境pip安装requirements后执行npm ci --prefix integrations/mcp/node --ignore-scripts --no-audit --no-fund。README新增安装/运行/对话示例和官方参考。每次工具调用有Server启动开销；文件写入不自动建立RAG索引；无文件管理前端；没有开放删除、图片读取或任意命令。停止不撤销已完成的文件写入，目录限制不是OS沙箱。无真实用户数据改动、无Git提交推送。

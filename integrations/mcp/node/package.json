@@ -1,0 +1,10 @@
+{
+  "name": "dev-agent-filesystem-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned Filesystem MCP Server runtime for dev-agent",
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "2.1.0"
+  },
+  "engines": {"node": ">=24"}
+}

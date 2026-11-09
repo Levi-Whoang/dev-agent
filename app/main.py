@@ -11,6 +11,7 @@ from app.errors import install_error_handling
 from api.routes.documents import router as documents_router
 from api.routes.sessions import router as sessions_router
 from api.routes.users import router as users_router
+from api.routes.mcp import router as mcp_router
 from auth.jwt_auth import validate_auth_settings
 
 
@@ -21,6 +22,9 @@ async def lifespan(app: FastAPI):
     if os.getenv("RAG_WARMUP", "true").lower() in {"true", "1", "yes"}:
         await run_in_threadpool(warmup_knowledge)
     try:
+        from agent.runtime import agent
+        from integrations.mcp.runtime import filesystem
+        await filesystem.start(agent)
         yield
     finally:
         from agent.runtime import client
@@ -44,4 +48,5 @@ def health():
 app.include_router(users_router)
 app.include_router(sessions_router)
 app.include_router(documents_router)
+app.include_router(mcp_router)
 install_error_handling(app)

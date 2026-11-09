@@ -30,6 +30,9 @@ def create_args_model(func):
     )
 
 def function_to_schema(func):
+    from integrations.mcp.tools import MCPTool
+    if isinstance(func, MCPTool):
+        return func.openai_schema()
     args_model = create_args_model(func)
 
     return {

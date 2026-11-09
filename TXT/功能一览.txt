@@ -235,3 +235,24 @@ RAG 五项指标扩展
 - test/async_helpers.py：异步模型流、关闭状态和分片收集测试替身，恢复原文件路径。
 - test/test_async_database.py：异步SQLite认证/令牌/文档所有权、独立Session、异常与取消回滚集成测试，恢复原文件路径。
 - 上轮中断回退的临时同步替代文件test/stream_helpers.py、test/test_database.py已被上述异步文件替代，当前不存在。
+
+[2026-11-04 21:18:51 +08:00] 新增Filesystem MCP功能文件
+- integrations/：外部服务与协议集成目录。
+- integrations/__init__.py：集成包声明。
+- integrations/mcp/：MCP客户端、Filesystem连接和Agent工具适配。
+- integrations/mcp/__init__.py：MCP集成包声明。
+- integrations/mcp/config.py：环境变量配置、项目路径及固定Server入口。
+- integrations/mcp/filesystem.py：stdio连接、工具发现、按用户限定目录、调用与失败降级。
+- integrations/mcp/tools.py：MCP JSON Schema到模型工具的适配、参数验证与登录用户绑定。
+- integrations/mcp/runtime.py：不在导入时连接的共享Filesystem网关。
+- integrations/mcp/node/：官方Filesystem Server的独立Node运行依赖目录。
+- integrations/mcp/node/package.json：Server版本2.1.0与Node24以上要求。
+- integrations/mcp/node/package-lock.json：Node依赖的可重复安装锁文件。
+- integrations/mcp/node/node_modules/：本地安装依赖，已忽略Git跟踪。
+- api/routes/mcp.py：认证MCP状态及当前用户目录名称查询。
+- scripts/smoke_mcp.py：无需真实密钥的官方Server读写、用户隔离与越界拒绝冒烟检查。
+- test/test_mcp.py：MCP适配、权限、异常、只读、取消及Agent多步循环离线测试。
+- mcp_workspace/：运行时创建的用户文件目录；_discovery用于启动发现，user-ID为独立用户目录，已忽略Git跟踪。
+- app/main.py：新增启动时发现MCP并注册状态路由。
+- agent/agent.py、agent/control.py、tools/schema.py：新增远端schema校验和异步MCP工具执行。
+- tools/knowledge.py：新增当前可信用户ID读取，供检索与MCP共用用户范围。

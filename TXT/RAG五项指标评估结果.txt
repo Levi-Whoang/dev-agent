@@ -1,0 +1,39 @@
+RAG 五项指标评估
+生成时间：2026-11-02T21:04:26.288758+08:00
+虚构星桥云业务集：20题（12可回答，8无答案）；证据按来源和原文标注。
+Recall@K=召回的标注证据单元数/全部标注单元数；MRR=首个匹配证据片段的倒数排名。
+Precision@K=含匹配证据的片段数/K（不足K的空位计不相关），同时报告全题和正例均值。
+证据相关性采用来源+完整引文匹配，是可复核规则，不是完整语义相关性人工判断。
+Faithfulness=裁判认为受证据支持的事实陈述数/全部已判定事实数；纯拒答无事实时为N/A。
+无答案准确率=已选择负例中正确拒答数/已选择负例数；调用或裁判失败计失败。另列空检索结果时的拒答率。
+生成评估是固定检索证据到答案的链路，不包含 Agent 自主选工具；同一模型生成和裁判存在偏差，需人工抽查。
+未执行生成时 Faithfulness 和拒答准确率为 N/A，不用检索为空代替模型拒答。
+生成抽样题号：['B001', 'B002', 'B003', 'B013', 'B014', 'B015']
+dense：
+  recall_at_k: 0.25
+  mrr: 0.25
+  precision_at_k: 0.05
+  precision_at_k_answerable: 0.08333333333333333
+  faithfulness: 1.0
+  no_answer_accuracy: 1.0
+  empty_evidence_refusal_accuracy: 1.0
+  retrieval_no_answer_accuracy: 0.375
+  generation_count: 6
+  generation_errors: 0
+  judged_claims: 8
+hybrid：
+  recall_at_k: 0.9166666666666666
+  mrr: 0.9166666666666666
+  precision_at_k: 0.18333333333333332
+  precision_at_k_answerable: 0.3055555555555555
+  faithfulness: 1.0
+  no_answer_accuracy: 1.0
+  empty_evidence_refusal_accuracy: N/A
+  retrieval_no_answer_accuracy: 0.25
+  generation_count: 6
+  generation_errors: 0
+  judged_claims: 8
+完整证据、逐题生成答案、裁判判定和失败见 rag_quality_20261102_130525.json
+
+[2026-11-02 21:06:19 +08:00] 补充小样本诊断
+两种模式的生成样本各6条（3正例、3负例），各判定8项事实。Faithfulness=100%仅为这8项陈述的模型裁判结果。纯向量正例拒答率1/3，混合0/3，说明忠实度高不等于能回答问题。无答案准确率100%分别仅基于3道负例，不代表总体。

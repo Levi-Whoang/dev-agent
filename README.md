@@ -327,10 +327,51 @@ RAG 检索模式评估：运行 `python -m evaluation.retrieval`，在相同公�
 五项 RAG 质量评估：`python -m evaluation.quality` 计算新业务集的证据 Recall@K、MRR 和 Precision@K；加 `--generate --generation-limit 6` 实测均衡抽样答案的 Faithfulness 与无答案拒答准确率。输出见 `TXT/RAG五项指标评估结果.txt`，定义与生成调用范围见 `evaluation/README.md`。
 
 
-首字延迟：API 默认在启动阶段预热 embedding、公共向量及 BM25 索引（`RAG_WARMUP=true`），服务启动会更慢，但首次请求不再承担这部分模型加载。设为 false 可恢复惰性加载；私人文档仍在首次检索时编码。没有私人上传的账号复用公共向量。RAG 工具完成后直接进入最终流式回答，避免额外生成一遍完整答案；其他工具仍保留决策循环。日志中的 `rag_warmup`、`rag_search`、`llm_decision` 和 `agent_first_text` 用于区分预热、检索、决策及首正文延迟，不记录问题和答案正文。上传或重启导致缓存失效时仍可能重新编码。
+首字延迟：API 默认在启动阶段预热 embedding、公共向量及 BM25 索引（`RAG_WARMUP=true`），服务启动会更慢，但首次请求不再承担这部分模型加载。设为 false 可恢复惰性加载；私人文档仍在首次检索时编码。没有私人上传的账号复用公共向量。未启用MCP工具时，RAG 工具完成后直接进入最终流式回答，避免额外生成一遍完整答案。启用MCP后保留完整决策循环，以支持“检索后写入文件”等多步任务，可能增加一轮模型调用。日志中的 `rag_warmup`、`rag_search`、`llm_decision` 和 `agent_first_text` 用于区分预热、检索、决策及首正文延迟，不记录问题和答案正文。上传或重启导致缓存失效时仍可能重新编码。
 
 当前使用 `AsyncOpenAI` 和 SQLAlchemy 的 `AsyncEngine` / `AsyncSession`。MySQL 驱动为 `aiomysql`，SQLite 测试使用 `aiosqlite`；旧 `mysql+pymysql`、`sqlite+pysqlite` URL 会自动转换，已有数据库表和数据保持兼容。安装依赖使用 `python -m pip install -r requirements.txt`。
 
 完整Agent调用使用 `await agent.run(...)`，流式调用使用 `async for text in agent.run_stream(...)`。认证、会话和文档数据库服务及路由均通过await调用，每个数据库作用域使用独立Session并自动提交、异常/取消回滚及关闭。密码哈希、文档解析与文件操作仍在线程池执行，RAG工具仍由有界线程池承接，避免阻塞事件循环。
 
-流式输出、停止生成、RAG预热和跳过重复回答均保留。停止信号可以取消等待中的模型请求或分片读取，断连时关闭模型流并保存已输出正文；应用退出时关闭客户端、释放数据库连接池。已开始的同步工具无法强制终止，多worker任务共享和文档磁盘/数据库一致性仍需单独处理。
+流式输出、停止生成和RAG预热均保留；仅有本地工具时继续跳过RAG重复回答。停止信号可以取消等待中的模型请求或分片读取，断连时关闭模型流并保存已输出正文；应用退出时关闭客户端、释放数据库连接池。已开始的同步工具无法强制终止，多worker任务共享和文档磁盘/数据库一致性仍需单独处理。
+
+
+## Filesystem MCP
+
+项目作为MCP Client，通过stdio连接官方 `@modelcontextprotocol/server-filesystem`。Python SDK固定为 `mcp==2.3.0`，Server固定为 `2.1.0`，Node依赖锁在 `integrations/mcp/node/package-lock.json`。需要 Node.js 24 或更高版本。
+
+```powershell
+python -m pip install -r requirements.txt
+npm ci --prefix integrations/mcp/node --ignore-scripts --no-audit --no-fund
+python scripts/smoke_mcp.py
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+当前环境已安装依赖。启动API时自动发现并注册 `filesystem_` 前缀的工具：文本读取、批量读取、目录列表/大小、目录树、搜索、元数据、写入、编辑、创建目录和移动。注册后沿用现有JWT登录、Agent工具决策和SSE输出，无需为文件操作单独填写密钥。登录前端后可以发送：
+
+- “在我的文件工作目录中创建 notes.md，写入：今天完成了MCP接入。”
+- “读取 notes.md，告诉我文件内容。”
+- “列出我工作目录中的文件。”
+- “创建 reports 目录，将 notes.md 移动到 reports/notes.md。”
+
+默认文件保存在 `mcp_workspace/user-<数据库用户ID>/`，每个用户独立。工具使用相对路径，`.`代表自己的根目录；模型不能指定其他用户ID。客户端先校验路径，每次调用再启动一个仅允许当前用户目录的Server，调用结束后关闭，因此有子进程启动开销，但不会共享跨用户文件连接。此处属于目录访问限制，不是操作系统级沙箱；不要由外部程序向用户目录植入硬链接或不受信任文件。
+
+Filesystem文件与RAG上传知识库分别管理，在这里创建文件不会自动进入检索索引；需要加入知识库时仍通过文档上传接口。没有新增前端文件管理页面，操作入口是现有聊天框。只注册已适配的11种文本/目录工具，未开放图片读取、删除文件或任意命令执行。
+
+`.env`可选配置如下，不配置时使用这些默认值：
+
+```dotenv
+MCP_FILESYSTEM_ENABLED=true
+MCP_FILESYSTEM_ROOT=mcp_workspace
+MCP_FILESYSTEM_ALLOW_WRITE=true
+MCP_NODE_COMMAND=node
+MCP_TIMEOUT_SECONDS=15
+```
+
+设置 `MCP_FILESYSTEM_ALLOW_WRITE=false` 可只开放读取，设置 `MCP_FILESYSTEM_ENABLED=false` 可关闭MCP；修改后重启后端。Node不在PATH时，可将 `MCP_NODE_COMMAND` 设置为node可执行文件绝对路径。相对工作目录以项目根目录为准。
+
+认证后可调用 `GET /mcp/filesystem` 查看 `available`、工具列表和自己的目录名称。Node或Server缺失、握手失败时MCP降级不可用，普通聊天与RAG保持可用；日志记录连接失败及工具名称、耗时，不记录文件参数与内容。`MCP_TIMEOUT_SECONDS`限制MCP连接/调用，已有 `TOOL_TIMEOUT_SECONDS` 仍限制整次工具执行。停止/超时会取消等待并清理连接；已经发生的写入不会自动撤销。返回正文最多24000字符，超出时 `truncated=true`。
+
+`scripts/smoke_mcp.py` 使用临时目录连接真实Server，验证发现工具、写入/读取、用户隔离及Server拒绝越界，不需要LLM或数据库密钥，结束后清理示例文件。`.mcp.json`继续作为IDE配置保留，应用使用上述集成模块与环境变量，不读取IDE中的pycharm连接。
+
+参考：[官方Filesystem Server](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem)、[官方Python MCP客户端](https://py.sdk.modelcontextprotocol.io/client/)。

@@ -707,8 +707,25 @@ async def test_lifespan_closes_async_client(asgi_app, monkeypatch):
     client.close = AsyncMock()
     monkeypatch.setattr(sys.modules["agent.runtime"], "client", client, raising=False)
     monkeypatch.setenv("RAG_WARMUP", "false")
+    monkeypatch.setenv("MCP_FILESYSTEM_ENABLED", "false")
     async def lifecycle():
         async with app.router.lifespan_context(app):
             pass
     await lifecycle()
     client.close.assert_awaited_once()
+
+
+# MCP状态接口要求认证，只返回当前用户目录名称，不公开服务器实际路径。
+async def test_mcp_status_is_authenticated_and_scoped(asgi_app, monkeypatch):
+    from integrations.mcp.runtime import filesystem
+    app, _ = asgi_app
+    monkeypatch.setattr(filesystem, "status", lambda: {
+        "enabled": True, "available": True, "tools": ["filesystem_read_text_file"]})
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
+        assert (await client.get("/mcp/filesystem")).status_code == 401
+        alice = (await client.get("/mcp/filesystem", headers=ALICE_HEADERS)).json()["data"]
+        bob = (await client.get("/mcp/filesystem", headers=BOB_HEADERS)).json()["data"]
+    assert alice["available"] is True
+    assert alice["workspace"] == "user-1"
+    assert bob["workspace"] == "user-2"
+    assert "root" not in alice

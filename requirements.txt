@@ -69,3 +69,5 @@ python-pptx==1.0.2
 
 aiomysql==0.3.2
 aiosqlite==0.22.1
+mcp==2.3.0
+jsonschema==4.26.0

@@ -1,0 +1,99 @@
+RAG 检索模式对照评估
+生成时间：2026-11-02T20:53:59.662338+08:00
+比较对象：dense=历史纯向量策略重建；hybrid=当前向量+BM25加权融合。
+两者复用当前相同的切分、模型、阈值、Top-K、去重；不代表任一历史提交的全版本性能。
+问题集：rag-eval-2.0，共 80 条。
+公共语料文件数：37；SHA256：0eb3e66d694f9a8d6903af63b1402c4dc79d4aacadbdf4b02f0c0c313d9a848b
+配置：{"CHUNK_SIZE": 300, "CHUNK_OVERLAP": 50, "TOP_K": 3, "SIMILARITY_THRESHOLD": 0.6, "DENSE_WEIGHT": 0.7, "KEYWORD_WEIGHT": 0.3, "KEYWORD_MIN_COVERAGE": 0.4, "BM25_K1": 1.5, "BM25_B": 0.75}
+证据覆盖命中率=允许来源的 Top-K 文本合并后覆盖全部标准词；不是严格片段 Recall。
+source_mrr=首个允许来源倒数排名；single_chunk_evidence_mrr 要求单个片段包含全部标准词。
+误召回率=无答案问题中返回任意片段的比例；不是最终回答幻觉率。
+
+dense：正例 50，负例 30
+  evidence_hit_at_k: 0.7000
+  source_mrr: 0.6133
+  single_chunk_evidence_mrr: 0.6133
+  false_positive_rate: 0.1667
+  paraphrase: 12/17
+  multi_fact: 9/11
+  keyword: 7/9
+  no_answer: 9/10
+  realistic_paraphrase: 7/13
+  similar_distractor: 16/20
+hybrid：正例 50，负例 30
+  evidence_hit_at_k: 0.7400
+  source_mrr: 0.6767
+  single_chunk_evidence_mrr: 0.6767
+  false_positive_rate: 0.1667
+  paraphrase: 14/17
+  multi_fact: 9/11
+  keyword: 7/9
+  no_answer: 9/10
+  realistic_paraphrase: 7/13
+  similar_distractor: 16/20
+
+混合检索相对纯向量：{"ranking_or_score_only": 44, "improved": 2}
+evidence_hit_at_k 变化：+4.00 个百分点
+false_positive_rate 变化：+0.00 个百分点
+
+正例标注在完整公共语料内仍缺少标准词的项目（未偷偷排除，可能影响绝对分数）：
+  R002: ['Agent 应用开发实习生']
+  R003: ['Python', 'FastAPI', 'LLM API', 'RAG']
+  R004: ['Tool Calling', '提示词设计', '知识检索']
+  R005: ['Agent 应用开发实习生']
+  R046: ['Python', 'FastAPI', 'LLM API', 'RAG']
+  R048: ['Tool Calling', '提示词设计', '知识检索']
+
+发生差异的问题：
+  R003 ranking_or_score_only: 这个实习岗位要求掌握哪些技术栈？
+  R006 ranking_or_score_only: 工具调用参数应该如何防止模型生成错误？
+  R007 ranking_or_score_only: Agent 怎么避免陷入无限次调用工具？
+  R008 improved: 不同用户的对话记录如何避免串在一起？
+  R009 ranking_or_score_only: 工具执行失败后，错误应该怎样反馈？
+  R010 ranking_or_score_only: 工具注册表负责什么？
+  R011 ranking_or_score_only: 长文档为什么要切片并保留重叠？
+  R012 ranking_or_score_only: Embedding 向量相似是否能证明事实正确？
+  R013 ranking_or_score_only: Recall@K 和 MRR 分别衡量什么？
+  R014 ranking_or_score_only: RAG 从原始文档到生成答案有哪些主要步骤？
+  R015 ranking_or_score_only: 资料里没有答案时，知识库助手应怎么做？
+  R016 ranking_or_score_only: 余弦相似度怎么用于取 Top-K 片段？
+  R017 ranking_or_score_only: pytest 里 fixture 和 monkeypatch 有什么用途？
+  R018 ranking_or_score_only: Python 的 finally 代码块什么时候运行？
+  R019 ranking_or_score_only: 在异步 FastAPI 路由中直接执行阻塞函数有什么影响？
+  R020 ranking_or_score_only: Python 类型标注能在运行时自动校验输入吗？
+  R021 ranking_or_score_only: GET 和 POST 会话接口分别用来做什么？
+  R022 ranking_or_score_only: FastAPI 的请求字段长度限制可以用什么定义？
+  R023 ranking_or_score_only: FastAPI 出错时如何区分资源不存在和服务端故障？
+  R024 ranking_or_score_only: 请求中间件日志适合记录哪些信息？
+  R025 ranking_or_score_only: 数据库事务提交或回滚解决什么问题？
+  R026 ranking_or_score_only: 保存 MySQL 会话消息时，参数化 SQL 有什么好处？
+  R027 ranking_or_score_only: 研发任务开始前需要先明确什么？
+  R028 ranking_or_score_only: 项目里应该怎样保存 API Key？
+  R029 ranking_or_score_only: 测试部门主要负责哪些工作？
+  R030 ranking_or_score_only: 星河科技主要开发哪些类型的软件？
+  R031 ranking_or_score_only: 后端实习生需要掌握哪些基础？
+  R032 ranking_or_score_only: Agent 方向面试可能会问哪些工程问题？
+  R033 improved: 简历中可以随意写一个性能提升百分比吗？
+  R034 ranking_or_score_only: RAG 项目验收应该记录哪些检索结果？
+  R035 ranking_or_score_only: Agent 项目日志还可以观测哪些耗时和用量？
+  R043 ranking_or_score_only: 实习岗位每周需要到岗几天？
+  R046 ranking_or_score_only: 我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？
+  R049 ranking_or_score_only: 如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？
+  R050 ranking_or_score_only: 为了避免模型一直重复调用工具，执行循环要加什么保护？
+  R052 ranking_or_score_only: 工具报错时，为什么不能把错误包装成正常业务结果？
+  R053 ranking_or_score_only: RAG 切分文档时留一点相邻内容，主要是为了什么？
+  R054 ranking_or_score_only: 向量相似度高，就能直接断定检索到的事实正确吗？
+  R055 ranking_or_score_only: 我有一个长文档要做 RAG，通常从导入到检索会经过哪些步骤？
+  R056 ranking_or_score_only: 查知识库时，Recall@K 和 MRR 可以分别帮我看什么？
+  R057 ranking_or_score_only: FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？
+  R059 ranking_or_score_only: 写 MySQL 会话消息时，用参数占位而不是拼 SQL 字符串有什么意义？
+  R071 ranking_or_score_only: Embedding 模型在 GPU 上运行时的显存占用是多少 MB？
+  R073 ranking_or_score_only: MySQL 会话消息超过多少天会被自动清理？
+  R075 ranking_or_score_only: FastAPI 服务部署在生产环境时配了几个 worker？
+  R080 ranking_or_score_only: Agent 调用天气工具时使用的真实供应商 API Key 是什么？
+
+说明：混合检索允许低向量分但关键词覆盖达标的片段入选，可能补回精确关键词，也可能增加误召回；以本次成对结果判断。
+本次只评估检索；没有调用生成模型，不能代表答案正确率或引用支持性。问题集是开发集，不是独立留出集。
+耗时包含各次查询编码与排序，模型/文档编码预热单独记录；不作为严格性能基准。
+预热耗时 14.909s；对照总耗时 2.167s。
+完整逐题结果、失败案例（correct=false）、配置和环境见同名 JSON。

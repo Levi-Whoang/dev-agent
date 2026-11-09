@@ -282,3 +282,9 @@ TXT 时间戳规则与注释语言偏好（2026-10-21）
 [2026-11-03 14:38:01 +08:00] 取消同步回退，恢复异步实现并修复中断遗留
 用户改变要求：不要回退到同步版本，修复当前代码。本次核对上轮中断后的工作区，同步回退已经写入多个源文件，因此逐项恢复SQLAlchemy AsyncEngine/AsyncSession、AsyncOpenAI、Agent.run/run_stream、工具异步等待，以及认证/会话/文档仓储和路由的await调用链。保留现有JWT刷新撤销、所有权校验、停止生成、引用、RAG预热、首字优化、评估与前端功能。修复数据库URL驱动兼容、MySQL服务端默认时间显式refresh、同步文件解析和密码哈希的线程池分工、模型取消和流关闭/已输出文本保存，补回取消与事务回滚回归检查。
 验证：完整离线测试81项通过（3.43秒），覆盖真实异步SQLite、HTTP/ASGI权限、认证、文档与模型流替身；git diff --check通过。没有调用真实LLM，没有在真实用户数据库执行写入，没有运行浏览器端人工测试。恢复的是异步版本，SQLAlchemy ORM与现有表结构继续使用；没有提交或推送GitHub。TXT只更新已有文件并保留历史内容。
+
+[2026-11-04 21:18:51 +08:00] 新增Filesystem MCP接入
+用户要求项目新增MCP功能并连接Filesystem MCP Server。新增独立integrations/mcp模块，应用作为MCP Client通过stdio连接官方@modelcontextprotocol/server-filesystem 2.1.0（Python SDK mcp 2.3.0）。本机Node26可用，Python和Node依赖均已安装，Node依赖锁定到package-lock。启动时发现并注册11个filesystem_工具，现有聊天框可以完成文本读取/批量读取、目录查看/搜索/元数据、写入/编辑/创建目录和移动操作，无需新的LLM或数据库密钥。
+访问范围：默认mcp_workspace/user-<用户数据库ID>，从服务端登录上下文确定用户，拒绝未认证、路径穿越及跨用户访问；每次调用启动只允许该用户目录的Server，结束关闭，客户端与Server双层目录校验。新增认证GET /mcp/filesystem查看状态、工具及自己的目录名。支持环境变量禁用、只读、根目录与超时；MCP故障降级不阻断原有聊天/RAG。原IDE .mcp.json保持不变。
+Agent现在兼容远端JSON Schema和异步工具，并让完整回答与流式回答共用校验/执行入口，保留超时、停止、日志与SSE。MCP存在时RAG后继续决策，允许检索后继续操作文件；相较纯RAG快捷路径可能多一次模型调用。每次MCP调用有子进程启动开销；工作目录不是RAG知识库，文件不会自动进入索引；没有增加前端文件管理页面或任意命令工具。
+验证：完整离线测试92 passed（4.44秒），pip check、git diff --check通过。真实scripts/smoke_mcp.py无需密钥，在临时目录成功完成官方Server握手、11工具发现、写入/读取、跨用户隔离、客户端与Server越界拒绝并清理文件。Agent循环与HTTP权限使用模型/数据库替身，未调用真实LLM或修改真实业务数据库。README、.env.example和功能一览已更新；未新建TXT、未修改.env、未提交推送GitHub，保留用户已有logs/__init__.py暂存删除等无关改动。重启现有后端后自动连接。

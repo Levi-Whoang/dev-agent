@@ -1,0 +1,4208 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-02T20:53:59.662338+08:00",
+  "dataset": {
+    "version": "rag-eval-2.0",
+    "sha256": "860200243b99d985c0a185d7735c46a321d7dbc00c880b9f9acf427d3e7cee6a",
+    "count": 80
+  },
+  "corpus": [
+    {
+      "name": "demo_agent_failures.txt",
+      "sha256": "bd5693100a738c09d3cb36ecc64d77a674d058974c6f107b1cfdda1415309bbf"
+    },
+    {
+      "name": "demo_agent_history.txt",
+      "sha256": "b874a81639a1c6ca7d06d80cf24057fb7e013573db8164094ed076bf7b987e7a"
+    },
+    {
+      "name": "demo_agent_loop.txt",
+      "sha256": "7ac3fec56ea74dd686fba6fa564b377d1cf0b5e78a8f407f8f6a76f7719bfaa4"
+    },
+    {
+      "name": "demo_agent_schema.txt",
+      "sha256": "8b8226b0c4e18a65568b3beac22fbc67c8512ae20e198c193d2fa18d26d34bed"
+    },
+    {
+      "name": "demo_agent_tools.txt",
+      "sha256": "3730a6dc3c516b1fd22da69570c03b89389489530f068f51940b9749641fb536"
+    },
+    {
+      "name": "demo_api_rest.txt",
+      "sha256": "31425034ebad8aa133e8871a64d627b0421e87c4a377e6a04e4df7fc324c414d"
+    },
+    {
+      "name": "demo_company_departments.txt",
+      "sha256": "b20efb0e8011eb1f38bce4f6d30db1775079575d93b80d464e66bcb4492a5004"
+    },
+    {
+      "name": "demo_company_faq.txt",
+      "sha256": "8ea4f0a658e5cbeb1d2ee4993096fe02b4be9ca3a96a79526a457b3a5a0a5fb5"
+    },
+    {
+      "name": "demo_company_overview.txt",
+      "sha256": "555155f909df2460764230021cc8b1f025d386f4b1ecb01fa02480ce8024085d"
+    },
+    {
+      "name": "demo_company_security.txt",
+      "sha256": "20bbd65eab6f7c38f67c37aab6e6251a3bebb418042115a3ad15ca2973e4484e"
+    },
+    {
+      "name": "demo_company_workflow.txt",
+      "sha256": "040f8f8b751cce0823f8792e0a8be0b4e4ba951c7cc700d3bf0454475ea50bcb"
+    },
+    {
+      "name": "demo_database_mysql.txt",
+      "sha256": "7c44509a112756e0c8f25dced5691f5f0262f6cc28f3b14639e086a6e24e50b8"
+    },
+    {
+      "name": "demo_database_transactions.txt",
+      "sha256": "708c0e77d2564c1a12a9b5db1f1240f333499fd61ff6b63b3e55320c2b965f6e"
+    },
+    {
+      "name": "demo_deployment_config.txt",
+      "sha256": "d9cfe8672a6a68b23a2cd01982c9395d41fea2e3e3587cfdf17571c8a986d4a8"
+    },
+    {
+      "name": "demo_fastapi_errors.txt",
+      "sha256": "bd60b840ff54abe91a1b561b6c19984dfb41d17809ff4068d3d682ded4aa3a3a"
+    },
+    {
+      "name": "demo_fastapi_middleware.txt",
+      "sha256": "8bb842ec8617d25a52852998ba1b06eb36809e0effa3a33f976b5a0e9c0fd724"
+    },
+    {
+      "name": "demo_fastapi_routes.txt",
+      "sha256": "98d2ff5934152ad533bf6d071af5fdbff41e6aa15a5eef93435066508ab2bed8"
+    },
+    {
+      "name": "demo_fastapi_validation.txt",
+      "sha256": "16c333cc09174661d4d2db4337f37c5891650050f52db3fbf852c03a9c87a0ba"
+    },
+    {
+      "name": "demo_observability_logs.txt",
+      "sha256": "637ffb0b3d423828eab58ef9d6662908843210c5e8d95c58b016502f950db72e"
+    },
+    {
+      "name": "demo_python_async.txt",
+      "sha256": "27bf8b573936f25b418e1dfef57e524b90530e9835af9ab7a906c3be89bf6009"
+    },
+    {
+      "name": "demo_python_exceptions.txt",
+      "sha256": "4ae9102f13443d3c28b14c86563341045e4541bdbaf09660c44409c833104e1a"
+    },
+    {
+      "name": "demo_python_modules.txt",
+      "sha256": "ec1838314156b7f4bf397124d47e4d087f6366b5b41218f85d03b337403d2e72"
+    },
+    {
+      "name": "demo_python_testing.txt",
+      "sha256": "7b0580fbeff2f471e9518db96104f6fdc8ed0c05bee8639c1ad32faa28d56625"
+    },
+    {
+      "name": "demo_python_types.txt",
+      "sha256": "6bf075df0f05cac1d046fc37cade09c98a89b87955067418c0ec0aa443496581"
+    },
+    {
+      "name": "demo_rag_chunking.txt",
+      "sha256": "3844b2edb4786294f48ed1070ce56b3f1a22361a016bb0e7189c848d1bce82c9"
+    },
+    {
+      "name": "demo_rag_embeddings.txt",
+      "sha256": "018a1ec76d6264383942f16b0d9228146774df3a4db62f800e4b39af22903192"
+    },
+    {
+      "name": "demo_rag_evaluation.txt",
+      "sha256": "9da67ce08a67e5ca39a297e3b1e403bff8c7875a5d6ffc96ab68e0f4471cad75"
+    },
+    {
+      "name": "demo_rag_pipeline.txt",
+      "sha256": "369e6251731907107e565f517399172f8ce1e3f8369a934d761ed448ec39d073"
+    },
+    {
+      "name": "demo_rag_refusal.txt",
+      "sha256": "bd3fae672a9f490e2e84daffe75c5bf69f3af069652cf209d86ede8de97b6faa"
+    },
+    {
+      "name": "demo_rag_similarity.txt",
+      "sha256": "4a1e18e49c4670707fef68dae5bc76b135c686cd0e75cc7a8e53a67f6887ed00"
+    },
+    {
+      "name": "demo_recruitment_agent.txt",
+      "sha256": "bc42528e5a2344a988802d525ded81c13339fd9e8ab96e4907409fb5c3e2ab8d"
+    },
+    {
+      "name": "demo_recruitment_backend.txt",
+      "sha256": "3742d655da846875ff6343c28dc6e39fe1e205814386eb87a6b79a0287e31936"
+    },
+    {
+      "name": "demo_recruitment_evaluation.txt",
+      "sha256": "8dd190ec9fc00ecb93ca96a119e9a1d03082c5040742209dbd9f81bcbd87ea25"
+    },
+    {
+      "name": "demo_recruitment_interview.txt",
+      "sha256": "012aef5738551f27dfb01c4fdf4fb0fe4f44717215a77c6db61a93114c166fef"
+    },
+    {
+      "name": "demo_recruitment_resume.txt",
+      "sha256": "1197f3358825cfacce55408da7b75bfa4beb55c60b8dbd785c417e1520a44f30"
+    },
+    {
+      "name": "demo_testing_metrics.txt",
+      "sha256": "c4c66af010cfcc5b779c524de056f660b049789d54611ce7bce380c658ffd836"
+    },
+    {
+      "name": "faq.txt",
+      "sha256": "2a47d4c456915ad24094de8ff73cafc0bc77266b9487412cc7334b9421e76353"
+    }
+  ],
+  "corpus_sha256": "0eb3e66d694f9a8d6903af63b1402c4dc79d4aacadbdf4b02f0c0c313d9a848b",
+  "gold_audit": [
+    {
+      "case_id": "R002",
+      "missing_terms": [
+        "Agent 应用开发实习生"
+      ]
+    },
+    {
+      "case_id": "R003",
+      "missing_terms": [
+        "Python",
+        "FastAPI",
+        "LLM API",
+        "RAG"
+      ]
+    },
+    {
+      "case_id": "R004",
+      "missing_terms": [
+        "Tool Calling",
+        "提示词设计",
+        "知识检索"
+      ]
+    },
+    {
+      "case_id": "R005",
+      "missing_terms": [
+        "Agent 应用开发实习生"
+      ]
+    },
+    {
+      "case_id": "R046",
+      "missing_terms": [
+        "Python",
+        "FastAPI",
+        "LLM API",
+        "RAG"
+      ]
+    },
+    {
+      "case_id": "R048",
+      "missing_terms": [
+        "Tool Calling",
+        "提示词设计",
+        "知识检索"
+      ]
+    }
+  ],
+  "config": {
+    "CHUNK_SIZE": 300,
+    "CHUNK_OVERLAP": 50,
+    "TOP_K": 3,
+    "SIMILARITY_THRESHOLD": 0.6,
+    "DENSE_WEIGHT": 0.7,
+    "KEYWORD_WEIGHT": 0.3,
+    "KEYWORD_MIN_COVERAGE": 0.4,
+    "BM25_K1": 1.5,
+    "BM25_B": 0.75
+  },
+  "environment": {
+    "python": "3.12.13",
+    "commit": "0f27d19111d085461b943408dabb2c2ec5cbe5f3",
+    "dirty": true,
+    "packages": {
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1",
+      "scikit-learn": "1.9.1"
+    }
+  },
+  "model": {
+    "name": "BAAI/bge-small-zh-v1.5",
+    "revision": null
+  },
+  "warmup_seconds": 14.908992700000454,
+  "comparison_seconds": 2.167038399999001,
+  "comparison": {
+    "metrics": {
+      "dense": {
+        "positive_total": 50,
+        "negative_total": 30,
+        "evidence_hit_at_k": 0.7,
+        "source_mrr": 0.6133333333333334,
+        "single_chunk_evidence_mrr": 0.6133333333333334,
+        "false_positive_rate": 0.16666666666666666,
+        "categories": {
+          "paraphrase": {
+            "total": 17,
+            "correct": 12
+          },
+          "multi_fact": {
+            "total": 11,
+            "correct": 9
+          },
+          "keyword": {
+            "total": 9,
+            "correct": 7
+          },
+          "no_answer": {
+            "total": 10,
+            "correct": 9
+          },
+          "realistic_paraphrase": {
+            "total": 13,
+            "correct": 7
+          },
+          "similar_distractor": {
+            "total": 20,
+            "correct": 16
+          }
+        }
+      },
+      "hybrid": {
+        "positive_total": 50,
+        "negative_total": 30,
+        "evidence_hit_at_k": 0.74,
+        "source_mrr": 0.6766666666666667,
+        "single_chunk_evidence_mrr": 0.6766666666666667,
+        "false_positive_rate": 0.16666666666666666,
+        "categories": {
+          "paraphrase": {
+            "total": 17,
+            "correct": 14
+          },
+          "multi_fact": {
+            "total": 11,
+            "correct": 9
+          },
+          "keyword": {
+            "total": 9,
+            "correct": 7
+          },
+          "no_answer": {
+            "total": 10,
+            "correct": 9
+          },
+          "realistic_paraphrase": {
+            "total": 13,
+            "correct": 7
+          },
+          "similar_distractor": {
+            "total": 20,
+            "correct": 16
+          }
+        }
+      }
+    },
+    "cases": {
+      "dense": [
+        {
+          "case_id": "R001",
+          "query": "这家公司的办公地点在哪个区？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "query": "公司目前在招什么职位？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R003",
+          "query": "这个实习岗位要求掌握哪些技术栈？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6898,
+              "dense_score": 0.6898,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.6881,
+              "dense_score": 0.6881,
+              "keyword_score": 0.0,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6564,
+              "dense_score": 0.6564,
+              "keyword_score": 0.0,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            }
+          ]
+        },
+        {
+          "case_id": "R004",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R005",
+          "query": "岗位名称是什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R006",
+          "query": "工具调用参数应该如何防止模型生成错误？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.645,
+              "dense_score": 0.645,
+              "keyword_score": 0.0,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_agent_schema.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 0.0,
+              "content_sha256": "31307a00b642459685468181c6e740c93f8edc3d3594c547e6c944bad56e9205"
+            },
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6048,
+              "dense_score": 0.6048,
+              "keyword_score": 0.0,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            }
+          ]
+        },
+        {
+          "case_id": "R007",
+          "query": "Agent 怎么避免陷入无限次调用工具？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6831,
+              "dense_score": 0.6831,
+              "keyword_score": 0.0,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6485,
+              "dense_score": 0.6485,
+              "keyword_score": 0.0,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6328,
+              "dense_score": 0.6328,
+              "keyword_score": 0.0,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R008",
+          "query": "不同用户的对话记录如何避免串在一起？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R009",
+          "query": "工具执行失败后，错误应该怎样反馈？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.7196,
+              "dense_score": 0.7196,
+              "keyword_score": 0.0,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.6296,
+              "dense_score": 0.6296,
+              "keyword_score": 0.0,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            }
+          ]
+        },
+        {
+          "case_id": "R010",
+          "query": "工具注册表负责什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6269,
+              "dense_score": 0.6269,
+              "keyword_score": 0.0,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R011",
+          "query": "长文档为什么要切片并保留重叠？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6072,
+              "dense_score": 0.6072,
+              "keyword_score": 0.0,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            }
+          ]
+        },
+        {
+          "case_id": "R012",
+          "query": "Embedding 向量相似是否能证明事实正确？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.7416,
+              "dense_score": 0.7416,
+              "keyword_score": 0.0,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R013",
+          "query": "Recall@K 和 MRR 分别衡量什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7005,
+              "dense_score": 0.7005,
+              "keyword_score": 0.0,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R014",
+          "query": "RAG 从原始文档到生成答案有哪些主要步骤？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6924,
+              "dense_score": 0.6924,
+              "keyword_score": 0.0,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            }
+          ]
+        },
+        {
+          "case_id": "R015",
+          "query": "资料里没有答案时，知识库助手应怎么做？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.7621,
+              "dense_score": 0.7621,
+              "keyword_score": 0.0,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6794,
+              "dense_score": 0.6794,
+              "keyword_score": 0.0,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R016",
+          "query": "余弦相似度怎么用于取 Top-K 片段？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.8006,
+              "dense_score": 0.8006,
+              "keyword_score": 0.0,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            }
+          ]
+        },
+        {
+          "case_id": "R017",
+          "query": "pytest 里 fixture 和 monkeypatch 有什么用途？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_testing.txt",
+              "score": 0.6877,
+              "dense_score": 0.6877,
+              "keyword_score": 0.0,
+              "content_sha256": "fb3ad355b0ee2b7195023ec6cbf004ba1b8b9197eb25ad5782ce186392215819"
+            }
+          ]
+        },
+        {
+          "case_id": "R018",
+          "query": "Python 的 finally 代码块什么时候运行？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_exceptions.txt",
+              "score": 0.6235,
+              "dense_score": 0.6235,
+              "keyword_score": 0.0,
+              "content_sha256": "78f9ece43d7d357ed69d953a1a1e51a530e9b8acd054b2bdd4602df16762210a"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6183,
+              "dense_score": 0.6183,
+              "keyword_score": 0.0,
+              "content_sha256": "1262610f24d6163d08627e0a515d12c58ee10c92bfa27f39045f736c9d7769cb"
+            }
+          ]
+        },
+        {
+          "case_id": "R019",
+          "query": "在异步 FastAPI 路由中直接执行阻塞函数有什么影响？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6482,
+              "dense_score": 0.6482,
+              "keyword_score": 0.0,
+              "content_sha256": "c66f753933e4fc657766c9cf906ac83ea92d2b85635a699963a533db97acc46c"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6432,
+              "dense_score": 0.6432,
+              "keyword_score": 0.0,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6208,
+              "dense_score": 0.6208,
+              "keyword_score": 0.0,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R020",
+          "query": "Python 类型标注能在运行时自动校验输入吗？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_types.txt",
+              "score": 0.7322,
+              "dense_score": 0.7322,
+              "keyword_score": 0.0,
+              "content_sha256": "b6cd211021bbd5d46daff11cc42ef87899b3ee505beda274fc449aea030ac2df"
+            }
+          ]
+        },
+        {
+          "case_id": "R021",
+          "query": "GET 和 POST 会话接口分别用来做什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6024,
+              "dense_score": 0.6024,
+              "keyword_score": 0.0,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R022",
+          "query": "FastAPI 的请求字段长度限制可以用什么定义？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.7413,
+              "dense_score": 0.7413,
+              "keyword_score": 0.0,
+              "content_sha256": "ee7082d6cb223f44a57a8d9db868676b52818b8f9077fb0965c3547cb66a9745"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6588,
+              "dense_score": 0.6588,
+              "keyword_score": 0.0,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            }
+          ]
+        },
+        {
+          "case_id": "R023",
+          "query": "FastAPI 出错时如何区分资源不存在和服务端故障？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.3333333333333333,
+          "evidence_rr": 0.3333333333333333,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.7064,
+              "dense_score": 0.7064,
+              "keyword_score": 0.0,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6553,
+              "dense_score": 0.6553,
+              "keyword_score": 0.0,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            },
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.6412,
+              "dense_score": 0.6412,
+              "keyword_score": 0.0,
+              "content_sha256": "b3bdda06dfaac14676fd490de95242c2c07d94755a8089a14738c8d4b41923d4"
+            }
+          ]
+        },
+        {
+          "case_id": "R024",
+          "query": "请求中间件日志适合记录哪些信息？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.7047,
+              "dense_score": 0.7047,
+              "keyword_score": 0.0,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6153,
+              "dense_score": 0.6153,
+              "keyword_score": 0.0,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            }
+          ]
+        },
+        {
+          "case_id": "R025",
+          "query": "数据库事务提交或回滚解决什么问题？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_transactions.txt",
+              "score": 0.7457,
+              "dense_score": 0.7457,
+              "keyword_score": 0.0,
+              "content_sha256": "b3b4d17d36ba2fe29a907fc87416ab39773999cd23e0c948a3721bfa6924c181"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6419,
+              "dense_score": 0.6419,
+              "keyword_score": 0.0,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6085,
+              "dense_score": 0.6085,
+              "keyword_score": 0.0,
+              "content_sha256": "c0994785ce2dc255e0d23726cb6692cae114d99bdf33ba0b8f4c61cb9a1ac64a"
+            }
+          ]
+        },
+        {
+          "case_id": "R026",
+          "query": "保存 MySQL 会话消息时，参数化 SQL 有什么好处？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.8133,
+              "dense_score": 0.8133,
+              "keyword_score": 0.0,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6255,
+              "dense_score": 0.6255,
+              "keyword_score": 0.0,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R027",
+          "query": "研发任务开始前需要先明确什么？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_workflow.txt",
+              "score": 0.6822,
+              "dense_score": 0.6822,
+              "keyword_score": 0.0,
+              "content_sha256": "ba12b12a027adc3ff227492dfe6e244d76ea738d019f69225e60709dc1f30e7f"
+            }
+          ]
+        },
+        {
+          "case_id": "R028",
+          "query": "项目里应该怎样保存 API Key？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6174,
+              "dense_score": 0.6174,
+              "keyword_score": 0.0,
+              "content_sha256": "c0994785ce2dc255e0d23726cb6692cae114d99bdf33ba0b8f4c61cb9a1ac64a"
+            },
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6019,
+              "dense_score": 0.6019,
+              "keyword_score": 0.0,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R029",
+          "query": "测试部门主要负责哪些工作？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.7056,
+              "dense_score": 0.7056,
+              "keyword_score": 0.0,
+              "content_sha256": "cec901695b0888c5db65404862ff695c716a435f7fccd4ee590a1e8e3516b6c7"
+            }
+          ]
+        },
+        {
+          "case_id": "R030",
+          "query": "星河科技主要开发哪些类型的软件？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.7403,
+              "dense_score": 0.7403,
+              "keyword_score": 0.0,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R031",
+          "query": "后端实习生需要掌握哪些基础？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.7155,
+              "dense_score": 0.7155,
+              "keyword_score": 0.0,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6511,
+              "dense_score": 0.6511,
+              "keyword_score": 0.0,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R032",
+          "query": "Agent 方向面试可能会问哪些工程问题？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6878,
+              "dense_score": 0.6878,
+              "keyword_score": 0.0,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6635,
+              "dense_score": 0.6635,
+              "keyword_score": 0.0,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_testing_metrics.txt",
+              "score": 0.6363,
+              "dense_score": 0.6363,
+              "keyword_score": 0.0,
+              "content_sha256": "c97ded7cb6c74bafbfd547250ba2a8b0f277605082e121ea89ae4b1700a3e5a1"
+            }
+          ]
+        },
+        {
+          "case_id": "R033",
+          "query": "简历中可以随意写一个性能提升百分比吗？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R034",
+          "query": "RAG 项目验收应该记录哪些检索结果？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.3333333333333333,
+          "evidence_rr": 0.3333333333333333,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7512,
+              "dense_score": 0.7512,
+              "keyword_score": 0.0,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6913,
+              "dense_score": 0.6913,
+              "keyword_score": 0.0,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            },
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.6315,
+              "dense_score": 0.6315,
+              "keyword_score": 0.0,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            }
+          ]
+        },
+        {
+          "case_id": "R035",
+          "query": "Agent 项目日志还可以观测哪些耗时和用量？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.7109,
+              "dense_score": 0.7109,
+              "keyword_score": 0.0,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            },
+            {
+              "source": "demo_testing_metrics.txt",
+              "score": 0.6409,
+              "dense_score": 0.6409,
+              "keyword_score": 0.0,
+              "content_sha256": "c97ded7cb6c74bafbfd547250ba2a8b0f277605082e121ea89ae4b1700a3e5a1"
+            }
+          ]
+        },
+        {
+          "case_id": "R036",
+          "query": "公司老板的姓氏是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R037",
+          "query": "公司的具体月薪范围是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R038",
+          "query": "公司是哪一年成立的？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R039",
+          "query": "公司总部的街道和门牌号是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R040",
+          "query": "公司目前有多少名员工？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R041",
+          "query": "公司的产品今年收入是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R042",
+          "query": "这家公司的正式法定名称是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R043",
+          "query": "实习岗位每周需要到岗几天？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 0.0,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R044",
+          "query": "公司是否提供餐补和住房补贴？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R045",
+          "query": "公司老板的手机号码是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R046",
+          "query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.7384,
+              "dense_score": 0.7384,
+              "keyword_score": 0.0,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.7081,
+              "dense_score": 0.7081,
+              "keyword_score": 0.0,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.6721,
+              "dense_score": 0.6721,
+              "keyword_score": 0.0,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "query": "这家公司在深圳哪个片区办公？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R049",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 0.0,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 0.0,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R050",
+          "query": "为了避免模型一直重复调用工具，执行循环要加什么保护？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6376,
+              "dense_score": 0.6376,
+              "keyword_score": 0.0,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R052",
+          "query": "工具报错时，为什么不能把错误包装成正常业务结果？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6312,
+              "dense_score": 0.6312,
+              "keyword_score": 0.0,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6031,
+              "dense_score": 0.6031,
+              "keyword_score": 0.0,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R053",
+          "query": "RAG 切分文档时留一点相邻内容，主要是为了什么？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6673,
+              "dense_score": 0.6673,
+              "keyword_score": 0.0,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6071,
+              "dense_score": 0.6071,
+              "keyword_score": 0.0,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            }
+          ]
+        },
+        {
+          "case_id": "R054",
+          "query": "向量相似度高，就能直接断定检索到的事实正确吗？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.6512,
+              "dense_score": 0.6512,
+              "keyword_score": 0.0,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6037,
+              "dense_score": 0.6037,
+              "keyword_score": 0.0,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R055",
+          "query": "我有一个长文档要做 RAG，通常从导入到检索会经过哪些步骤？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.7329,
+              "dense_score": 0.7329,
+              "keyword_score": 0.0,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            },
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6195,
+              "dense_score": 0.6195,
+              "keyword_score": 0.0,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.6054,
+              "dense_score": 0.6054,
+              "keyword_score": 0.0,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R056",
+          "query": "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.6371,
+              "dense_score": 0.6371,
+              "keyword_score": 0.0,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R057",
+          "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6665,
+              "dense_score": 0.6665,
+              "keyword_score": 0.0,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.6294,
+              "dense_score": 0.6294,
+              "keyword_score": 0.0,
+              "content_sha256": "ee7082d6cb223f44a57a8d9db868676b52818b8f9077fb0965c3547cb66a9745"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6254,
+              "dense_score": 0.6254,
+              "keyword_score": 0.0,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R058",
+          "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R059",
+          "query": "写 MySQL 会话消息时，用参数占位而不是拼 SQL 字符串有什么意义？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6815,
+              "dense_score": 0.6815,
+              "keyword_score": 0.0,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R060",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R061",
+          "query": "公司在南山区的办公楼具体叫什么，在哪一层？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R062",
+          "query": "从深圳北站到公司办公室坐地铁要几站？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R063",
+          "query": "公司办公地点附近最近的地铁出口编号是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R065",
+          "query": "这个岗位是每周固定到岗五天，还是可以远程办公？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R066",
+          "query": "投递这份实习简历的截止日期是哪一天？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R067",
+          "query": "招聘方要求候选人的本科专业必须是哪一个？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R068",
+          "query": "公司面试一共有几轮，每轮分别由谁参加？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R069",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R070",
+          "query": "这套知识库目前一共有多少条文档和多少个向量？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R071",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 0.0,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R072",
+          "query": "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R073",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 0.0,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R075",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 0.0,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R076",
+          "query": "项目的 CI 每天几点触发完整回归测试？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R077",
+          "query": "测试部门今年累计关闭了多少个缺陷？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R078",
+          "query": "这家公司今年智能问答产品的实际收入是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R079",
+          "query": "招聘团队承诺多久之内一定会给候选人反馈？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R080",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 0.0,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 0.0,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        }
+      ],
+      "hybrid": [
+        {
+          "case_id": "R001",
+          "query": "这家公司的办公地点在哪个区？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R002",
+          "query": "公司目前在招什么职位？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R003",
+          "query": "这个实习岗位要求掌握哪些技术栈？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6898,
+              "dense_score": 0.6898,
+              "keyword_score": 16.8975,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.6881,
+              "dense_score": 0.6881,
+              "keyword_score": 18.032,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            },
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6564,
+              "dense_score": 0.6564,
+              "keyword_score": 17.0451,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            }
+          ]
+        },
+        {
+          "case_id": "R004",
+          "query": "候选人还需要了解哪些模型交互和检索能力？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R005",
+          "query": "岗位名称是什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R006",
+          "query": "工具调用参数应该如何防止模型生成错误？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.3333333333333333,
+          "evidence_rr": 0.3333333333333333,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.7234,
+              "dense_score": 0.6048,
+              "keyword_score": 25.6405,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.645,
+              "dense_score": 0.645,
+              "keyword_score": 12.4245,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_agent_schema.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 27.2434,
+              "content_sha256": "31307a00b642459685468181c6e740c93f8edc3d3594c547e6c944bad56e9205"
+            }
+          ]
+        },
+        {
+          "case_id": "R007",
+          "query": "Agent 怎么避免陷入无限次调用工具？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.754,
+              "dense_score": 0.6485,
+              "keyword_score": 26.7007,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6831,
+              "dense_score": 0.6831,
+              "keyword_score": 4.2654,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6328,
+              "dense_score": 0.6328,
+              "keyword_score": 5.775,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R008",
+          "query": "不同用户的对话记录如何避免串在一起？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6671,
+              "dense_score": 0.5245,
+              "keyword_score": 37.2897,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R009",
+          "query": "工具执行失败后，错误应该怎样反馈？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.7752,
+              "dense_score": 0.7196,
+              "keyword_score": 21.7388,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6589,
+              "dense_score": 0.5128,
+              "keyword_score": 24.0246,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.6296,
+              "dense_score": 0.6296,
+              "keyword_score": 3.3859,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            }
+          ]
+        },
+        {
+          "case_id": "R010",
+          "query": "工具注册表负责什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.7388,
+              "dense_score": 0.6269,
+              "keyword_score": 28.1576,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R011",
+          "query": "长文档为什么要切片并保留重叠？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6072,
+              "dense_score": 0.6072,
+              "keyword_score": 12.6494,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            }
+          ]
+        },
+        {
+          "case_id": "R012",
+          "query": "Embedding 向量相似是否能证明事实正确？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.8191,
+              "dense_score": 0.7416,
+              "keyword_score": 35.532,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R013",
+          "query": "Recall@K 和 MRR 分别衡量什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7005,
+              "dense_score": 0.7005,
+              "keyword_score": 14.1804,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R014",
+          "query": "RAG 从原始文档到生成答案有哪些主要步骤？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6924,
+              "dense_score": 0.6924,
+              "keyword_score": 10.1542,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            }
+          ]
+        },
+        {
+          "case_id": "R015",
+          "query": "资料里没有答案时，知识库助手应怎么做？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_rag_refusal.txt",
+              "score": 0.8335,
+              "dense_score": 0.7621,
+              "keyword_score": 27.5521,
+              "content_sha256": "b7165b47638a41f63cfba478a2889e8afbf4b2bff83a6018fc8663c2a04316ca"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6794,
+              "dense_score": 0.6794,
+              "keyword_score": 24.9359,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R016",
+          "query": "余弦相似度怎么用于取 Top-K 片段？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.8604,
+              "dense_score": 0.8006,
+              "keyword_score": 45.5176,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            }
+          ]
+        },
+        {
+          "case_id": "R017",
+          "query": "pytest 里 fixture 和 monkeypatch 有什么用途？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_testing.txt",
+              "score": 0.6877,
+              "dense_score": 0.6877,
+              "keyword_score": 11.0305,
+              "content_sha256": "fb3ad355b0ee2b7195023ec6cbf004ba1b8b9197eb25ad5782ce186392215819"
+            }
+          ]
+        },
+        {
+          "case_id": "R018",
+          "query": "Python 的 finally 代码块什么时候运行？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_exceptions.txt",
+              "score": 0.6235,
+              "dense_score": 0.6235,
+              "keyword_score": 6.9876,
+              "content_sha256": "78f9ece43d7d357ed69d953a1a1e51a530e9b8acd054b2bdd4602df16762210a"
+            },
+            {
+              "source": "demo_python_modules.txt",
+              "score": 0.6183,
+              "dense_score": 0.6183,
+              "keyword_score": 2.7844,
+              "content_sha256": "1262610f24d6163d08627e0a515d12c58ee10c92bfa27f39045f736c9d7769cb"
+            }
+          ]
+        },
+        {
+          "case_id": "R019",
+          "query": "在异步 FastAPI 路由中直接执行阻塞函数有什么影响？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_async.txt",
+              "score": 0.6482,
+              "dense_score": 0.6482,
+              "keyword_score": 35.8211,
+              "content_sha256": "c66f753933e4fc657766c9cf906ac83ea92d2b85635a699963a533db97acc46c"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6432,
+              "dense_score": 0.6432,
+              "keyword_score": 5.08,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6208,
+              "dense_score": 0.6208,
+              "keyword_score": 7.5961,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R020",
+          "query": "Python 类型标注能在运行时自动校验输入吗？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_python_types.txt",
+              "score": 0.8125,
+              "dense_score": 0.7322,
+              "keyword_score": 60.3247,
+              "content_sha256": "b6cd211021bbd5d46daff11cc42ef87899b3ee505beda274fc449aea030ac2df"
+            }
+          ]
+        },
+        {
+          "case_id": "R021",
+          "query": "GET 和 POST 会话接口分别用来做什么？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6024,
+              "dense_score": 0.6024,
+              "keyword_score": 10.2365,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R022",
+          "query": "FastAPI 的请求字段长度限制可以用什么定义？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.7413,
+              "dense_score": 0.7413,
+              "keyword_score": 22.0754,
+              "content_sha256": "ee7082d6cb223f44a57a8d9db868676b52818b8f9077fb0965c3547cb66a9745"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6588,
+              "dense_score": 0.6588,
+              "keyword_score": 3.7119,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            }
+          ]
+        },
+        {
+          "case_id": "R023",
+          "query": "FastAPI 出错时如何区分资源不存在和服务端故障？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_errors.txt",
+              "score": 0.7488,
+              "dense_score": 0.6412,
+              "keyword_score": 39.0134,
+              "content_sha256": "b3bdda06dfaac14676fd490de95242c2c07d94755a8089a14738c8d4b41923d4"
+            },
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.7064,
+              "dense_score": 0.7064,
+              "keyword_score": 4.3584,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6553,
+              "dense_score": 0.6553,
+              "keyword_score": 2.7256,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R024",
+          "query": "请求中间件日志适合记录哪些信息？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.7047,
+              "dense_score": 0.7047,
+              "keyword_score": 23.159,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.6153,
+              "dense_score": 0.6153,
+              "keyword_score": 8.2071,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            }
+          ]
+        },
+        {
+          "case_id": "R025",
+          "query": "数据库事务提交或回滚解决什么问题？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_transactions.txt",
+              "score": 0.822,
+              "dense_score": 0.7457,
+              "keyword_score": 43.3007,
+              "content_sha256": "b3b4d17d36ba2fe29a907fc87416ab39773999cd23e0c948a3721bfa6924c181"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6419,
+              "dense_score": 0.6419,
+              "keyword_score": 2.0167,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            },
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6085,
+              "dense_score": 0.6085,
+              "keyword_score": 7.3203,
+              "content_sha256": "c0994785ce2dc255e0d23726cb6692cae114d99bdf33ba0b8f4c61cb9a1ac64a"
+            }
+          ]
+        },
+        {
+          "case_id": "R026",
+          "query": "保存 MySQL 会话消息时，参数化 SQL 有什么好处？",
+          "category": "keyword",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.8693,
+              "dense_score": 0.8133,
+              "keyword_score": 26.4268,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6255,
+              "dense_score": 0.6255,
+              "keyword_score": 5.6679,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        },
+        {
+          "case_id": "R027",
+          "query": "研发任务开始前需要先明确什么？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_workflow.txt",
+              "score": 0.7776,
+              "dense_score": 0.6822,
+              "keyword_score": 36.239,
+              "content_sha256": "ba12b12a027adc3ff227492dfe6e244d76ea738d019f69225e60709dc1f30e7f"
+            }
+          ]
+        },
+        {
+          "case_id": "R028",
+          "query": "项目里应该怎样保存 API Key？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_security.txt",
+              "score": 0.6174,
+              "dense_score": 0.6174,
+              "keyword_score": 3.4912,
+              "content_sha256": "c0994785ce2dc255e0d23726cb6692cae114d99bdf33ba0b8f4c61cb9a1ac64a"
+            },
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6019,
+              "dense_score": 0.6019,
+              "keyword_score": 4.0721,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R029",
+          "query": "测试部门主要负责哪些工作？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_departments.txt",
+              "score": 0.7056,
+              "dense_score": 0.7056,
+              "keyword_score": 20.3187,
+              "content_sha256": "cec901695b0888c5db65404862ff695c716a435f7fccd4ee590a1e8e3516b6c7"
+            }
+          ]
+        },
+        {
+          "case_id": "R030",
+          "query": "星河科技主要开发哪些类型的软件？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_company_overview.txt",
+              "score": 0.8182,
+              "dense_score": 0.7403,
+              "keyword_score": 33.2994,
+              "content_sha256": "7af8aaeed1a3aa77a371e05dbc9db376ead33bd0c499809e02d80ecf822e44a6"
+            }
+          ]
+        },
+        {
+          "case_id": "R031",
+          "query": "后端实习生需要掌握哪些基础？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.7155,
+              "dense_score": 0.7155,
+              "keyword_score": 10.7336,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6511,
+              "dense_score": 0.6511,
+              "keyword_score": 11.3901,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "faq.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 26.8026,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R032",
+          "query": "Agent 方向面试可能会问哪些工程问题？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6878,
+              "dense_score": 0.6878,
+              "keyword_score": 1.6617,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.6635,
+              "dense_score": 0.6635,
+              "keyword_score": 18.4461,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_testing_metrics.txt",
+              "score": 0.6363,
+              "dense_score": 0.6363,
+              "keyword_score": 5.3644,
+              "content_sha256": "c97ded7cb6c74bafbfd547250ba2a8b0f277605082e121ea89ae4b1700a3e5a1"
+            }
+          ]
+        },
+        {
+          "case_id": "R033",
+          "query": "简历中可以随意写一个性能提升百分比吗？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_resume.txt",
+              "score": 0.6878,
+              "dense_score": 0.5539,
+              "keyword_score": 47.3189,
+              "content_sha256": "2f284e3f5fdf18d6074ae2b391802fe707829b18d09fbbc3a2efa9886132f3a3"
+            }
+          ]
+        },
+        {
+          "case_id": "R034",
+          "query": "RAG 项目验收应该记录哪些检索结果？",
+          "category": "paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.7512,
+              "dense_score": 0.7512,
+              "keyword_score": 13.0819,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            },
+            {
+              "source": "demo_recruitment_evaluation.txt",
+              "score": 0.742,
+              "dense_score": 0.6315,
+              "keyword_score": 27.9895,
+              "content_sha256": "bc012f0d065278882034252fad4b1a0125ff8d60c07e6db1db0990de6892f750"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6913,
+              "dense_score": 0.6913,
+              "keyword_score": 12.4196,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            }
+          ]
+        },
+        {
+          "case_id": "R035",
+          "query": "Agent 项目日志还可以观测哪些耗时和用量？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_observability_logs.txt",
+              "score": 0.7109,
+              "dense_score": 0.7109,
+              "keyword_score": 28.4387,
+              "content_sha256": "87ecae595c141d889ad0ea380cdf66360f1007dbc9d892cc744c0c9c2e962959"
+            },
+            {
+              "source": "demo_testing_metrics.txt",
+              "score": 0.6409,
+              "dense_score": 0.6409,
+              "keyword_score": 3.8597,
+              "content_sha256": "c97ded7cb6c74bafbfd547250ba2a8b0f277605082e121ea89ae4b1700a3e5a1"
+            }
+          ]
+        },
+        {
+          "case_id": "R036",
+          "query": "公司老板的姓氏是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R037",
+          "query": "公司的具体月薪范围是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R038",
+          "query": "公司是哪一年成立的？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R039",
+          "query": "公司总部的街道和门牌号是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R040",
+          "query": "公司目前有多少名员工？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R041",
+          "query": "公司的产品今年收入是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R042",
+          "query": "这家公司的正式法定名称是什么？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R043",
+          "query": "实习岗位每周需要到岗几天？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "faq.txt",
+              "score": 0.6046,
+              "dense_score": 0.6046,
+              "keyword_score": 10.8098,
+              "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+            }
+          ]
+        },
+        {
+          "case_id": "R044",
+          "query": "公司是否提供餐补和住房补贴？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R045",
+          "query": "公司老板的手机号码是多少？",
+          "category": "no_answer",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R046",
+          "query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.7384,
+              "dense_score": 0.7384,
+              "keyword_score": 8.3359,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_recruitment_interview.txt",
+              "score": 0.7081,
+              "dense_score": 0.7081,
+              "keyword_score": 12.1918,
+              "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+            },
+            {
+              "source": "demo_recruitment_backend.txt",
+              "score": 0.6721,
+              "dense_score": 0.6721,
+              "keyword_score": 6.6627,
+              "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+            }
+          ]
+        },
+        {
+          "case_id": "R047",
+          "query": "这家公司在深圳哪个片区办公？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R048",
+          "query": "岗位介绍里提到要会调模型和知识库吗？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R049",
+          "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6145,
+              "dense_score": 0.6145,
+              "keyword_score": 8.2936,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            },
+            {
+              "source": "demo_agent_tools.txt",
+              "score": 0.6112,
+              "dense_score": 0.6112,
+              "keyword_score": 5.5118,
+              "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+            }
+          ]
+        },
+        {
+          "case_id": "R050",
+          "query": "为了避免模型一直重复调用工具，执行循环要加什么保护？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_loop.txt",
+              "score": 0.6376,
+              "dense_score": 0.6376,
+              "keyword_score": 15.6418,
+              "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+            }
+          ]
+        },
+        {
+          "case_id": "R051",
+          "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R052",
+          "query": "工具报错时，为什么不能把错误包装成正常业务结果？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_agent_failures.txt",
+              "score": 0.6312,
+              "dense_score": 0.6312,
+              "keyword_score": 8.904,
+              "content_sha256": "b0ae6dbcb7c95bd612c4ed2ef4a17625d4f8f2ca963e5cd4ff4b887abbf1c4f6"
+            },
+            {
+              "source": "demo_company_faq.txt",
+              "score": 0.6031,
+              "dense_score": 0.6031,
+              "keyword_score": 3.0802,
+              "content_sha256": "8501ec03eec08d75c9750d808bb3c1bc1ed45d85cda023386593a89ceac1dcf8"
+            }
+          ]
+        },
+        {
+          "case_id": "R053",
+          "query": "RAG 切分文档时留一点相邻内容，主要是为了什么？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6673,
+              "dense_score": 0.6673,
+              "keyword_score": 7.9065,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            },
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.6071,
+              "dense_score": 0.6071,
+              "keyword_score": 6.9099,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            }
+          ]
+        },
+        {
+          "case_id": "R054",
+          "query": "向量相似度高，就能直接断定检索到的事实正确吗？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_rag_similarity.txt",
+              "score": 0.6512,
+              "dense_score": 0.6512,
+              "keyword_score": 17.0963,
+              "content_sha256": "ad3bb7eb1627e41b29f006e497311e522647a88ba92fe362b0ae5e529f4f756a"
+            },
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6037,
+              "dense_score": 0.6037,
+              "keyword_score": 39.1829,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R055",
+          "query": "我有一个长文档要做 RAG，通常从导入到检索会经过哪些步骤？",
+          "category": "multi_fact",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_pipeline.txt",
+              "score": 0.7329,
+              "dense_score": 0.7329,
+              "keyword_score": 8.9097,
+              "content_sha256": "1fdddd5f32d7d24de2eb3282c4fc1547121d1717ac7f4a36b101756acefe3605"
+            },
+            {
+              "source": "demo_rag_chunking.txt",
+              "score": 0.6195,
+              "dense_score": 0.6195,
+              "keyword_score": 10.8454,
+              "content_sha256": "01dc0ff02a05744452cc2df41bdaf0b718209c7ee1d9143c9554faefd15886cf"
+            },
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.6054,
+              "dense_score": 0.6054,
+              "keyword_score": 6.7523,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R056",
+          "query": "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_rag_evaluation.txt",
+              "score": 0.6371,
+              "dense_score": 0.6371,
+              "keyword_score": 16.5449,
+              "content_sha256": "64239efca0cd4783fea697fe763b15deb2954af63d0669c95804cd9184017179"
+            }
+          ]
+        },
+        {
+          "case_id": "R057",
+          "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0.5,
+          "evidence_rr": 0.5,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_middleware.txt",
+              "score": 0.6665,
+              "dense_score": 0.6665,
+              "keyword_score": 2.8759,
+              "content_sha256": "f60becf905217a8255a73f557807af43b1c6489828ce55d331024d2514c4bfd4"
+            },
+            {
+              "source": "demo_fastapi_validation.txt",
+              "score": 0.6294,
+              "dense_score": 0.6294,
+              "keyword_score": 9.0314,
+              "content_sha256": "ee7082d6cb223f44a57a8d9db868676b52818b8f9077fb0965c3547cb66a9745"
+            },
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6254,
+              "dense_score": 0.6254,
+              "keyword_score": 7.45,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R058",
+          "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R059",
+          "query": "写 MySQL 会话消息时，用参数占位而不是拼 SQL 字符串有什么意义？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 1.0,
+          "evidence_rr": 1.0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6815,
+              "dense_score": 0.6815,
+              "keyword_score": 22.3547,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R060",
+          "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+          "category": "realistic_paraphrase",
+          "answerable": true,
+          "correct": false,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R061",
+          "query": "公司在南山区的办公楼具体叫什么，在哪一层？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R062",
+          "query": "从深圳北站到公司办公室坐地铁要几站？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R063",
+          "query": "公司办公地点附近最近的地铁出口编号是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R064",
+          "query": "Agent 应用开发实习生的税前月薪和年终奖分别是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R065",
+          "query": "这个岗位是每周固定到岗五天，还是可以远程办公？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R066",
+          "query": "投递这份实习简历的截止日期是哪一天？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R067",
+          "query": "招聘方要求候选人的本科专业必须是哪一个？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R068",
+          "query": "公司面试一共有几轮，每轮分别由谁参加？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R069",
+          "query": "项目中的向量相似度阈值在生产环境精确配置成多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R070",
+          "query": "这套知识库目前一共有多少条文档和多少个向量？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R071",
+          "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_rag_embeddings.txt",
+              "score": 0.6168,
+              "dense_score": 0.6168,
+              "keyword_score": 15.2171,
+              "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+            }
+          ]
+        },
+        {
+          "case_id": "R072",
+          "query": "BM25 关键词召回和向量召回在当前线上流量下各占多少比例？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R073",
+          "query": "MySQL 会话消息超过多少天会被自动清理？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_database_mysql.txt",
+              "score": 0.6416,
+              "dense_score": 0.6416,
+              "keyword_score": 9.5113,
+              "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+            }
+          ]
+        },
+        {
+          "case_id": "R074",
+          "query": "这个 API 每分钟允许同一个用户调用多少次？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R075",
+          "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_fastapi_routes.txt",
+              "score": 0.6339,
+              "dense_score": 0.6339,
+              "keyword_score": 2.7256,
+              "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+            }
+          ]
+        },
+        {
+          "case_id": "R076",
+          "query": "项目的 CI 每天几点触发完整回归测试？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R077",
+          "query": "测试部门今年累计关闭了多少个缺陷？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R078",
+          "query": "这家公司今年智能问答产品的实际收入是多少？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R079",
+          "query": "招聘团队承诺多久之内一定会给候选人反馈？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": true,
+          "false_positive": false,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": []
+        },
+        {
+          "case_id": "R080",
+          "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+          "category": "similar_distractor",
+          "answerable": false,
+          "correct": false,
+          "false_positive": true,
+          "source_rr": 0,
+          "evidence_rr": 0,
+          "retrieved": [
+            {
+              "source": "demo_recruitment_agent.txt",
+              "score": 0.6207,
+              "dense_score": 0.6207,
+              "keyword_score": 4.5821,
+              "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+            },
+            {
+              "source": "demo_agent_history.txt",
+              "score": 0.6103,
+              "dense_score": 0.6103,
+              "keyword_score": 4.3071,
+              "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+            }
+          ]
+        }
+      ]
+    },
+    "differences": [
+      {
+        "case_id": "R003",
+        "query": "这个实习岗位要求掌握哪些技术栈？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R006",
+        "query": "工具调用参数应该如何防止模型生成错误？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R007",
+        "query": "Agent 怎么避免陷入无限次调用工具？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R008",
+        "query": "不同用户的对话记录如何避免串在一起？",
+        "change": "improved"
+      },
+      {
+        "case_id": "R009",
+        "query": "工具执行失败后，错误应该怎样反馈？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R010",
+        "query": "工具注册表负责什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R011",
+        "query": "长文档为什么要切片并保留重叠？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R012",
+        "query": "Embedding 向量相似是否能证明事实正确？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R013",
+        "query": "Recall@K 和 MRR 分别衡量什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R014",
+        "query": "RAG 从原始文档到生成答案有哪些主要步骤？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R015",
+        "query": "资料里没有答案时，知识库助手应怎么做？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R016",
+        "query": "余弦相似度怎么用于取 Top-K 片段？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R017",
+        "query": "pytest 里 fixture 和 monkeypatch 有什么用途？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R018",
+        "query": "Python 的 finally 代码块什么时候运行？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R019",
+        "query": "在异步 FastAPI 路由中直接执行阻塞函数有什么影响？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R020",
+        "query": "Python 类型标注能在运行时自动校验输入吗？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R021",
+        "query": "GET 和 POST 会话接口分别用来做什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R022",
+        "query": "FastAPI 的请求字段长度限制可以用什么定义？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R023",
+        "query": "FastAPI 出错时如何区分资源不存在和服务端故障？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R024",
+        "query": "请求中间件日志适合记录哪些信息？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R025",
+        "query": "数据库事务提交或回滚解决什么问题？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R026",
+        "query": "保存 MySQL 会话消息时，参数化 SQL 有什么好处？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R027",
+        "query": "研发任务开始前需要先明确什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R028",
+        "query": "项目里应该怎样保存 API Key？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R029",
+        "query": "测试部门主要负责哪些工作？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R030",
+        "query": "星河科技主要开发哪些类型的软件？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R031",
+        "query": "后端实习生需要掌握哪些基础？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R032",
+        "query": "Agent 方向面试可能会问哪些工程问题？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R033",
+        "query": "简历中可以随意写一个性能提升百分比吗？",
+        "change": "improved"
+      },
+      {
+        "case_id": "R034",
+        "query": "RAG 项目验收应该记录哪些检索结果？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R035",
+        "query": "Agent 项目日志还可以观测哪些耗时和用量？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R043",
+        "query": "实习岗位每周需要到岗几天？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R046",
+        "query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R049",
+        "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R050",
+        "query": "为了避免模型一直重复调用工具，执行循环要加什么保护？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R052",
+        "query": "工具报错时，为什么不能把错误包装成正常业务结果？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R053",
+        "query": "RAG 切分文档时留一点相邻内容，主要是为了什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R054",
+        "query": "向量相似度高，就能直接断定检索到的事实正确吗？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R055",
+        "query": "我有一个长文档要做 RAG，通常从导入到检索会经过哪些步骤？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R056",
+        "query": "查知识库时，Recall@K 和 MRR 可以分别帮我看什么？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R057",
+        "query": "FastAPI 接口收到不合规字段，长度范围应该在哪儿声明？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R059",
+        "query": "写 MySQL 会话消息时，用参数占位而不是拼 SQL 字符串有什么意义？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R071",
+        "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R073",
+        "query": "MySQL 会话消息超过多少天会被自动清理？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R075",
+        "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "change": "ranking_or_score_only"
+      },
+      {
+        "case_id": "R080",
+        "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+        "change": "ranking_or_score_only"
+      }
+    ]
+  },
+  "source_sha256": {
+    "evaluation\\retrieval.py": "ca39696cb87288a46659819bc64179c0e2069e6cf4d0b9cec7c61a34338ecb94",
+    "evaluation\\metrics.py": "cf40c6b7a87ba8028ebee8beb22d282c1552bf076e3fe6ea1987674af37ebb31",
+    "tools\\knowledge.py": "e3c6c5eca3eedda31c36fa2810c6e582d07c900987bf21207b1acec43d41d1d6",
+    "tools\\text_splitter.py": "04a774ac34754d96a674f6ab5b6f4414ba899c4417a854277173facb39e96e3d"
+  },
+  "failure_cases": {
+    "dense": [
+      {
+        "case_id": "R001",
+        "query": "这家公司的办公地点在哪个区？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R002",
+        "query": "公司目前在招什么职位？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R003",
+        "query": "这个实习岗位要求掌握哪些技术栈？",
+        "category": "multi_fact",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "faq.txt",
+            "score": 0.6898,
+            "dense_score": 0.6898,
+            "keyword_score": 0.0,
+            "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+          },
+          {
+            "source": "demo_recruitment_backend.txt",
+            "score": 0.6881,
+            "dense_score": 0.6881,
+            "keyword_score": 0.0,
+            "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+          },
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.6564,
+            "dense_score": 0.6564,
+            "keyword_score": 0.0,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          }
+        ]
+      },
+      {
+        "case_id": "R004",
+        "query": "候选人还需要了解哪些模型交互和检索能力？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R005",
+        "query": "岗位名称是什么？",
+        "category": "keyword",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R008",
+        "query": "不同用户的对话记录如何避免串在一起？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R021",
+        "query": "GET 和 POST 会话接口分别用来做什么？",
+        "category": "keyword",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_fastapi_routes.txt",
+            "score": 0.6024,
+            "dense_score": 0.6024,
+            "keyword_score": 0.0,
+            "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+          }
+        ]
+      },
+      {
+        "case_id": "R033",
+        "query": "简历中可以随意写一个性能提升百分比吗？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R043",
+        "query": "实习岗位每周需要到岗几天？",
+        "category": "no_answer",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "faq.txt",
+            "score": 0.6046,
+            "dense_score": 0.6046,
+            "keyword_score": 0.0,
+            "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+          }
+        ]
+      },
+      {
+        "case_id": "R046",
+        "query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.7384,
+            "dense_score": 0.7384,
+            "keyword_score": 0.0,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          },
+          {
+            "source": "demo_recruitment_interview.txt",
+            "score": 0.7081,
+            "dense_score": 0.7081,
+            "keyword_score": 0.0,
+            "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+          },
+          {
+            "source": "demo_recruitment_backend.txt",
+            "score": 0.6721,
+            "dense_score": 0.6721,
+            "keyword_score": 0.0,
+            "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+          }
+        ]
+      },
+      {
+        "case_id": "R047",
+        "query": "这家公司在深圳哪个片区办公？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R048",
+        "query": "岗位介绍里提到要会调模型和知识库吗？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R049",
+        "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_agent_loop.txt",
+            "score": 0.6145,
+            "dense_score": 0.6145,
+            "keyword_score": 0.0,
+            "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+          },
+          {
+            "source": "demo_agent_tools.txt",
+            "score": 0.6112,
+            "dense_score": 0.6112,
+            "keyword_score": 0.0,
+            "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+          }
+        ]
+      },
+      {
+        "case_id": "R051",
+        "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+        "category": "multi_fact",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R058",
+        "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R060",
+        "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R071",
+        "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_rag_embeddings.txt",
+            "score": 0.6168,
+            "dense_score": 0.6168,
+            "keyword_score": 0.0,
+            "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+          }
+        ]
+      },
+      {
+        "case_id": "R073",
+        "query": "MySQL 会话消息超过多少天会被自动清理？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_database_mysql.txt",
+            "score": 0.6416,
+            "dense_score": 0.6416,
+            "keyword_score": 0.0,
+            "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+          }
+        ]
+      },
+      {
+        "case_id": "R075",
+        "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_fastapi_routes.txt",
+            "score": 0.6339,
+            "dense_score": 0.6339,
+            "keyword_score": 0.0,
+            "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+          }
+        ]
+      },
+      {
+        "case_id": "R080",
+        "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.6207,
+            "dense_score": 0.6207,
+            "keyword_score": 0.0,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          },
+          {
+            "source": "demo_agent_history.txt",
+            "score": 0.6103,
+            "dense_score": 0.6103,
+            "keyword_score": 0.0,
+            "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+          }
+        ]
+      }
+    ],
+    "hybrid": [
+      {
+        "case_id": "R001",
+        "query": "这家公司的办公地点在哪个区？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R002",
+        "query": "公司目前在招什么职位？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R003",
+        "query": "这个实习岗位要求掌握哪些技术栈？",
+        "category": "multi_fact",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "faq.txt",
+            "score": 0.6898,
+            "dense_score": 0.6898,
+            "keyword_score": 16.8975,
+            "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+          },
+          {
+            "source": "demo_recruitment_backend.txt",
+            "score": 0.6881,
+            "dense_score": 0.6881,
+            "keyword_score": 18.032,
+            "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+          },
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.6564,
+            "dense_score": 0.6564,
+            "keyword_score": 17.0451,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          }
+        ]
+      },
+      {
+        "case_id": "R004",
+        "query": "候选人还需要了解哪些模型交互和检索能力？",
+        "category": "paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R005",
+        "query": "岗位名称是什么？",
+        "category": "keyword",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R021",
+        "query": "GET 和 POST 会话接口分别用来做什么？",
+        "category": "keyword",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_fastapi_routes.txt",
+            "score": 0.6024,
+            "dense_score": 0.6024,
+            "keyword_score": 10.2365,
+            "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+          }
+        ]
+      },
+      {
+        "case_id": "R043",
+        "query": "实习岗位每周需要到岗几天？",
+        "category": "no_answer",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "faq.txt",
+            "score": 0.6046,
+            "dense_score": 0.6046,
+            "keyword_score": 10.8098,
+            "content_sha256": "6ee3b626cb114658070bdbeb621c63a257afae706fdc838f823fdd46558e9892"
+          }
+        ]
+      },
+      {
+        "case_id": "R046",
+        "query": "我准备面试这个 Agent 实习岗，日常开发会用到哪些技术？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.7384,
+            "dense_score": 0.7384,
+            "keyword_score": 8.3359,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          },
+          {
+            "source": "demo_recruitment_interview.txt",
+            "score": 0.7081,
+            "dense_score": 0.7081,
+            "keyword_score": 12.1918,
+            "content_sha256": "bd881d4d4a604bcdc1e0971fb634fd1847326e159a3a28ecf046a064b924282b"
+          },
+          {
+            "source": "demo_recruitment_backend.txt",
+            "score": 0.6721,
+            "dense_score": 0.6721,
+            "keyword_score": 6.6627,
+            "content_sha256": "ce66a0c8eadb15d851d841ce2e496e2f02a42a2ddd79fb8787d2445a5bf14082"
+          }
+        ]
+      },
+      {
+        "case_id": "R047",
+        "query": "这家公司在深圳哪个片区办公？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R048",
+        "query": "岗位介绍里提到要会调模型和知识库吗？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R049",
+        "query": "如果模型给工具传了不合法的参数，Agent 这一层该怎么兜住？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_agent_loop.txt",
+            "score": 0.6145,
+            "dense_score": 0.6145,
+            "keyword_score": 8.2936,
+            "content_sha256": "6675dc00eae087e70e9d164942bd1be4558180667ded3c3b4e78a7e84e3394ef"
+          },
+          {
+            "source": "demo_agent_tools.txt",
+            "score": 0.6112,
+            "dense_score": 0.6112,
+            "keyword_score": 5.5118,
+            "content_sha256": "0b70409105b2387a3e27c49c5590b20d0ade670c02d8adcdf74cbc6487c09319"
+          }
+        ]
+      },
+      {
+        "case_id": "R051",
+        "query": "用户上次聊过的内容怎样在下一轮继续用，同时不和别人串话？",
+        "category": "multi_fact",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R058",
+        "query": "同步阻塞函数放进 async 路由里，会拖慢哪个部分？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R060",
+        "query": "简历里写延迟降低 80% 之前，至少应该有什么依据？",
+        "category": "realistic_paraphrase",
+        "answerable": true,
+        "correct": false,
+        "false_positive": false,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": []
+      },
+      {
+        "case_id": "R071",
+        "query": "Embedding 模型在 GPU 上运行时的显存占用是多少 MB？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_rag_embeddings.txt",
+            "score": 0.6168,
+            "dense_score": 0.6168,
+            "keyword_score": 15.2171,
+            "content_sha256": "9730b3358337e93b9bbb0270eaa4b36be7b4d38762a226fb24798d75560fa402"
+          }
+        ]
+      },
+      {
+        "case_id": "R073",
+        "query": "MySQL 会话消息超过多少天会被自动清理？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_database_mysql.txt",
+            "score": 0.6416,
+            "dense_score": 0.6416,
+            "keyword_score": 9.5113,
+            "content_sha256": "0f0cf546200054580612617083dfd818cf7833566b0474ab5765711735a0a2b0"
+          }
+        ]
+      },
+      {
+        "case_id": "R075",
+        "query": "FastAPI 服务部署在生产环境时配了几个 worker？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_fastapi_routes.txt",
+            "score": 0.6339,
+            "dense_score": 0.6339,
+            "keyword_score": 2.7256,
+            "content_sha256": "0388c9b0239923aa479de09a556de399f8d1fe62fdb06966a3a0737938990a73"
+          }
+        ]
+      },
+      {
+        "case_id": "R080",
+        "query": "Agent 调用天气工具时使用的真实供应商 API Key 是什么？",
+        "category": "similar_distractor",
+        "answerable": false,
+        "correct": false,
+        "false_positive": true,
+        "source_rr": 0,
+        "evidence_rr": 0,
+        "retrieved": [
+          {
+            "source": "demo_recruitment_agent.txt",
+            "score": 0.6207,
+            "dense_score": 0.6207,
+            "keyword_score": 4.5821,
+            "content_sha256": "519bba17cd9391082844258fbc0cb02afb0e6d2c793e57911748f23dde777d28"
+          },
+          {
+            "source": "demo_agent_history.txt",
+            "score": 0.6103,
+            "dense_score": 0.6103,
+            "keyword_score": 4.3071,
+            "content_sha256": "39ef21be2cf485e42f88dd959c5bcfe0c269fa7250d6791ded6f13398956376d"
+          }
+        ]
+      }
+    ]
+  }
+}
