@@ -49,9 +49,15 @@ async def chat_event_stream(agent, logger, message, session_id, internal_session
     import inspect
     from tools.knowledge import knowledge_owner_scope
     from agent.control import GenerationStopped
+    from agent.timeouts import AgentTimeoutError, Deadline, TimeoutConfig
+    # 入口处一次性计算本轮回答的绝对截止时间，后续模型和工具只消费剩余时间。
+    deadline = Deadline.after(TimeoutConfig.from_env().total_seconds)
     kwargs = {"session_id": internal_session_id}
-    if "stop_event" in inspect.signature(agent.run_stream).parameters:
+    parameters = inspect.signature(agent.run_stream).parameters
+    if "stop_event" in parameters:
         kwargs["stop_event"] = stop_event
+    if "deadline" in parameters:
+        kwargs["deadline"] = deadline
     iterator = agent.run_stream(message, **kwargs)
     try:
         with knowledge_owner_scope(owner_user_id):
@@ -66,9 +72,24 @@ async def chat_event_stream(agent, logger, message, session_id, internal_session
         citations = await latest_turn_citations(agent.session_manager, internal_session_id)
         yield "data: " + json.dumps({"type": "done", "session_id": session_id, "citations": citations,
                 **({"stopped": True} if stop_event and stop_event.is_set() else {})}, ensure_ascii=False) + "\n\n"
+    except AgentTimeoutError as exc:
+        logger.warning(
+            "流式聊天超时 session_id=%s remaining=%.3f",
+            session_id,
+            deadline.remaining(),
+        )
+        yield "data: " + json.dumps({
+            "type": "error",
+            "code": exc.code,
+            "message": str(exc),
+        }, ensure_ascii=False) + "\n\n"
     except Exception:
         logger.exception("流式聊天生成失败 session_id=%s", session_id)
-        yield "data: " + json.dumps({"type": "error", "message": "生成回复时发生错误"}, ensure_ascii=False) + "\n\n"
+        yield "data: " + json.dumps({
+            "type": "error",
+            "code": "generation_failed",
+            "message": "生成回复时发生错误",
+        }, ensure_ascii=False) + "\n\n"
 
 
 # 管理异步SSE生命周期，断连时清理模型流并释放任务登记。

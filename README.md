@@ -9,8 +9,10 @@
 - **Agent 工具调用**：根据用户问题决定是否调用工具，并处理工具参数、执行结果和异常。
 - **RAG 混合检索**：使用 Sentence Transformers 做向量语义召回，并使用 BM25 做关键词召回；英文按词匹配，中文按重叠字片段匹配，再融合排序。
 - **可解释检索分数**：返回知识片段、来源文件、向量分、关键词分和综合分，便于检查召回原因。
-- **多轮对话**：维护会话消息历史，并将会话记录保存到 MySQL。
-- **知识库文档管理**：支持 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 上传，记录上传用户及上传/修改时间，并支持查询、替换、改名和删除。
+- **多轮对话**：会话消息按条追加到独立表，避免并发请求互相覆盖；会话记录保存到 MySQL。
+- **历史摘要与上下文预算**：完整会话继续持久化；调用模型时保留最近 10 轮原文，更早轮次合并为摘要，并按估算 token 预算逐级降级。
+- **整体超时与重试**：入口计算本轮 deadline，模型与工具只使用剩余时间；可重试错误有限退避，超时通过 SSE 错误码返回。
+- **知识库文档管理**：支持 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 上传，记录上传用户及上传/修改时间，并支持查询、替换、改名和删除；解析受解压大小、条目数、页数和字符数限制，并在独立子进程中执行、超时终止。
 - **RESTful API**：基于 FastAPI 提供聊天、会话创建、历史查询、清空和删除接口。
 - **统一异常响应**：处理 HTTP 异常、请求参数校验异常及未预期异常。
 - **请求日志**：记录 API 请求路径、状态码与处理耗时。
@@ -37,8 +39,10 @@ HTTP 路由集中在 `api/routes/`；`app/` 负责 FastAPI 应用组装、启动
 dev-agent/
 ├── agent/
 │   ├── agent.py             # Agent 决策循环与工具调用
+│   ├── history.py           # 历史摘要与上下文 token 预算
 │   ├── runtime.py           # 大模型客户端与共享 Agent 实例
-│   └── session.py           # MySQL 会话持久化
+│   ├── session.py           # MySQL 会话、消息与摘要持久化
+│   └── timeouts.py          # 整体超时预算与可重试错误退避
 ├── api/
 │   ├── api_schemas.py       # 请求与响应模型
 │   ├── api_response.py      # 统一响应格式
@@ -59,8 +63,8 @@ dev-agent/
 │   └── schemas.py           # 认证请求模型
 ├── modules/
 │   ├── database.py          # SQLAlchemy engine、Session 与数据库初始化
-│   ├── document_parser.py   # 多格式文档统一解析为纯文本
-│   └── models.py            # 用户、JWT、聊天会话和知识库文档 ORM 模型
+│   ├── document_parser.py   # 多格式文档统一解析（独立子进程，带资源限制）
+│   └── models.py            # 用户、JWT、会话、消息和知识库文档 ORM 模型
 ├── services/
 │   ├── __init__.py          # 业务服务包
 │   └── documents.py         # 文档解析、存储及数据库业务逻辑
@@ -136,7 +140,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 生产环境设置 `APP_ENV=production`；应用启动时会拒绝缺失、短于 48 字符或已知占位的 `JWT_SECRET_KEY`，并要求设置 `AUTH_REGISTRATION_CODE`。注册页要求输入该邀请码。登录失败会按账号与来源组合在数据库中限流；认证成功/失败、注册、刷新和退出事件写入 `auth_audit_events`，日志不记录密码、JWT 原文或原始 IP。Access token 有效 30 分钟，Refresh token 有效 7 天且每次刷新后旧 token 对及关联 access token 会被撤销。前端将 token 存在当前标签页的 `sessionStorage`，受保护请求遇到过期 access token 时自动尝试轮换。
 
-确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`auth_users`、`auth_tokens` 和 `knowledge_documents` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
+确保 MySQL 服务已启动，且配置的数据库已经创建。账号需要在目标库中创建表和读写数据的权限；应用首次使用时通过 SQLAlchemy ORM 自动创建缺失的 `sessions`、`session_messages`、`session_summaries`、`auth_users`、`auth_tokens` 和 `knowledge_documents` 表。`create_all` 不会修改已有表结构；如果数据库来自旧版本且结构不兼容，请配置一个空的新数据库，或自行迁移后再启动。连接默认读取 `MYSQL_HOST`、`MYSQL_PORT`、`MYSQL_USER`、`MYSQL_PASSWORD` 和 `MYSQL_DATABASE`；也可设置 SQLAlchemy 格式的 `DATABASE_URL` 覆盖默认连接配置。
 
 ### 5. 演示语料与模型
 
@@ -205,7 +209,7 @@ npm run dev
 }
 ```
 
-`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件包含 `content`（工具决策完成后，最终回答逐段输出，并增量过滤内部推理标签），结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
+`POST /chat` 始终返回 `Content-Type: text/event-stream` 的 SSE 流：`delta` 事件包含 `content`（工具决策完成后，最终回答逐段输出，并增量过滤内部推理标签），结束时 `done` 事件包含 `session_id` 和本轮检索得到的 `citations`；发生生成错误时发送 `error` 事件，并带 `code` 字段：超时为 `agent_timeout`，其他生成失败为 `generation_failed`。请求方应持续读取响应流并拼接 `delta.content`。每条引用包含来源文件、证据片段和检索分数。没有调用知识检索工具时引用列表为空。实际回答取决于模型配置和知识库内容。
 
 注册新用户时调用 `POST /auth/register`：
 
@@ -257,6 +261,8 @@ npm run dev
 
 文档接口需要登录 JWT，并且每个用户只能查看、替换、改名或删除自己上传的文档。单文件上限为 20 MB。可上传 PDF、DOCX、XLSX、PPTX、TXT、MD、CSV、JSON、HTML/HTM；服务会把文档统一解析成文本供现有文本切分和混合检索使用。原文件和解析文本保存在 `KNOWLEDGE_DIR` 下，元数据保存在 MySQL `knowledge_documents` 表。
 
+解析前会检查 Office 压缩包的条目数与解压后总大小，并限制 PDF/PPTX 页数与提取文本字符数；单个文档在独立子进程中解析，超过时限会终止子进程。限制分别由 `DOCUMENT_MAX_ARCHIVE_ENTRIES`、`DOCUMENT_MAX_UNCOMPRESSED_BYTES`、`DOCUMENT_MAX_PAGES`、`DOCUMENT_MAX_CHARS` 和 `DOCUMENT_PARSE_TIMEOUT_SECONDS` 配置；超过限制或解析超时统一返回 422。
+
 - `POST /knowledge/documents`：`multipart/form-data` 字段 `file`，上传并加入检索知识库。
 - `GET /knowledge/documents`：查询当前用户文档列表。
 - `GET /knowledge/documents/{document_id}`：查询文档元数据。
@@ -290,6 +296,22 @@ LLM 分析问题并决定是否调用工具
 
 当涉及知识库的问题时，Agent 可以调用知识检索工具获取相关文本，再结合检索结果生成回答。文本切分优先沿段落、句子和换行边界进行；遇到超长句或无标点文本时，再按空白或字符长度切分，并保留相邻片段重叠。检索同时使用向量语义分和 BM25 关键词分：默认权重分别为 0.7 和 0.3，默认向量相似度阈值为 0.60；通用词不参与关键词分，关键词召回还需达到有效查询词覆盖门槛。没有充分关键词证据时，仅由向量阈值决定是否返回。结果中的 `score` 是综合分，`dense_score` 和 `keyword_score` 可用于观察两路召回。
 
+### 历史摘要与 token 预算
+
+完整消息按条保存在 `session_messages` 表，按自增 `id` 排序即写入顺序；旧版本 `sessions.messages` 中的整段 JSON 会在首次读取时自动迁移一次。摘要只影响调用模型前的上下文。`agent/history.py` 按用户消息切分轮次：最近 `HISTORY_RECENT_TURNS` 轮（默认 10）保留原文，更早轮次按时间顺序合并进摘要。摘要保存在 `session_summaries` 表，通过 `covered_messages` 记录已覆盖的消息数，后续只对新增的较早消息做增量合并，避免重复压缩；历史被清空或缩短后旧摘要会自动失效。生成摘要失败或超时会退化为保留用户/助手原话的本地摘要，不阻断当前问答。
+
+Agent 每个用户消息、助手消息（含工具调用）和工具结果都通过 `SessionManager.append_message` 单条写入，不再整段覆盖 `sessions.messages`；因此同一会话的并发请求各自 INSERT，不会互相丢消息。写入顺序可能因并发而交错，但每条消息都会保留。旧数据迁移和并发首次创建会话使用数据库行锁/唯一键兜底，`clear` 与 `delete` 会同时清理 `session_messages` 和摘要。
+
+发给模型的上下文受 `HISTORY_TOKEN_BUDGET`（默认 12000）约束。超预算时按以下顺序降级：截断工具结果 → 减少保留轮数（不低于 2 轮）→ 截断窗口内的长消息 → 丢弃摘要 → 只保留最近 1 轮 → 进一步压缩正文 → 截断当前问题；极端情况下只保留系统提示。删除轮次以整轮为单位，工具调用与结果始终成对保留。token 数由内置估算器计算（中日韩字符按 1 token、ASCII 约 4 字符 1 token），未引入额外分词器依赖。相关配置见 `.env.example` 中的 `HISTORY_RECENT_TURNS`、`HISTORY_TOKEN_BUDGET`、`HISTORY_SUMMARY_MAX_TOKENS`、`HISTORY_SUMMARY_TIMEOUT`。
+
+### 整体超时与重试
+
+`api/chat_helpers.py` 在 SSE 入口创建一个 `Deadline`（默认 `CHAT_TOTAL_TIMEOUT_SECONDS=120`），并把它传给 `Agent.run_stream`；`Agent.run` 直接调用时也会自行创建 deadline。每轮模型请求的超时取 `LLM_REQUEST_TIMEOUT_SECONDS`（默认 20）与当前剩余时间的较小值，工具执行同样以 `TOOL_TIMEOUT_SECONDS`（默认 15）和剩余时间中较小者为上限；最终流式读取逐片检查 deadline，因此单次请求超时不会叠加成无限等待。摘要生成也消费同一 deadline，剩余不足时直接退化为本地摘要。
+
+模型调用遇到连接错误、请求超时、限流或状态码 408/409/429/500/502/503/504 时，按 `LLM_RETRY_BACKOFF_SECONDS` 指数退避重试，最多 `LLM_MAX_RETRIES` 次（默认 2），退避上限为 `LLM_MAX_RETRY_BACKOFF_SECONDS`，且不会超过剩余预算；其他错误立即失败。预算耗尽时抛出 `AgentTimeoutError`，SSE 返回 `{"type":"error","code":"agent_timeout","message":"本次回答超时，请稍后重试或缩短问题"}`；前端按 code 显示明确文案。若超时发生在已输出部分正文之后，已输出内容仍会保留并写入会话，随后收到 error 事件而不是 done。
+
+超时是协作式的：已经开始的同步工具无法被强制终止，其外部副作用仍可能完成；模型连接会在取消时关闭。
+
 `test/retrieval_dataset.py` 当前是 `rag-eval-2.0`，包含 80 条按真实提问方式编写的样例：50 条可回答、10 条一般无答案、20 条与已有知识相近但缺少目标事实的干扰问题。正例标注标准证据词和允许来源。运行 `python test/evaluate_retrieval.py` 比较分块、阈值和 Top-K 配置，查看 Recall@K、MRR、误召回率和分类结果。每次运行会在 `test/evaluation_results/` 保存 JSON 报告，其中包含评估集版本与 SHA-256 指纹、配置、指标及失败问题；报告不复制检索片段正文，只记录来源、分数和正文摘要哈希。该评估集仍是开发集，指标不能代表通用检索准确率。
 
 ## 运行测试
@@ -318,7 +340,7 @@ python -m pytest test/ -v
 
 流式生成分为工具决策与最终回答两个阶段，最终回答不再注册工具。相比单轮请求会多一次模型调用；决策阶段完成前不会输出正文。前端“停止生成”请求 `POST /sessions/{session_id}/stop` 后中止浏览器读取；后端协作式停止并保存已输出的回答。停止接口必须认证，只能停止自己的会话。同一会话生成中再次提交返回 409。
 
-`TOOL_TIMEOUT_SECONDS` 默认 15 秒，模型请求超时为 20 秒。工具超时向模型返回 `tool_timeout`；工具线程最多 4 个，满载返回 `tool_busy`。超时/停止不能强杀已开始执行的同步函数，其外部副作用仍可能完成；生成停止需等待正在阻塞的模型读取返回。任务登记保存在进程内，当前请使用单 worker；多 worker 需要共享任务调度。日志记录任务开始/结束及工具名称、耗时、超时和失败，不记录工具参数或返回正文。
+`TOOL_TIMEOUT_SECONDS` 默认 15 秒，模型请求超时由 `LLM_REQUEST_TIMEOUT_SECONDS` 控制（默认 20 秒），整轮上限见 `CHAT_TOTAL_TIMEOUT_SECONDS`。工具超时向模型返回 `tool_timeout`；工具线程最多 4 个，满载返回 `tool_busy`。超时/停止不能强杀已开始执行的同步函数，其外部副作用仍可能完成；生成停止需等待正在阻塞的模型读取返回。任务登记保存在进程内，当前请使用单 worker；多 worker 需要共享任务调度。日志记录任务开始/结束及工具名称、耗时、超时和失败，不记录工具参数或返回正文。
 
 
 RAG 检索模式评估：运行 `python -m evaluation.retrieval`，在相同公共语料和参数下比较纯向量与混合检索；完整报告位于 `evaluation/results/`，最新中文总结位于 `TXT/RAG检索对比评估结果.txt`。报告包含逐题差异、失败案例、标注检查、语料/问题集指纹和环境信息；具体指标定义见 `evaluation/README.md`。
@@ -331,7 +353,7 @@ RAG 检索模式评估：运行 `python -m evaluation.retrieval`，在相同公�
 
 当前使用 `AsyncOpenAI` 和 SQLAlchemy 的 `AsyncEngine` / `AsyncSession`。MySQL 驱动为 `aiomysql`，SQLite 测试使用 `aiosqlite`；旧 `mysql+pymysql`、`sqlite+pysqlite` URL 会自动转换，已有数据库表和数据保持兼容。安装依赖使用 `python -m pip install -r requirements.txt`。
 
-完整Agent调用使用 `await agent.run(...)`，流式调用使用 `async for text in agent.run_stream(...)`。认证、会话和文档数据库服务及路由均通过await调用，每个数据库作用域使用独立Session并自动提交、异常/取消回滚及关闭。密码哈希、文档解析与文件操作仍在线程池执行，RAG工具仍由有界线程池承接，避免阻塞事件循环。
+完整Agent调用使用 `await agent.run(...)`，流式调用使用 `async for text in agent.run_stream(...)`。认证、会话和文档数据库服务及路由均通过await调用，每个数据库作用域使用独立Session并自动提交、异常/取消回滚及关闭。密码哈希与文件操作仍在线程池执行，文档解析在独立子进程中进行并由线程池等待，RAG工具仍由有界线程池承接，避免阻塞事件循环。
 
 流式输出、停止生成和RAG预热均保留；仅有本地工具时继续跳过RAG重复回答。停止信号可以取消等待中的模型请求或分片读取，断连时关闭模型流并保存已输出正文；应用退出时关闭客户端、释放数据库连接池。已开始的同步工具无法强制终止，多worker任务共享和文档磁盘/数据库一致性仍需单独处理。
 

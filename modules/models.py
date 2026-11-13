@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     JSON,
     String,
+    Text,
     UniqueConstraint,
     func,
 )
@@ -118,6 +119,61 @@ class ChatSession(Base):
     )
 
     owner: Mapped[AuthUser | None] = relationship(back_populates="sessions")
+
+
+class ChatSummary(Base):
+    """会话中较早历史的增量摘要，与完整消息分开保存。"""
+
+    __tablename__ = "session_summaries"
+
+    session_id: Mapped[str] = mapped_column(
+        String(100),
+        ForeignKey(
+            "sessions.session_id",
+            name="fk_session_summaries_session",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    # 已并入摘要的消息条数（不含 system 消息），用于增量合并。
+    covered_messages: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class ChatMessage(Base):
+    """会话中的单条消息；按 id 递增即写入顺序，避免整段历史覆盖。"""
+
+    __tablename__ = "session_messages"
+    __table_args__ = (
+        Index("idx_session_messages_session", "session_id", "id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    session_id: Mapped[str] = mapped_column(
+        String(100),
+        ForeignKey(
+            "sessions.session_id",
+            name="fk_session_messages_session",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    )
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tool_calls: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    tool_call_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.current_timestamp()
+    )
 
 
 class KnowledgeDocument(Base):

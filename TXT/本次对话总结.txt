@@ -291,3 +291,29 @@ Agent现在兼容远端JSON Schema和异步工具，并让完整回答与流式�
 
 [2026-11-09 21:24:00 +08:00] 精简Agent重复消息与工具处理
 用户希望抽取Agent重复的消息处理逻辑，统一工具参数校验和执行入口，并区分普通执行与流式执行。本次新增agent/tool_execution.py，统一规范化模型工具调用结构、JSON解析、本地Pydantic/MCP JSON Schema校验、工具执行及错误映射。Agent普通run和run_stream现共用轮次初始化、assistant工具消息序列化、tool结果消息构造和工具执行入口；两种模式各自保留模型循环和最终响应方式。代码已修改并检查结构，未运行测试（本轮遵循不主动增加/运行测试的工作约束）。
+
+[2026-11-13 15:41:00 +08:00] 新增历史摘要与上下文 token 预算
+用户要求保留最近 10 轮历史问答，更早轮次做摘要处理，并设置总 token 预算与超限降级策略。本次新增 agent/history.py：按用户消息切分轮次，默认保留最近 10 轮原文，更早轮次按时间顺序合并为摘要，作为独立 system 消息注入；完整消息仍全部保存在 sessions.messages，摘要只影响发给模型的上下文。新增 session_summaries 表（ChatSummary）保存摘要正文与 covered_messages，后续只对新增的较早消息做增量合并；历史清空或缩短时自动丢弃过期摘要。摘要模型调用失败、超时或返回空内容时，退化为保留用户/助手原话的本地摘要，不阻断问答。
+预算：默认 HISTORY_TOKEN_BUDGET=12000，准备上下文及每次模型调用前都会检查；超预算依次截断工具结果、减少保留轮数（不低于 2 轮）、截断长消息、丢弃摘要、只保留最近 1 轮、进一步压缩正文、截断当前问题，极端情况只保留系统提示。删除轮次以整轮为单位，保持工具调用与结果配对。token 用内置估算器（中日韩字符按 1、ASCII 约 4 字符 1 token），不新增分词器依赖。
+涉及文件：modules/models.py、agent/session.py、agent/history.py（新增）、agent/agent.py、test/test_history.py（新增）、test/test_session.py、test/test_agent.py、.env.example、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。配置新增 HISTORY_RECENT_TURNS、HISTORY_TOKEN_BUDGET、HISTORY_SUMMARY_MAX_TOKENS、HISTORY_SUMMARY_TIMEOUT。
+验证：完整离线测试 119 passed，其中新增 27 项（test_history.py 22 项、test_session.py 3 项摘要持久化、test_agent.py 2 项摘要/预算集成）；git diff --check 通过。测试使用模型与会话替身及内存 SQLite，不调用真实 LLM 或 MySQL。本机 Windows 下 Python 3.12 以 0o700 建目录的 ACL 问题用临时 sitecustomize 绕过，未写入项目代码。
+边界：摘要质量依赖摘要模型，失败时退化为截断原话；预算为估算值，与真实分词可能有偏差；摘要表由 create_all 创建，不迁移已有表；同一会话并发写入覆盖问题仍未解决。
+
+[2026-11-13 15:58:00 +08:00] 会话消息拆分为独立表
+用户要求把消息拆成独立表按条 append，解决并发丢消息。本次新增 session_messages 表（ChatMessage，自增 id、session_id 外键级联、role/content/tool_calls/tool_call_id/name/created_at）；SessionManager 新增 append_message/append_messages，get_messages 按 id 读取并懒迁移旧 sessions.messages JSON，save 仅保留兼容的破坏式替换，clear/delete 级联清理消息行；Agent 改为逐条写入 user、assistant、tool 和流式最终正文，system 提示不入库，不再整段覆盖历史。并发请求各自 INSERT，不会再互相覆盖，但轮次语义顺序不保证。
+涉及文件：modules/models.py、agent/session.py、agent/agent.py、test/test_session.py、test/test_agent.py、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。
+验证：新增 7 项测试（并发追加、缺失会话并发创建、消息字段往返、旧 JSON 迁移幂等、clear/delete 级联、Agent 逐条追加），完整离线测试 126 passed；git diff --check 通过。测试使用文件/内存 SQLite 与会话替身，不调用真实 LLM 或 MySQL；Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过。
+边界：消息顺序按自增 id，不保证并发请求的轮次语义顺序；旧 JSON 迁移依赖 MySQL 行锁，SQLite 下并发首次读取仍可能重复迁移；多 worker 下摘要与 updated_at 仍可能竞争；create_all 不修改已有表结构。
+
+[2026-11-13 16:10:00 +08:00] 整体超时预算与重试
+用户要求增加整体超时预算，入口计算 deadline，每轮传剩余时间；对可重试错误做有限退避；超时给前端明确错误码而不是统一文案。本次新增 agent/timeouts.py：TimeoutConfig 读取 CHAT_TOTAL_TIMEOUT_SECONDS、LLM_REQUEST_TIMEOUT_SECONDS、LLM_MAX_RETRIES、LLM_RETRY_BACKOFF_SECONDS、LLM_MAX_RETRY_BACKOFF_SECONDS；Deadline 记录单调时钟截止时间；run_with_retry 对连接错误、超时、限流及 408/409/429/500/502/503/504 做指数退避，次数与剩余预算双重限制。
+Agent 的 run/run_stream 入口创建或接收 deadline，模型每次调用使用剩余时间与单次请求上限的较小值，工具执行同样取剩余时间，最终流式读取逐片检查；摘要生成也消费同一 deadline，预算不足时退化为本地摘要。SSE 超时返回 code=agent_timeout，其他异常返回 code=generation_failed；前端 ChatEvent 增加 code 并按 code 显示明确文案。已开始输出后超时，已输出正文仍会保存到会话。
+涉及文件：agent/timeouts.py（新增）、agent/agent.py、agent/history.py、api/chat_helpers.py、frontend/src/api.ts、frontend/src/App.tsx、test/test_timeouts.py（新增）、.env.example、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。
+验证：新增 13 项测试（Deadline/配置/可重试判定/退避成功与耗尽/剩余时间传递/流式最终调用预算/SSE 错误码），完整离线测试 139 passed；git diff --check 通过；frontend tsc -b 通过。npm run build 的 vite 阶段因本机沙箱 spawn EPERM 失败，未完成打包，不是类型错误。测试使用模型与会话替身，不调用真实 LLM 或 MySQL。
+边界：超时是协作式的，已开始的同步工具无法强制终止；连接关闭依赖 SDK；预算从入口开始计时，不含排队时间；多 worker 各自独立计时。
+
+[2026-11-13 16:20:00 +08:00] 文档解析资源限制与独立进程
+用户要求限制解压后总大小与条目数、限制页数/字符数，并把解析放到独立进程、设置超时。本次重写 modules/document_parser.py：新增 ParserLimits 读取 DOCUMENT_MAX_ARCHIVE_ENTRIES、DOCUMENT_MAX_UNCOMPRESSED_BYTES、DOCUMENT_MAX_PAGES、DOCUMENT_MAX_CHARS、DOCUMENT_PARSE_TIMEOUT_SECONDS；Office 解析前检查 zip 条目数和声明的解压总大小，PDF/PPTX 限制页数，规范化文本后限制字符数。解析改由独立子进程执行，父进程用临时文件传参、subprocess.run 设置超时，超时抛 DocumentParseTimeoutError；子进程通过 error_type 保留限制错误，父进程还原为 DocumentLimitError，临时目录清理失败不掩盖解析结果，其他错误经文档服务转 422。非法或过低的配置值回落到默认值。
+涉及文件：modules/document_parser.py、test/test_document_parser.py（新增）、.env.example、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。
+验证：新增 11 项测试（独立进程、docx/xlsx/pptx 正文提取、条目数、解压大小、PDF 页数、字符数、超时、环境覆盖、非法回落），完整离线测试 150 passed；原有文档创建/替换与 HTTP 测试 23 passed；git diff --check 通过。测试使用真实子进程、临时 PDF/zip 与 Office 文件，不调用真实 LLM 或 MySQL；Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过。
+边界：DOCX 没有可靠页数，只限制 PDF/PPTX；解压大小依赖 zip 目录声明值；子进程未设置 OS 级内存/CPU 配额；超大文本仍可能在子进程内完整加载，依赖超时与进程退出兜底。

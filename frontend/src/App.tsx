@@ -29,6 +29,10 @@ const TOKEN_KEY = "dev-agent.access-token";
 const REFRESH_TOKEN_KEY = "dev-agent.refresh-token";
 const USERNAME_KEY = "dev-agent.username";
 const starters = ["知识库里包含哪些内容？", "请总结一下主要信息。", "这个项目能做什么？"];
+const CHAT_ERROR_MESSAGES: Record<string, string> = {
+  agent_timeout: "本次回答超时，请稍后重试或缩短问题。",
+  generation_failed: "生成回复时发生错误，请稍后重试。",
+};
 
 function createMessage(role: Message["role"], content: string): Message {
   return { id: crypto.randomUUID(), role, content, citations: [] };
@@ -333,7 +337,14 @@ export default function App() {
           }
           updateAssistant((item) => ({ ...item, citations: event.citations || [] }));
         } else if (event.type === "error") {
-          throw new Error(event.message || "生成回复时发生错误");
+          const error = new Error(
+            (event.code && CHAT_ERROR_MESSAGES[event.code]) ||
+              event.message ||
+              "生成回复时发生错误",
+          );
+          // 保留服务端错误码，便于日志定位和后续按类型处理。
+          error.name = event.code || "ChatError";
+          throw error;
         }
       }, controller.signal);
     } catch (error) {

@@ -362,3 +362,35 @@ API与配置：app/main.py启动时发现MCP并挂载api/routes/mcp.py的认证�
 修改后：新增agent/tool_execution.py，提供normalize_tool_call、assistant_tool_message和execute_tool_call，统一模型调用规范化、消息序列化、JSON解析、本地Pydantic/MCP JSON Schema校验、工具执行及错误结果。Agent._begin_turn统一系统/历史/用户消息初始化；_tool_result_message统一工具返回消息格式。普通run和run_stream各自保留清晰的决策循环、普通完整返回或流式正文输出；两者调用同一工具入口，流式仍传stop_event，普通执行使用默认超时。
 文件：agent/tool_execution.py（新增）；agent/agent.py（复用共享处理逻辑）。功能一览尚未追加，本次未增加文件夹，只增加单个模块。
 验证：本次只检查代码与改动结构，未运行测试或其他自动化验证；没有声称通过测试。
+
+[2026-11-13 15:40:00 +08:00] 历史摘要与上下文token预算
+修改前：每次模型请求都把会话全部消息原样发送；历史持续增长会增加 token 消耗与首字延迟，并且没有总预算或超限处理。会话记录只有完整消息，没有摘要存储。
+修改后：新增 agent/history.py，按用户消息切分轮次，最近 HISTORY_RECENT_TURNS 轮保留原文，更早轮次合并为摘要；摘要以独立 system 消息注入，不覆盖主系统提示。新增 session_summaries 表（ChatSummary）保存摘要正文和 covered_messages，Agent 只对新增的较早消息做增量合并，历史清空或缩短时自动丢弃过期摘要；调大保留轮数导致摘要覆盖范围进入保留窗口时，按当前较早原文重建摘要，避免丢失窗口之前的消息。摘要模型调用失败、超时或返回空内容时退化为保留用户/助手原话的本地摘要，问答不中断。完整消息仍全部写入 sessions.messages，摘要只影响发给模型的上下文。
+预算与降级：准备上下文和每次模型调用前都会执行 enforce_budget，按 HISTORY_TOKEN_BUDGET 估算 token 上限，依次压缩工具结果、减少保留轮数（不低于 2 轮）、截断窗口内长消息、丢弃摘要、只保留最近 1 轮、进一步压缩正文、截断当前问题，极端情况下只保留系统提示；删除轮次时整轮删除，保持 assistant tool_calls 与 tool 结果配对。token 使用内置估算器（CJK/全角按 1 token、ASCII 约 4 字符 1 token），不新增分词器依赖。
+涉及文件：modules/models.py、agent/session.py、agent/history.py（新增）、agent/agent.py、test/test_history.py（新增）、test/test_session.py、test/test_agent.py、.env.example、README.md、TXT/功能一览.txt、TXT/本次对话总结.txt。
+配置：.env.example 新增 HISTORY_RECENT_TURNS=10、HISTORY_TOKEN_BUDGET=12000、HISTORY_SUMMARY_MAX_TOKENS=600、HISTORY_SUMMARY_TIMEOUT=20；非法或低于下限的值回落到默认/下限并记录警告。
+验证：新增 27 项测试（test_history.py 22 项、test_session.py 3 项摘要持久化、test_agent.py 2 项摘要与预算集成），完整离线测试 119 passed；git diff --check 通过。测试使用内存会话替身、模型替身和内存 SQLite，不调用真实模型或 MySQL。本机 Windows 下 Python 3.12 按 0o700 建目录会产生受限 ACL 导致 pytest tmp_path 失败，测试时用临时 PYTHONPATH/sitecustomize 绕过，未写入项目代码或依赖。
+边界：摘要质量依赖摘要模型，失败时退化为截断原话；预算为估算值，不保证与真实分词完全一致；摘要表由 create_all 创建，不迁移已有表；同一会话并发写入的一致性仍未处理。
+
+[2026-11-13 15:58:00 +08:00] 会话消息独立表与并发追加
+修改前：sessions.messages 以 JSON 保存整段历史，SessionManager.save 每次覆盖整表；同一会话的并发请求各自读取旧快照后回写，互相覆盖并丢消息。Agent 在每轮决策和工具结果后保存完整 history。
+修改后：新增 session_messages 表（ChatMessage，id 自增主键、session_id 外键级联、role/content/tool_calls/tool_call_id/name/created_at，按 id 升序即写入顺序）。SessionManager 新增 append_message/append_messages 单条与批量 INSERT；get_messages 从新表读取，发现旧 JSON 且新表无行时在会话行锁内一次性迁移并清空 JSON；save 保留为兼容用的破坏式替换；clear/delete 同步清理消息行与摘要。Agent 只持久化新 user 消息（system 提示每轮重建、不入库），assistant（含 tool_calls）、tool 结果和流式最终正文分别 append_message，不再整段 save；并发请求各自 INSERT，不再互相覆盖。追加时刷新 sessions.updated_at。
+涉及文件：modules/models.py、agent/session.py、agent/agent.py、test/test_session.py、test/test_agent.py、README.md、TXT/功能一览.txt、TXT/本次对话总结.txt、TXT/未来代码修改说明.txt。
+验证：新增 7 项测试（并发追加、缺失会话并发创建、消息字段往返、旧 JSON 迁移幂等、clear/delete 级联、Agent 逐条追加），完整离线测试 126 passed；git diff --check 通过。测试使用文件/内存 SQLite 与会话替身，不调用真实 LLM 或 MySQL；本机 Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过，未写入项目代码。
+边界：消息顺序按自增 id，不保证并发请求的轮次语义顺序；旧 JSON 迁移依赖 MySQL 行锁，SQLite 下并发首次读取仍可能重复迁移；多 worker 下摘要与 updated_at 仍可能竞争；create_all 不修改已有表结构。
+
+[2026-11-13 16:10:00 +08:00] 整体超时预算与重试
+修改前：普通 run 的模型调用没有 timeout，也没有重试；run_stream 的决策调用和最终流式调用各自写死 timeout=20，多轮叠加后没有整轮上限；工具与摘要生成也各自超时，不消费本轮剩余时间。SSE 异常统一返回“生成回复时发生错误”，前端无法区分超时与其他失败。
+修改后：新增 agent/timeouts.py，提供 TimeoutConfig、Deadline、AgentTimeoutError、is_retryable 和 run_with_retry。Agent 入口创建 deadline，run/run_stream 均接受可选 deadline；每轮模型请求使用 min(LLM_REQUEST_TIMEOUT_SECONDS, 剩余时间)，工具使用 min(TOOL_TIMEOUT_SECONDS, 剩余时间)，最终流式读取逐片检查剩余时间；摘要生成消费同一 deadline，预算不足时直接本地退化。连接错误、请求超时、限流及状态码 408/409/429/500/502/503/504 按指数退避有限重试，其他错误立即失败。SSE 超时返回 code=agent_timeout，其他生成失败返回 code=generation_failed；前端按 code 显示明确文案。
+涉及文件：agent/timeouts.py（新增）、agent/agent.py、agent/history.py、api/chat_helpers.py、frontend/src/api.ts、frontend/src/App.tsx、test/test_timeouts.py（新增）、.env.example、README.md、TXT/功能一览.txt、TXT/本次对话总结.txt。
+配置：.env.example 新增 CHAT_TOTAL_TIMEOUT_SECONDS=120、LLM_REQUEST_TIMEOUT_SECONDS=20、LLM_MAX_RETRIES=2、LLM_RETRY_BACKOFF_SECONDS=0.5、LLM_MAX_RETRY_BACKOFF_SECONDS=4、TOOL_TIMEOUT_SECONDS=15；非法值回落到默认并记录警告。
+验证：新增 13 项 test_timeouts.py 测试，完整离线测试 139 passed；git diff --check 通过；frontend 的 tsc -b 通过。npm run build 在 vite 阶段因本机沙箱 spawn EPERM 失败，未完成打包，不是类型错误。测试使用模型/会话替身，不调用真实 LLM 或 MySQL。
+边界：超时是协作式的，已开始的同步工具无法强制终止；模型连接取消依赖 SDK 关闭；整体预算按单调时钟计算，不包含排队等待；多 worker 下各进程独立计时。
+
+[2026-11-13 16:20:00 +08:00] 文档解析资源限制与独立进程
+修改前：document_parser 在当前进程（线程池）中解析所有格式，只受上传接口 20 MB 限制；Office 压缩包可包含大量条目或解压后超大内容，PDF/PPTX 页数和提取字符数没有上限，解析也没有超时。损坏或恶意文件可能长时间占用线程、消耗大量内存。
+修改后：新增 ParserLimits 和 DOCUMENT_* 配置；Office 文件解析前读取 zip 目录，限制条目数与声明的解压后总大小；PDF 按页数、PPTX 按幻灯片数检查 max_pages；提取并规范化文本后检查 max_chars。解析改由独立子进程执行（python -m modules.document_parser），父进程通过临时文件传递输入输出，subprocess.run 设置 timeout，超时终止子进程并抛 DocumentParseTimeoutError；子进程用 error_type=limit 保留限制错误类型，父进程还原为 DocumentLimitError，其他解析错误统一为 ValueError，经文档服务转 422；临时目录清理失败不会掩盖已完成的解析结果。限制值非法或低于下限时回落到默认值。
+涉及文件：modules/document_parser.py、test/test_document_parser.py（新增）、.env.example、README.md、TXT/功能一览.txt、TXT/本次对话总结.txt。
+配置：.env.example 新增 DOCUMENT_MAX_ARCHIVE_ENTRIES=2000、DOCUMENT_MAX_UNCOMPRESSED_BYTES=209715200、DOCUMENT_MAX_PAGES=300、DOCUMENT_MAX_CHARS=2000000、DOCUMENT_PARSE_TIMEOUT_SECONDS=30，并逐项注释。
+验证：新增 11 项 test_document_parser.py 测试（独立进程解析、docx/xlsx/pptx 正文提取、字符上限、PDF 页数、zip 条目数、解压总大小、解析超时、环境变量覆盖、非法值回落），完整离线测试 150 passed；原有文档创建/替换及 HTTP 测试 23 passed；git diff --check 通过。测试使用真实子进程和临时 PDF/zip/Office 文件，不调用真实 LLM 或 MySQL；Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过。
+边界：页数限制只适用于 PDF 和 PPTX，DOCX 没有可靠页数；解压大小以 zip 目录声明值为准；子进程继承当前环境变量，未设置 OS 级内存/CPU 配额；文本提取仍会在子进程内完整加载，极端文件依赖超时与进程退出兜底。

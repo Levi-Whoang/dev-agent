@@ -52,6 +52,9 @@ class MemorySessionManager:
     async def save(self, session_id, messages):
         self.sessions[session_id]["messages"] = list(messages)
 
+    async def append_message(self, session_id, message):
+        self.sessions[session_id]["messages"].append(dict(message))
+
     async def clear(self, session_id):
         self.sessions[session_id]["messages"] = []
 

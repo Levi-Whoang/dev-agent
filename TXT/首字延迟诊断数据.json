@@ -1,0 +1,8 @@
+{
+  "cold_rag_seconds": 13.206951299998764,
+  "warm_rag_seconds": 0.012079000000085216,
+  "baseline_first_text_seconds": 3.5378301000000647,
+  "optimized_first_text_seconds": 1.9436788000002707,
+  "measured_at": "2026-11-02T21:15:13.301899+08:00",
+  "notes": "单次、同进程热RAG、虚构公共资料、内存会话；基线仅移除RAG直达最终阶段优化，不是历史提交；不包含HTTP/MySQL。"
+}

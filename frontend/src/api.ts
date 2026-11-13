@@ -51,6 +51,7 @@ export interface ChatEvent {
   session_id?: string;
   citations?: Citation[];
   message?: string;
+  code?: string;
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");

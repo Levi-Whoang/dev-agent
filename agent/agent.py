@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import re
@@ -9,6 +10,13 @@ logger = logging.getLogger(__name__)
 from integrations.mcp.tools import MCPTool
 from agent.session import SessionManager
 from agent.control import await_or_stop, GenerationStopped
+from agent.history import HistoryManager
+from agent.timeouts import (
+    AgentTimeoutError,
+    Deadline,
+    TimeoutConfig,
+    run_with_retry,
+)
 from agent.tool_execution import assistant_tool_message, execute_tool_call
 
 class Agent:
@@ -46,74 +54,98 @@ class Agent:
         self.tools = tools
         self.tool_registry = tool_registry
         self.session_manager = SessionManager()
+        self.history = HistoryManager(self.client, self.session_manager)
+        self.timeouts = TimeoutConfig.from_env()
 
     # 异步执行模型决策和工具调用，返回完整回答供内部评估使用。
-    async def run(self, user_input, session_id):
+    async def run(self, user_input, session_id, deadline=None):
+        deadline = deadline or Deadline.after(self.timeouts.total_seconds)
 
-        messages = await self.session_manager.get_messages(session_id)
-
-        messages = await self._begin_turn(user_input, session_id)
+        # history 保存完整对话，messages 只保存本轮发给模型的（可能已压缩）上下文。
+        history, messages = await self._begin_turn(
+            user_input, session_id, deadline=deadline
+        )
         #最多10轮决策
         max_iterations = 10
 
-        if not messages or messages[0].get("role") != "system":
-            messages.insert(0, self._system_prompt)
-        else:
-            messages[0] = self._system_prompt
-
         for _ in range(max_iterations):
-            response = await self.client.chat.completions.create(
+            messages = self.history.enforce_budget(messages, session_id=session_id)
+            response = await self._model_call(
+                deadline,
                 model=os.getenv("LLM_MODEL"),
                 messages=messages,
                 tools=self.tools,
-                tool_choice="auto"
+                tool_choice="auto",
             )
 
             message = response.choices[0].message
-            messages.append(assistant_tool_message(message))
+            saved = assistant_tool_message(message)
+            messages.append(saved)
+            history.append(saved)
+            await self.session_manager.append_message(session_id, saved)
 
             # LLM 不需要工具
             if not message.tool_calls:
-                await self.session_manager.save(session_id, messages)
                 return message.content
 
             # LLM 要调用工具
             for tool_call in message.tool_calls:
 
-                result = await execute_tool_call(self.tool_registry, tool_call)
-                messages.append(self._tool_result_message(tool_call.id, result))
-
-            await self.session_manager.save(session_id, messages)
+                result = await execute_tool_call(
+                    self.tool_registry,
+                    tool_call,
+                    timeout=self._tool_timeout(deadline),
+                )
+                tool_message = self._tool_result_message(tool_call.id, result)
+                messages.append(tool_message)
+                history.append(tool_message)
+                await self.session_manager.append_message(session_id, tool_message)
 
         else:
-            await self.session_manager.save(session_id, messages)
             raise RuntimeError("Agent 超过最大决策轮数，已停止执行")
 
     # 工具决策与最终输出分离，最终阶段不注册工具以防输出工具草稿。
-    async def run_stream(self, user_input, session_id, stop_event=None):
+    async def run_stream(self, user_input, session_id, stop_event=None, deadline=None):
         from threading import Event
         from agent.stream_filter import PublicTextFilter
         stop_event = stop_event or Event()
+        deadline = deadline or Deadline.after(self.timeouts.total_seconds)
         started = time.perf_counter()
-        messages = await self._begin_turn(user_input, session_id)
+        history, messages = await self._begin_turn(
+            user_input, session_id, deadline=deadline
+        )
         for _ in range(10):
             if stop_event.is_set():
                 return
             decision_started = time.perf_counter()
-            response = await await_or_stop(self.client.chat.completions.create(
-                model=os.getenv("LLM_MODEL"), messages=messages, tools=self.tools,
-                tool_choice="auto", timeout=20,
-            ), stop_event)
+            messages = self.history.enforce_budget(messages, session_id=session_id)
+            response = await self._model_call(
+                deadline,
+                stop_event=stop_event,
+                model=os.getenv("LLM_MODEL"),
+                messages=messages,
+                tools=self.tools,
+                tool_choice="auto",
+            )
             logger.info("llm_decision session_id=%s duration=%.3f", session_id, time.perf_counter()-decision_started)
             decision = response.choices[0].message
             if not decision.tool_calls:
                 break
             saved = assistant_tool_message(decision)
             messages.append(saved)
+            history.append(saved)
+            await self.session_manager.append_message(session_id, saved)
             for call in saved["tool_calls"]:
-                result = await execute_tool_call(self.tool_registry, call, stop_event=stop_event)
-                messages.append(self._tool_result_message(call["id"], result))
-            await self.session_manager.save(session_id, messages)
+                result = await execute_tool_call(
+                    self.tool_registry,
+                    call,
+                    timeout=self._tool_timeout(deadline),
+                    stop_event=stop_event,
+                )
+                tool_message = self._tool_result_message(call["id"], result)
+                messages.append(tool_message)
+                history.append(tool_message)
+                await self.session_manager.append_message(session_id, tool_message)
             # 仅有本地工具时保留RAG首字优化；MCP任务可能还需根据证据继续写文件。
             if (not any(isinstance(tool, MCPTool) for tool in self.tool_registry.values())
                 and all(call["function"]["name"] in {"knowledge_search", "knowledge_search_context"} for call in saved["tool_calls"])):
@@ -122,17 +154,27 @@ class Agent:
             raise RuntimeError("Agent 超过最大决策轮数")
         if stop_event.is_set():
             return
-        response_stream = await await_or_stop(self.client.chat.completions.create(
-            model=os.getenv("LLM_MODEL"), messages=messages, stream=True, timeout=20,
-        ), stop_event)
+        messages = self.history.enforce_budget(messages, session_id=session_id)
+        response_stream = await self._model_call(
+            deadline,
+            stop_event=stop_event,
+            model=os.getenv("LLM_MODEL"),
+            messages=messages,
+            stream=True,
+        )
         public_filter = PublicTextFilter()
         parts = []
         try:
             while not stop_event.is_set():
                 try:
-                    chunk = await await_or_stop(anext(response_stream), stop_event)
+                    # 流式读取同样受整体截止时间约束，避免逐片等待无限叠加。
+                    remaining = deadline.ensure()
+                    async with asyncio.timeout(remaining):
+                        chunk = await await_or_stop(anext(response_stream), stop_event)
                 except (StopAsyncIteration, GenerationStopped):
                     break
+                except TimeoutError as exc:
+                    raise AgentTimeoutError() from exc
                 if stop_event.is_set():
                     break
                 if not chunk.choices:
@@ -151,19 +193,69 @@ class Agent:
                     await response_stream.close()
                 finally:
                     if parts:
-                        messages.append({"role": "assistant", "content": "".join(parts)})
-                        await self.session_manager.save(session_id, messages)
+                        assistant_message = {
+                            "role": "assistant",
+                            "content": "".join(parts),
+                        }
+                        history.append(assistant_message)
+                        await self.session_manager.append_message(
+                            session_id, assistant_message
+                        )
+
+    # 每次模型请求都按“单次上限”和“整体剩余时间”中较小者设置超时。
+    async def _model_call(self, deadline, stop_event=None, **kwargs):
+        async def request():
+            remaining = deadline.ensure()
+            request_timeout = max(
+                0.01, min(self.timeouts.request_seconds, remaining)
+            )
+
+            async def invoke():
+                call = self.client.chat.completions.create(
+                    timeout=request_timeout, **kwargs
+                )
+                if stop_event is not None:
+                    return await await_or_stop(call, stop_event)
+                return await call
+
+            try:
+                async with asyncio.timeout(request_timeout):
+                    return await invoke()
+            except TimeoutError as exc:
+                if deadline.remaining() <= 0.05:
+                    raise AgentTimeoutError() from exc
+                # 单次请求超时仍可重试，交给统一退避逻辑处理。
+                raise
+
+        return await run_with_retry(
+            request, deadline, self.timeouts, stop_event=stop_event
+        )
+
+    # 工具也不能越过本轮整体截止时间。
+    def _tool_timeout(self, deadline):
+        remaining = deadline.ensure()
+        try:
+            tool_timeout = float(os.getenv("TOOL_TIMEOUT_SECONDS", "15"))
+        except ValueError:
+            tool_timeout = 15.0
+        return max(0.01, min(tool_timeout, remaining))
 
     # 读取历史并把系统消息与新用户输入组成统一轮次。
-    async def _begin_turn(self, user_input, session_id):
-        messages = await self.session_manager.get_messages(session_id)
-        messages.append({"role": "user", "content": user_input})
-        if not messages or messages[0].get("role") != "system":
-            messages.insert(0, self._system_prompt)
+    async def _begin_turn(self, user_input, session_id, deadline=None):
+        history = await self.session_manager.get_messages(session_id)
+        user_message = {"role": "user", "content": user_input}
+        history.append(user_message)
+        if not history or history[0].get("role") != "system":
+            history.insert(0, self._system_prompt)
         else:
-            messages[0] = self._system_prompt
-        await self.session_manager.save(session_id, messages)
-        return messages
+            history[0] = self._system_prompt
+        # 会话存储或模型客户端可能在运行或测试中被替换，摘要组件始终跟随当前实例。
+        self.history.session_manager = self.session_manager
+        self.history.client = self.client
+        # 只追加本轮用户消息；system 提示每轮重建，不写入消息表。
+        await self.session_manager.append_message(session_id, user_message)
+        context = await self.history.prepare(session_id, history, deadline=deadline)
+        return history, context
 
     # 统一构造工具结果消息，保证普通与流式流程格式一致。
     @staticmethod

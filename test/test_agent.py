@@ -8,6 +8,7 @@ import pytest
 
 import agent.agent as agent_module
 from agent.agent import Agent
+from agent.history import SUMMARY_PREFIX, count_tokens
 
 
 def calculate(a: int, b: int):
@@ -18,17 +19,39 @@ def explode(value: int):
     raise RuntimeError("boom")
 
 
+def echo(text: str):
+    return {"text": text * 2000}
+
+
 class FakeSessionManager:
     """内存会话存储，确保测试不连接 MySQL。"""
 
     def __init__(self):
         self.sessions = {}
+        self.summaries = {}
+        self.save_calls = 0
 
     async def get_messages(self, session_id):
         return list(self.sessions.get(session_id, []))
 
     async def save(self, session_id, messages):
+        self.save_calls += 1
         self.sessions[session_id] = list(messages)
+
+    async def append_message(self, session_id, message):
+        self.sessions.setdefault(session_id, []).append(dict(message))
+
+    async def get_summary(self, session_id):
+        return self.summaries.get(session_id)
+
+    async def save_summary(self, session_id, content, covered_messages):
+        self.summaries[session_id] = {
+            "content": content,
+            "covered_messages": covered_messages,
+        }
+
+    async def clear_summary(self, session_id):
+        self.summaries.pop(session_id, None)
 
 
 def make_tool_call(name, arguments, call_id="call_123"):
@@ -106,6 +129,113 @@ def make_agent(monkeypatch, *messages, tool_registry=None):
 async def get_tool_message(agent, session_id):
     messages = await agent.session_manager.get_messages(session_id)
     return next(message for message in messages if message.get("role") == "tool")
+
+
+def record_requests(client):
+    """在请求发出时保存消息快照，避免后续 append 修改断言对象。"""
+    snapshots = []
+    original = client.chat.completions.create
+
+    async def create(**kwargs):
+        snapshots.append([dict(message) for message in kwargs["messages"]])
+        return await original(**kwargs)
+
+    client.chat.completions.create = AsyncMock(side_effect=create)
+    return snapshots
+
+
+async def test_agent_summarizes_old_turns_and_persists_full_history(monkeypatch):
+    monkeypatch.setenv("HISTORY_RECENT_TURNS", "1")
+    # 第一次调用用于生成摘要，第二次才是本轮决策。
+    agent, client = make_agent(
+        monkeypatch,
+        make_message(content="旧对话摘要"),
+        make_message(content="最新回答"),
+    )
+    snapshots = record_requests(client)
+    history = [{"role": "system", "content": "旧系统提示"}]
+    for index in range(3):
+        history.append({"role": "user", "content": f"旧问题{index}"})
+        history.append({"role": "assistant", "content": f"旧回答{index}"})
+    await agent.session_manager.save("summary-case", history)
+
+    result = await agent.run("新问题", session_id="summary-case")
+
+    assert result == "最新回答"
+    request_messages = snapshots[-1]
+    assert request_messages[0]["role"] == "system"
+    assert sum(
+        message["content"].startswith(SUMMARY_PREFIX) for message in request_messages
+    ) == 1
+    # 更早的三轮进入摘要，最近一轮保留原文。
+    assert request_messages[-1] == {"role": "user", "content": "新问题"}
+    assert not any(message["content"] == "旧问题2" for message in request_messages)
+
+    summary = await agent.session_manager.get_summary("summary-case")
+    assert summary["covered_messages"] == 6
+    assert summary["content"] == "旧对话摘要"
+
+    # 持久化的仍是完整历史，摘要只影响发给模型的上下文。
+    stored = await agent.session_manager.get_messages("summary-case")
+    assert [message["content"] for message in stored if message["role"] == "user"] == [
+        "旧问题0",
+        "旧问题1",
+        "旧问题2",
+        "新问题",
+    ]
+    assert stored[-1] == {"role": "assistant", "content": "最新回答"}
+    assert count_tokens(request_messages) <= 12000
+
+
+async def test_agent_appends_turns_without_rewriting_whole_history(monkeypatch):
+    agent, _ = make_agent(
+        monkeypatch,
+        make_message(content="第一轮回答"),
+        make_message(content="第二轮回答"),
+    )
+
+    assert (await agent.run("第一问", session_id="append-case")) == "第一轮回答"
+    assert (await agent.run("第二问", session_id="append-case")) == "第二轮回答"
+
+    stored = await agent.session_manager.get_messages("append-case")
+    assert [message["role"] for message in stored] == [
+        "user",
+        "assistant",
+        "user",
+        "assistant",
+    ]
+    assert [message["content"] for message in stored] == [
+        "第一问",
+        "第一轮回答",
+        "第二问",
+        "第二轮回答",
+    ]
+    # 逐条追加，不再整段覆盖历史；system 提示每轮重建，不入库。
+    assert agent.session_manager.save_calls == 0
+
+
+async def test_agent_enforces_context_budget_on_every_model_call(monkeypatch):
+    monkeypatch.setenv("HISTORY_RECENT_TURNS", "10")
+    monkeypatch.setenv("HISTORY_TOKEN_BUDGET", "1000")
+    tool_call = make_tool_call("echo", json.dumps({"text": "x"}))
+    agent, client = make_agent(
+        monkeypatch,
+        make_message(tool_calls=[tool_call]),
+        make_message(content="完成"),
+        tool_registry={"echo": echo},
+    )
+    snapshots = record_requests(client)
+
+    assert (await agent.run("请处理", session_id="budget-case")) == "完成"
+
+    assert len(snapshots) == 2
+    for request_messages in snapshots:
+        assert count_tokens(request_messages) <= 1000
+
+    stored = await agent.session_manager.get_messages("budget-case")
+    # 工具结果在完整历史中不被截断。
+    tool_message = next(message for message in stored if message["role"] == "tool")
+    assert len(json.loads(tool_message["content"])["text"]) == 2000
 
 
 async def test_agent_executes_tool_and_persists_final_answer(monkeypatch):

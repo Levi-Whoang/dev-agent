@@ -30,6 +30,9 @@ class FakeSessionManager:
     async def get_messages(self, session_id):
         return list(self.sessions.get(session_id, []))
 
+    async def append_message(self, session_id, message):
+        self.sessions.setdefault(session_id, []).append(dict(message))
+
     async def clear(self, session_id):
         if session_id in self.sessions:
             self.sessions[session_id] = []

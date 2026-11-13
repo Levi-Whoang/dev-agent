@@ -17,10 +17,11 @@
 二、agent/：Agent 与会话持久化
 - __init__.py：将目录标记为 Python 包。
 - agent.py：Agent 主循环；调用大模型、处理工具调用，并提供普通和流式运行逻辑。
+- history.py：历史摘要与上下文 token 预算；保留最近轮次原文、增量合并较早轮次，并在超预算时逐级降级。
 - control.py：进程内生成任务登记、停止信号、有界工具线程池和工具超时日志。
 - stream_filter.py：跨模型分片过滤内部推理标签，输出公开正文。
 - runtime.py：加载模型 API 配置，创建共享 OpenAI 客户端和 Agent 实例。
-- session.py：会话消息及会话元数据的数据库读写、创建、查询、改名、清空和删除。
+- session.py：会话消息按条追加、历史摘要及会话元数据的数据库读写、旧 JSON 迁移、创建、查询、改名、清空和删除。
 
 三、api/：API 模型、辅助逻辑和 HTTP 路由
 - api_response.py：统一成功和错误响应的数据格式。
@@ -52,8 +53,8 @@
 七、modules/：数据库与共享数据结构
 - __init__.py：将目录标记为 Python 包。
 - database.py：SQLAlchemy 引擎、Session 工厂、表初始化及事务上下文管理。
-- document_parser.py：统一解析 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 为纯文本。
-- models.py：SQLAlchemy ORM 模型，包含用户、令牌、会话、认证审计和知识库文档等表结构。
+- document_parser.py：统一解析 PDF、DOCX、XLSX、PPTX、TXT、Markdown、CSV、JSON 和 HTML 为纯文本；校验压缩包条目数/解压大小、页数和字符数，并在独立子进程中执行、超时终止。
+- models.py：SQLAlchemy ORM 模型，包含用户、令牌、会话、会话消息、会话历史摘要、认证审计和知识库文档等表结构。
 
 八、tools/：Agent 可调用工具和检索
 - __init__.py：将目录标记为 Python 包。
@@ -138,13 +139,15 @@
 
 十二、test/：自动化测试和 RAG 评估
 - __init__.py：将目录标记为 Python 包。
-- test_agent.py：Agent 工具调用、错误处理、迭代边界和流式输出测试。
+- test_agent.py：Agent 工具调用、错误处理、迭代边界、流式输出、摘要/预算及逐条消息持久化测试。
+- test_history.py：历史摘要、增量覆盖、过期清理、token 估算及预算降级单元测试。
+- test_document_parser.py：文档解析独立进程、docx/xlsx/pptx 正文提取、条目/大小/页数/字符数限制、超时及环境配置回落测试。
 - test_api.py：路由行为及 SSE 响应测试。
 - test_api_http.py：使用 ASGI 客户端和替身依赖检查 HTTP/API、认证及会话隔离。
 - test_knowledge.py：知识加载、向量/关键词检索、引用构造和无答案行为测试。
 - test_rag_agent.py：RAG 工具接入 Agent 的集成行为测试。
 - test_retrieval_report.py：评估集版本、指纹、指标与失败报告结构测试。
-- test_session.py：会话数据库持久化、所有权和生命周期测试。
+- test_session.py：会话数据库持久化、消息逐条追加与并发、旧 JSON 迁移、所有权和生命周期测试。
 - test_text_splitter.py：文本切分边界、重叠及异常参数测试。
 - retrieval_dataset.py：带版本信息的检索评估问题集。
 - evaluate_retrieval.py：运行检索评估并生成指标和失败案例报告。
@@ -259,4 +262,23 @@ RAG 五项指标扩展
 
 
 [2026-11-09 21:24:00 +08:00] agent/tool_execution.py：规范化模型工具调用消息，统一JSON解析、本地及MCP参数校验、工具执行和错误映射，供普通与流式Agent复用。
+
+[2026-11-13 15:58:00 +08:00] 会话消息独立表与按条追加
+- modules/models.py：新增 ChatMessage（session_messages），按自增 id 保存每条消息及工具调用字段。
+- agent/session.py：新增 append_message/append_messages；get_messages 从新表按 id 读取并懒迁移旧 sessions.messages JSON；save 仅保留兼容替换语义；clear/delete 级联清理消息行。
+- agent/agent.py：user、assistant、tool 和流式最终正文逐条写入，不再整段覆盖历史。
+- test/test_session.py：并发追加、缺失会话并发创建、消息字段往返、旧 JSON 迁移幂等及级联清理测试。
+- test/test_agent.py：多轮逐条追加持久化测试。
+
+[2026-11-13 16:10:00 +08:00] 整体超时预算与重试
+- agent/timeouts.py：Deadline 整体截止时间、TimeoutConfig 环境配置、可重试错误判定、有限指数退避与 AgentTimeoutError。
+- test/test_timeouts.py：Deadline/配置/重试、Agent 剩余时间传递、总预算耗尽与 SSE 错误码测试。
+- agent/agent.py、agent/history.py、api/chat_helpers.py：入口创建 deadline，模型、工具、摘要和流式读取按剩余时间执行，超时/失败返回明确错误码。
+- frontend/src/api.ts、frontend/src/App.tsx：SSE error 支持 code，并按 agent_timeout/generation_failed 显示文案。
+
+[2026-11-13 16:20:00 +08:00] 文档解析资源限制与独立进程
+- modules/document_parser.py：新增 ParserLimits 与 DOCUMENT_* 配置；Office 先校验压缩包条目数与解压后总大小，PDF/PPTX 限制页数，提取文本限制字符数。
+- modules/document_parser.py：解析改到独立子进程（python -m modules.document_parser），父进程设置超时并回收结果；超时抛 DocumentParseTimeoutError，限制错误经 error_type 还原为 DocumentLimitError。
+- test/test_document_parser.py：新增独立进程解析、docx/xlsx/pptx 正文提取、条目/大小/页数/字符数限制、超时与配置回落测试。
+- .env.example、README.md：补充 DOCUMENT_* 配置与限制说明。
 

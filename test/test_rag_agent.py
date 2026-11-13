@@ -23,6 +23,9 @@ class FakeSessionManager:
     async def save(self, session_id, messages):
         self.sessions[session_id] = list(messages)
 
+    async def append_message(self, session_id, message):
+        self.sessions.setdefault(session_id, []).append(dict(message))
+
 
 def make_llm_message(content=None, tool_calls=None):
     """构造模拟 LLM 返回的消息。"""
