@@ -8,6 +8,7 @@ from tools.knowledge import warmup_knowledge
 from fastapi import FastAPI
 
 from app.errors import install_error_handling
+from app.process_guard import ensure_single_process
 from api.routes.documents import router as documents_router
 from api.routes.sessions import router as sessions_router
 from api.routes.users import router as users_router
@@ -18,6 +19,8 @@ from auth.jwt_auth import validate_auth_settings
 # 在 FastAPI 启动时检查认证配置并管理应用生命周期。
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 停止生成和同会话互斥依赖进程内状态，多 worker 下必须拒绝启动。
+    ensure_single_process()
     validate_auth_settings()
     if os.getenv("RAG_WARMUP", "true").lower() in {"true", "1", "yes"}:
         await run_in_threadpool(warmup_knowledge)

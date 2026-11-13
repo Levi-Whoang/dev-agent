@@ -317,3 +317,9 @@ Agent 的 run/run_stream 入口创建或接收 deadline，模型每次调用使�
 涉及文件：modules/document_parser.py、test/test_document_parser.py（新增）、.env.example、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。
 验证：新增 11 项测试（独立进程、docx/xlsx/pptx 正文提取、条目数、解压大小、PDF 页数、字符数、超时、环境覆盖、非法回落），完整离线测试 150 passed；原有文档创建/替换与 HTTP 测试 23 passed；git diff --check 通过。测试使用真实子进程、临时 PDF/zip 与 Office 文件，不调用真实 LLM 或 MySQL；Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过。
 边界：DOCX 没有可靠页数，只限制 PDF/PPTX；解压大小依赖 zip 目录声明值；子进程未设置 OS 级内存/CPU 配额；超大文本仍可能在子进程内完整加载，依赖超时与进程退出兜底。
+
+[2026-11-13 17:00:00 +08:00] 项目评估 NO2 的 P0 修复
+用户要求解决项目评估 NO2 中的 P0。本次处理三条：启动时用 app/process_guard.py 检查 WEB_CONCURRENCY、UVICORN_WORKERS、GUNICORN_WORKERS 和 --workers/-w，多 worker 直接拒绝启动，明确停止/互斥只在单进程有效；新增 agent/prompt_safety.py，给工具输出加不可信边界，Agent 只包装发给模型的副本，持久化仍保留原始 JSON，系统提示同步声明；HistoryManager.prepare 把摘要生成移到后台任务，最多等待 50ms，超时先用本地摘要，后台模型摘要完成后覆盖写入，同一会话只保留一个任务。
+涉及文件：app/process_guard.py（新增）、app/main.py、agent/prompt_safety.py（新增）、agent/agent.py、agent/history.py、test/test_process_guard.py（新增）、test/test_agent.py、test/test_history.py、README.md、TXT/功能一览.txt、TXT/未来代码修改说明.txt。
+验证：新增启动校验、工具输出包装、慢摘要不阻塞测试；process_guard/history/agent 子集 47 passed，完整离线测试 156 passed；`git diff --check` 与 `py_compile` 通过。测试使用内存替身，不调用真实 LLM 或 MySQL。
+边界：单实例校验只覆盖显式 worker 配置，多容器/多机部署仍需共享任务调度或粘性路由；工具输出边界降低但不能完全消除提示注入；后台摘要在进程退出时可能未完成，下一次 prepare 会重新生成；清空会话后后台任务短暂写回会在下一次 prepare 自动清除。

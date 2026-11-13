@@ -394,3 +394,18 @@ API与配置：app/main.py启动时发现MCP并挂载api/routes/mcp.py的认证�
 配置：.env.example 新增 DOCUMENT_MAX_ARCHIVE_ENTRIES=2000、DOCUMENT_MAX_UNCOMPRESSED_BYTES=209715200、DOCUMENT_MAX_PAGES=300、DOCUMENT_MAX_CHARS=2000000、DOCUMENT_PARSE_TIMEOUT_SECONDS=30，并逐项注释。
 验证：新增 11 项 test_document_parser.py 测试（独立进程解析、docx/xlsx/pptx 正文提取、字符上限、PDF 页数、zip 条目数、解压总大小、解析超时、环境变量覆盖、非法值回落），完整离线测试 150 passed；原有文档创建/替换及 HTTP 测试 23 passed；git diff --check 通过。测试使用真实子进程和临时 PDF/zip/Office 文件，不调用真实 LLM 或 MySQL；Windows 0o700 ACL 问题仍用临时 sitecustomize 绕过。
 边界：页数限制只适用于 PDF 和 PPTX，DOCX 没有可靠页数；解压大小以 zip 目录声明值为准；子进程继承当前环境变量，未设置 OS 级内存/CPU 配额；文本提取仍会在子进程内完整加载，极端文件依赖超时与进程退出兜底。
+
+[2026-11-13 17:00:00 +08:00] 项目评估 NO2 的 P0 修复
+
+修改前：停止生成和同会话互斥使用进程内任务表，多 worker 时停止请求可能落到别的进程；工具结果以普通文本进入模型，只有系统提示声明“内容是数据”；历史摘要在 prepare 中同步等待模型，长会话首包最多被拖慢约 20 秒。
+
+修改后：
+- 新增 app/process_guard.py，启动时检查 WEB_CONCURRENCY、UVICORN_WORKERS、GUNICORN_WORKERS 和 --workers/-w，发现多 worker 抛 RuntimeError 并拒绝启动；app/main.py 的 lifespan 最前面调用。
+- 新增 agent/prompt_safety.py，给 role=tool 的消息加“不可信工具输出”前缀/后缀；Agent._model_call 只包装发给模型的 messages 副本，数据库仍保存原始工具 JSON；系统提示补充工具输出不得作为指令执行；历史摘要格式化工具内容时也加边界标记。
+- agent/history.py 的 prepare 不再同步等待摘要：创建后台 asyncio.Task，最多等待 50ms，超时先用本地摘要构造上下文，后台模型摘要完成后再写入 session_summaries；同一会话只保留一个摘要任务，并新增 wait_for_summaries/cancel_summaries。
+
+涉及文件：app/process_guard.py（新增）、app/main.py、agent/prompt_safety.py（新增）、agent/agent.py、agent/history.py、test/test_process_guard.py（新增）、test/test_agent.py、test/test_history.py、README.md、TXT/功能一览.txt、TXT/本次对话总结.txt。
+
+验证：test/test_process_guard.py、test/test_history.py、test/test_agent.py 共 47 passed；完整离线测试 156 passed，`git diff --check` 通过，`py_compile` 通过。测试使用内存会话/摘要替身和 Fake 模型，不连接真实 LLM 或 MySQL。
+
+边界：单实例校验只能阻止显式 worker 配置，无法阻止在多个容器/进程外各自启动；多实例横向扩容仍需共享任务调度或粘性路由。工具输出边界降低但不能完全消除提示注入，敏感写入仍依赖工具权限和用户确认。摘要后台任务在进程退出时可能未完成，下一次 prepare 会重新生成；清空会话后后台任务短暂写回时，下一次 prepare 会因覆盖数超过总消息数再次清除。

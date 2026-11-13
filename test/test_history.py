@@ -1,5 +1,7 @@
 """历史摘要与 token 预算管理测试。"""
 
+import asyncio
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -56,6 +58,25 @@ class FakeClient:
             raise result
         return SimpleNamespace(
             choices=[SimpleNamespace(message=SimpleNamespace(content=result))]
+        )
+
+
+class SlowClient:
+    """摘要请求会一直等待，直到测试显式放行。"""
+
+    def __init__(self):
+        self.started = asyncio.Event()
+        self.release = asyncio.Event()
+        self.calls = []
+
+    async def create(self, **kwargs):
+        self.calls.append(kwargs)
+        self.started.set()
+        await self.release.wait()
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(message=SimpleNamespace(content="后台模型摘要"))
+            ]
         )
 
 
@@ -341,6 +362,35 @@ async def test_prepare_uses_client_summary_and_falls_back_on_error(monkeypatch):
         "s3", make_history([make_turn(0), make_turn(1)])
     )
     assert "问题0" in context[1]["content"]
+
+
+@pytest.mark.anyio
+async def test_prepare_does_not_block_on_slow_summary(monkeypatch):
+    monkeypatch.setenv("HISTORY_RECENT_TURNS", "1")
+    client = SlowClient()
+    manager = FakeSessionManager()
+    history_manager = HistoryManager(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=client)),
+        session_manager=manager,
+    )
+
+    started_at = time.perf_counter()
+    context = await history_manager.prepare(
+        "s1", make_history([make_turn(0), make_turn(1), make_turn(2)])
+    )
+    elapsed = time.perf_counter() - started_at
+
+    # 摘要模型未返回时，首包只等很短的宽限时间，先使用本地摘要。
+    assert elapsed < 0.5
+    assert "问题0" in context[1]["content"]
+    assert manager.summaries["s1"]["covered_messages"] == 4
+    await asyncio.wait_for(client.started.wait(), timeout=1)
+
+    client.release.set()
+    await history_manager.wait_for_summaries()
+    stored = manager.summaries["s1"]
+    assert stored["content"] == "后台模型摘要"
+    assert stored["covered_messages"] == 4
 
 
 @pytest.mark.anyio
